@@ -1,0 +1,196 @@
+/* Tablet/iPad-first base (768px+) */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  background-color: white;
+  min-height: 100vh;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: #111;
+}
+
+.datePicker {
+  margin-bottom: 24px;
+}
+
+.datePickerLabel {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.dateInput {
+  width: 100%;
+  max-width: 200px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 16px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Grid layout: 2 kolom di tablet+, 1 kolom di mobile */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 20px;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.cardTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #222;
+}
+
+.productList {
+  max-height: 384px;
+  overflow-y: auto;
+}
+
+.productItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f5f5f5;
+  font-size: 15px;
+}
+
+.productItem:last-child {
+  border-bottom: none;
+}
+
+/* Form styling */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.formSelect,
+.formInput {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  background: white;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.formSelect:focus,
+.formInput:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* 3D Button Style - White with subtle shadow */
+.button {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  
+  /* Default 3D look */
+  background: white;
+  color: #111;
+  box-shadow: 0 4px 0 #f0f0f0, 0 6px 8px rgba(0,0,0,0.1);
+}
+
+.button:hover {
+  box-shadow: 0 4px 0 #e0e0e0, 0 6px 10px rgba(0,0,0,0.15);
+  transform: translateY(-1px);
+}
+
+.button:active {
+  box-shadow: 0 2px 0 #f0f0f0, 0 3px 4px rgba(0,0,0,0.1);
+  transform: translateY(2px);
+}
+
+/* Primary button (sales) - hijau */
+.button--primary {
+  background: white;
+  color: #059669;
+  box-shadow: 0 4px 0 #f0fdf4, 0 6px 8px rgba(0,0,0,0.1);
+}
+
+.button--primary:hover {
+  box-shadow: 0 4px 0 #dcfce7, 0 6px 10px rgba(0,0,0,0.15);
+}
+
+.button--primary:active {
+  box-shadow: 0 2px 0 #f0fdf4, 0 3px 4px rgba(0,0,0,0.1);
+}
+
+/* Loading text */
+.loading {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+/* Mobile responsive */
+@media (max-width: 767px) {
+  .container {
+    padding: 16px;
+  }
+
+  .title {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .dateInput {
+    max-width: 160px;
+    padding: 8px 10px;
+    font-size: 15px;
+  }
+}
+
+/* Desktop enhancement */
+@media (min-width: 1024px) {
+  .container {
+    padding: 32px;
+  }
+
+  .grid {
+    gap: 32px;
+  }
+}
+
+/* Low stock highlight */
+.productItemLow {
+  background-color: #fff8e1 !important;
+  border-left: 3px solid #ffc107 !important;
+}
