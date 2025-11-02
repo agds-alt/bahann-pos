@@ -27,7 +27,8 @@
     "react-dom": "19.2.0",
     "recharts": "^3.3.0",
     "supabase": "2.54.11",
-    "superjson": "^2.2.5"
+    "superjson": "^2.2.5",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
