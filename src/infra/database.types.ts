@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      users: {
+        Row: {
+          id: string
+          email: string
+          name: string
+          password_hash: string
+          outlet_id: string | null
+          role: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          email: string
+          name: string
+          password_hash: string
+          outlet_id?: string | null
+          role?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          email?: string
+          name?: string
+          password_hash?: string
+          outlet_id?: string | null
+          role?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_sales: {
         Row: {
           created_at: string | null
