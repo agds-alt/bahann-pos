@@ -1,0 +1,146 @@
+import { InputHTMLAttributes, forwardRef } from 'react'
+
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string
+  error?: string
+  fullWidth?: boolean
+}
+
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ label, error, fullWidth = false, className = '', ...props }, ref) => {
+    return (
+      <div className={`${fullWidth ? 'w-full' : ''}`}>
+        {label && (
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            {label}
+          </label>
+        )}
+        <input
+          ref={ref}
+          className={`
+            w-full px-4 py-3 text-base
+            bg-white text-gray-900
+            border-2 border-gray-200
+            rounded-xl
+            shadow-[3px_3px_0px_0px_rgba(0,0,0,0.08)]
+            focus:outline-none focus:border-gray-400
+            focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.12)]
+            focus:translate-x-[-1px] focus:translate-y-[-1px]
+            transition-all duration-200
+            disabled:opacity-50 disabled:cursor-not-allowed
+            ${error ? 'border-red-400 focus:border-red-500' : ''}
+            ${className}
+          `}
+          {...props}
+        />
+        {error && (
+          <p className="mt-1 text-sm text-red-600">{error}</p>
+        )}
+      </div>
+    )
+  }
+)
+
+Input.displayName = 'Input'
+
+/**
+ * Textarea Component
+ */
+interface TextareaProps extends InputHTMLAttributes<HTMLTextAreaElement> {
+  label?: string
+  error?: string
+  rows?: number
+  fullWidth?: boolean
+}
+
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ label, error, rows = 4, fullWidth = false, className = '', ...props }, ref) => {
+    return (
+      <div className={`${fullWidth ? 'w-full' : ''}`}>
+        {label && (
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            {label}
+          </label>
+        )}
+        <textarea
+          ref={ref}
+          rows={rows}
+          className={`
+            w-full px-4 py-3 text-base
+            bg-white text-gray-900
+            border-2 border-gray-200
+            rounded-xl
+            shadow-[3px_3px_0px_0px_rgba(0,0,0,0.08)]
+            focus:outline-none focus:border-gray-400
+            focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.12)]
+            focus:translate-x-[-1px] focus:translate-y-[-1px]
+            transition-all duration-200
+            disabled:opacity-50 disabled:cursor-not-allowed
+            resize-none
+            ${error ? 'border-red-400 focus:border-red-500' : ''}
+            ${className}
+          `}
+          {...props}
+        />
+        {error && (
+          <p className="mt-1 text-sm text-red-600">{error}</p>
+        )}
+      </div>
+    )
+  }
+)
+
+Textarea.displayName = 'Textarea'
+
+/**
+ * Select Component
+ */
+interface SelectProps extends InputHTMLAttributes<HTMLSelectElement> {
+  label?: string
+  error?: string
+  options: { value: string; label: string }[]
+  fullWidth?: boolean
+}
+
+export const Select = forwardRef<HTMLSelectElement, SelectProps>(
+  ({ label, error, options, fullWidth = false, className = '', ...props }, ref) => {
+    return (
+      <div className={`${fullWidth ? 'w-full' : ''}`}>
+        {label && (
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            {label}
+          </label>
+        )}
+        <select
+          ref={ref}
+          className={`
+            w-full px-4 py-3 text-base
+            bg-white text-gray-900
+            border-2 border-gray-200
+            rounded-xl
+            shadow-[3px_3px_0px_0px_rgba(0,0,0,0.08)]
+            focus:outline-none focus:border-gray-400
+            focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.12)]
+            focus:translate-x-[-1px] focus:translate-y-[-1px]
+            transition-all duration-200
+            disabled:opacity-50 disabled:cursor-not-allowed
+            ${error ? 'border-red-400 focus:border-red-500' : ''}
+            ${className}
+          `}
+          {...props}
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        {error && (
+          <p className="mt-1 text-sm text-red-600">{error}</p>
+        )}
+      </div>
+    )
+  }
+)
+
+Select.displayName = 'Select'
