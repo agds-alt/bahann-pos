@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -9,10 +9,21 @@ import { trpc } from '@/lib/trpc/client'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [showRegisteredMessage, setShowRegisteredMessage] = useState(false)
+
+  useEffect(() => {
+    // Check if redirected from registration
+    if (searchParams.get('registered') === 'true') {
+      setShowRegisteredMessage(true)
+      // Hide message after 5 seconds
+      setTimeout(() => setShowRegisteredMessage(false), 5000)
+    }
+  }, [searchParams])
 
   const loginMutation = trpc.auth.login.useMutation()
 
@@ -59,6 +70,14 @@ export default function LoginPage() {
 
           <CardBody>
             <form onSubmit={handleLogin} className="space-y-6">
+              {showRegisteredMessage && (
+                <div className="p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+                  <p className="text-sm font-semibold text-green-600">
+                    ✅ Registration successful! Please login with your credentials.
+                  </p>
+                </div>
+              )}
+
               {error && (
                 <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl">
                   <p className="text-sm text-red-600">{error}</p>
@@ -96,11 +115,16 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center space-y-2">
               <p className="text-sm text-gray-600">
                 Don't have an account?{' '}
                 <a href="/register" className="font-semibold text-gray-900 hover:underline">
                   Register
+                </a>
+              </p>
+              <p className="text-xs text-gray-500">
+                <a href="/test/users" className="text-blue-600 hover:underline">
+                  🔍 View Registered Users (Test)
                 </a>
               </p>
             </div>
