@@ -8,16 +8,21 @@ import { trpc } from '@/lib/trpc/client'
 import { PrintPreviewModal } from '@/components/print/PrintPreviewModal'
 import { ReceiptData } from '@/components/print/PrintReceipt'
 
+interface CartItem {
+  productId: string
+  productName: string
+  productSku: string
+  quantity: number
+  unitPrice: number
+  total: number
+}
+
 export default function SalesTransactionPage() {
-  const [formData, setFormData] = useState({
-    productId: '',
-    productName: '',
-    productSku: '',
-    outletId: '',
-    saleDate: new Date().toISOString().split('T')[0],
-    quantitySold: 1,
-    unitPrice: 0,
-  })
+  const [selectedProductId, setSelectedProductId] = useState('')
+  const [selectedOutletId, setSelectedOutletId] = useState('')
+  const [quantity, setQuantity] = useState(1)
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [saleDate] = useState(new Date().toISOString().split('T')[0])
 
   const [paymentData, setPaymentData] = useState({
     method: 'cash',
@@ -26,24 +31,124 @@ export default function SalesTransactionPage() {
 
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false)
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
+  const [error, setError] = useState('')
+  const [showSuccess, setShowSuccess] = useState(false)
+
+  // Fetch products and outlets for dropdowns
+  const { data: products, isLoading: productsLoading } = trpc.products.getAll.useQuery()
+  const { data: outlets, isLoading: outletsLoading } = trpc.outlets.getAll.useQuery()
+
+  // Fetch real dashboard data
+  const { data: recentTransactions, refetch: refetchTransactions } = trpc.dashboard.getRecentTransactions.useQuery({ limit: 5 })
 
   const recordSaleMutation = trpc.sales.record.useMutation()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const selectedProduct = products?.find(p => p.id === selectedProductId)
+  const selectedOutlet = outlets?.find(o => o.id === selectedOutletId)
+
+  // Add item to cart
+  const handleAddToCart = () => {
+    if (!selectedProduct) {
+      setError('Please select a product')
+      return
+    }
+
+    if (quantity <= 0) {
+      setError('Quantity must be greater than 0')
+      return
+    }
+
+    const unitPrice = selectedProduct.price || 0
+    const total = quantity * unitPrice
+
+    // Check if product already in cart
+    const existingItemIndex = cart.findIndex(item => item.productId === selectedProduct.id)
+
+    if (existingItemIndex >= 0) {
+      // Update existing item
+      const updatedCart = [...cart]
+      updatedCart[existingItemIndex].quantity += quantity
+      updatedCart[existingItemIndex].total = updatedCart[existingItemIndex].quantity * unitPrice
+      setCart(updatedCart)
+    } else {
+      // Add new item
+      const newItem: CartItem = {
+        productId: selectedProduct.id,
+        productName: selectedProduct.name,
+        productSku: selectedProduct.sku,
+        quantity,
+        unitPrice,
+        total,
+      }
+      setCart([...cart, newItem])
+    }
+
+    // Reset selection
+    setSelectedProductId('')
+    setQuantity(1)
+    setError('')
+  }
+
+  // Remove item from cart
+  const handleRemoveFromCart = (productId: string) => {
+    setCart(cart.filter(item => item.productId !== productId))
+  }
+
+  // Update cart item quantity
+  const handleUpdateQuantity = (productId: string, newQuantity: number) => {
+    if (newQuantity <= 0) return
+
+    const updatedCart = cart.map(item => {
+      if (item.productId === productId) {
+        return {
+          ...item,
+          quantity: newQuantity,
+          total: newQuantity * item.unitPrice,
+        }
+      }
+      return item
+    })
+    setCart(updatedCart)
+  }
+
+  // Calculate cart totals
+  const cartSubtotal = cart.reduce((sum, item) => sum + item.total, 0)
+  const cartTotal = cartSubtotal // Can add tax/discount here
+  const change = paymentData.amountPaid - cartTotal
+
+  // Complete sale
+  const handleCompleteSale = async () => {
+    setError('')
+    setShowSuccess(false)
+
+    if (cart.length === 0) {
+      setError('Cart is empty. Please add items to cart.')
+      return
+    }
+
+    if (!selectedOutletId) {
+      setError('Please select an outlet')
+      return
+    }
+
+    if (paymentData.amountPaid < cartTotal) {
+      setError('Insufficient payment amount')
+      return
+    }
 
     try {
-      await recordSaleMutation.mutateAsync({
-        productId: formData.productId,
-        outletId: formData.outletId,
-        saleDate: formData.saleDate,
-        quantitySold: formData.quantitySold,
-        unitPrice: formData.unitPrice,
-      })
+      // Record each sale item
+      for (const item of cart) {
+        await recordSaleMutation.mutateAsync({
+          productId: item.productId,
+          outletId: selectedOutletId,
+          saleDate,
+          quantitySold: item.quantity,
+          unitPrice: item.unitPrice,
+        })
+      }
 
       // Generate receipt data
-      const total = formData.quantitySold * formData.unitPrice
-      const change = paymentData.amountPaid - total
       const transactionId = generateTransactionId()
       const now = new Date()
 
@@ -59,26 +164,24 @@ export default function SalesTransactionPage() {
           minute: '2-digit',
           second: '2-digit',
         }),
-        cashier: getUserName(), // Get from session/context
+        cashier: getUserName(),
         outlet: {
-          name: 'OTISTA Outlet', // Get from outlet data
-          address: 'Jl. Otista Raya No. 123, Jakarta Timur',
-          phone: '+62 21 8765 4321',
-          email: 'otista@bahann.com',
+          name: selectedOutlet?.name || 'Bahann POS',
+          address: selectedOutlet?.address || 'Indonesia',
+          phone: '+62 21 xxxx xxxx',
+          email: 'info@bahann.com',
         },
-        items: [
-          {
-            name: formData.productName || 'Product Name',
-            sku: formData.productSku || 'SKU-000',
-            quantity: formData.quantitySold,
-            unitPrice: formData.unitPrice,
-            total: total,
-          },
-        ],
-        subtotal: total,
-        tax: 0, // Optional: calculate tax
-        discount: 0, // Optional: apply discount
-        total: total,
+        items: cart.map(item => ({
+          name: item.productName,
+          sku: item.productSku,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          total: item.total,
+        })),
+        subtotal: cartSubtotal,
+        tax: 0,
+        discount: 0,
+        total: cartTotal,
         payment: {
           method: paymentData.method,
           amount: paymentData.amountPaid,
@@ -89,244 +192,355 @@ export default function SalesTransactionPage() {
 
       setReceiptData(receipt)
       setIsPrintModalOpen(true)
+      setShowSuccess(true)
+
+      // Refetch transactions
+      refetchTransactions()
 
       // Reset form
-      setFormData({
-        ...formData,
-        productName: '',
-        productSku: '',
-        quantitySold: 1,
-        unitPrice: 0,
-      })
+      setCart([])
       setPaymentData({
         method: 'cash',
         amountPaid: 0,
       })
-    } catch (error: any) {
-      alert(error.message || 'Failed to record sale')
+      setSelectedOutletId('')
+
+      setTimeout(() => setShowSuccess(false), 3000)
+    } catch (err: any) {
+      setError(err.message || 'Failed to record sale')
     }
   }
 
-  const totalRevenue = formData.quantitySold * formData.unitPrice
-  const change = paymentData.amountPaid - totalRevenue
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(value)
+  }
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Sales Transaction</h1>
-        <p className="text-gray-600">Record point-of-sale transactions</p>
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">Point of Sale</h1>
+        <p className="text-gray-600">Process sales transactions with multi-item cart</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sales Input Form */}
-        <Card variant="elevated" padding="lg">
-          <CardHeader>
-            <CardTitle>New Sale</CardTitle>
-          </CardHeader>
-          <CardBody>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Product Information */}
-              <div className="p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
-                <h3 className="text-sm font-bold text-blue-900 mb-3">Product Information</h3>
+      {/* Success Message */}
+      {showSuccess && (
+        <div className="p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+          <p className="text-sm font-semibold text-green-600">
+            ✅ Sale completed successfully!
+          </p>
+        </div>
+      )}
 
-                <Input
-                  type="text"
-                  label="Product ID"
-                  placeholder="Enter product UUID"
-                  value={formData.productId}
-                  onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
-                  fullWidth
-                  required
-                />
+      {/* Error Message */}
+      {error && (
+        <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+          <p className="text-sm font-semibold text-red-600">
+            ❌ {error}
+          </p>
+        </div>
+      )}
 
-                <div className="mt-3">
-                  <Input
-                    type="text"
-                    label="Product Name"
-                    placeholder="Enter product name"
-                    value={formData.productName}
-                    onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
-                    fullWidth
-                    required
-                  />
-                </div>
-
-                <div className="mt-3">
-                  <Input
-                    type="text"
-                    label="SKU"
-                    placeholder="Enter product SKU"
-                    value={formData.productSku}
-                    onChange={(e) => setFormData({ ...formData, productSku: e.target.value })}
-                    fullWidth
-                    required
-                  />
-                </div>
-              </div>
-
-              <Input
-                type="text"
-                label="Outlet ID"
-                placeholder="Enter outlet UUID"
-                value={formData.outletId}
-                onChange={(e) => setFormData({ ...formData, outletId: e.target.value })}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Product Selection + Cart */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Outlet Selection */}
+          <Card variant="elevated" padding="lg">
+            <CardHeader>
+              <CardTitle>Select Outlet</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <Select
+                value={selectedOutletId}
+                onChange={(e) => setSelectedOutletId(e.target.value)}
+                options={[
+                  { value: '', label: 'Choose an outlet...' },
+                  ...(outlets?.map(outlet => ({
+                    value: outlet.id,
+                    label: `${outlet.name} - ${outlet.address}`,
+                  })) || []),
+                ]}
                 fullWidth
                 required
               />
+              {selectedOutlet && (
+                <div className="mt-3 p-3 bg-purple-50 border-2 border-purple-200 rounded-xl">
+                  <p className="text-xs text-purple-600 font-semibold">Selected Outlet:</p>
+                  <p className="text-sm font-semibold text-purple-900">{selectedOutlet.name}</p>
+                  <p className="text-xs text-purple-700">{selectedOutlet.address}</p>
+                </div>
+              )}
+            </CardBody>
+          </Card>
 
-              <Input
-                type="date"
-                label="Sale Date"
-                value={formData.saleDate}
-                onChange={(e) => setFormData({ ...formData, saleDate: e.target.value })}
-                fullWidth
-                required
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  type="number"
-                  label="Quantity"
-                  min="1"
-                  value={formData.quantitySold}
-                  onChange={(e) => setFormData({ ...formData, quantitySold: parseInt(e.target.value) || 1 })}
+          {/* Add Product to Cart */}
+          <Card variant="elevated" padding="lg">
+            <CardHeader>
+              <CardTitle>Add Item to Cart</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <div className="space-y-4">
+                <Select
+                  label="Select Product"
+                  value={selectedProductId}
+                  onChange={(e) => setSelectedProductId(e.target.value)}
+                  options={[
+                    { value: '', label: 'Choose a product...' },
+                    ...(products?.map(product => ({
+                      value: product.id,
+                      label: `${product.name} - ${formatCurrency(product.price || 0)}`,
+                    })) || []),
+                  ]}
                   fullWidth
-                  required
                 />
 
-                <Input
-                  type="number"
-                  label="Unit Price (Rp)"
-                  min="0"
-                  step="1"
-                  value={formData.unitPrice}
-                  onChange={(e) => setFormData({ ...formData, unitPrice: parseFloat(e.target.value) || 0 })}
-                  fullWidth
-                  required
-                />
+                {selectedProduct && (
+                  <div className="p-3 bg-blue-50 border-2 border-blue-200 rounded-xl">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-xs text-blue-600 font-semibold">Selected Product:</p>
+                        <p className="text-sm font-semibold text-blue-900">{selectedProduct.name}</p>
+                        <p className="text-xs text-blue-700">
+                          SKU: {selectedProduct.sku} • {selectedProduct.category || 'N/A'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-blue-900">
+                          {formatCurrency(selectedProduct.price || 0)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <Input
+                      type="number"
+                      label="Quantity"
+                      min="1"
+                      value={quantity}
+                      onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                      fullWidth
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button
+                      variant="primary"
+                      onClick={handleAddToCart}
+                      disabled={!selectedProduct || productsLoading}
+                    >
+                      ➕ Add to Cart
+                    </Button>
+                  </div>
+                </div>
               </div>
+            </CardBody>
+          </Card>
 
-              {/* Payment Information */}
-              <div className="p-4 bg-green-50 rounded-xl border-2 border-green-200">
-                <h3 className="text-sm font-bold text-green-900 mb-3">Payment Information</h3>
+          {/* Shopping Cart */}
+          <Card variant="default" padding="lg">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>🛒 Shopping Cart</CardTitle>
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">
+                  {cart.length} items
+                </span>
+              </div>
+            </CardHeader>
+            <CardBody>
+              {cart.length === 0 ? (
+                <div className="py-12 text-center text-gray-500">
+                  <div className="text-6xl mb-4">🛒</div>
+                  <p className="font-semibold">Cart is empty</p>
+                  <p className="text-sm">Add products to start a transaction</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {cart.map((item) => (
+                    <div
+                      key={item.productId}
+                      className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border-2 border-gray-200"
+                    >
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900">{item.productName}</p>
+                        <p className="text-sm text-gray-600">SKU: {item.productSku}</p>
+                        <p className="text-sm text-gray-700 font-semibold">
+                          {formatCurrency(item.unitPrice)} × {item.quantity}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleUpdateQuantity(item.productId, item.quantity - 1)}
+                          >
+                            -
+                          </Button>
+                          <span className="w-12 text-center font-bold">{item.quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleUpdateQuantity(item.productId, item.quantity + 1)}
+                          >
+                            +
+                          </Button>
+                        </div>
+                        <div className="w-32 text-right">
+                          <p className="text-lg font-bold text-gray-900">
+                            {formatCurrency(item.total)}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRemoveFromCart(item.productId)}
+                        >
+                          🗑️
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
 
+                  {/* Cart Total */}
+                  <div className="p-4 bg-gray-900 rounded-xl border-2 border-gray-700">
+                    <p className="text-sm text-gray-400 mb-1">Cart Total</p>
+                    <p className="text-3xl font-bold text-white">
+                      {formatCurrency(cartTotal)}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        </div>
+
+        {/* Right Column: Payment & Summary */}
+        <div className="space-y-6">
+          {/* Payment Section */}
+          <Card variant="elevated" padding="lg">
+            <CardHeader>
+              <CardTitle>Payment</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <div className="space-y-4">
                 <Select
                   label="Payment Method"
                   value={paymentData.method}
                   onChange={(e: any) => setPaymentData({ ...paymentData, method: e.target.value })}
                   options={[
-                    { value: 'cash', label: 'Cash' },
-                    { value: 'card', label: 'Debit/Credit Card' },
-                    { value: 'transfer', label: 'Bank Transfer' },
-                    { value: 'ewallet', label: 'E-Wallet (GoPay, OVO, Dana)' },
+                    { value: 'cash', label: '💵 Cash' },
+                    { value: 'card', label: '💳 Card' },
+                    { value: 'transfer', label: '🏦 Transfer' },
+                    { value: 'ewallet', label: '📱 E-Wallet' },
                   ]}
                   fullWidth
                 />
 
-                <div className="mt-3">
-                  <Input
-                    type="number"
-                    label="Amount Paid (Rp)"
-                    min="0"
-                    step="1"
-                    value={paymentData.amountPaid}
-                    onChange={(e) => setPaymentData({ ...paymentData, amountPaid: parseFloat(e.target.value) || 0 })}
-                    fullWidth
-                    required
-                  />
-                </div>
+                <Input
+                  type="number"
+                  label="Amount Paid"
+                  min="0"
+                  step="1000"
+                  value={paymentData.amountPaid}
+                  onChange={(e) => setPaymentData({ ...paymentData, amountPaid: parseFloat(e.target.value) || 0 })}
+                  fullWidth
+                  required
+                />
 
                 {change >= 0 && paymentData.amountPaid > 0 && (
-                  <div className="mt-3 p-3 bg-white rounded-lg">
-                    <p className="text-xs text-gray-600">Change</p>
-                    <p className="text-xl font-bold text-green-700">
-                      Rp {change.toLocaleString('id-ID')}
+                  <div className="p-4 bg-green-50 rounded-xl border-2 border-green-200">
+                    <p className="text-sm text-green-700 font-semibold">Change</p>
+                    <p className="text-2xl font-bold text-green-900">
+                      {formatCurrency(change)}
                     </p>
                   </div>
                 )}
+
+                <Button
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  onClick={handleCompleteSale}
+                  disabled={recordSaleMutation.isPending || cart.length === 0 || !selectedOutletId || change < 0}
+                >
+                  {recordSaleMutation.isPending ? 'Processing...' : '✅ Complete Sale & Print'}
+                </Button>
               </div>
+            </CardBody>
+          </Card>
 
-              {/* Total Revenue Display */}
-              <div className="p-6 bg-gray-900 rounded-xl border-2 border-gray-700">
-                <p className="text-sm text-gray-400 mb-1">Total Amount</p>
-                <p className="text-3xl font-bold text-white">
-                  Rp {totalRevenue.toLocaleString('id-ID')}
-                </p>
+          {/* Quick Stats */}
+          <Card variant="default" padding="lg">
+            <CardHeader>
+              <CardTitle>Session Stats</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <div className="space-y-3">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-600">Items in Cart</p>
+                  <p className="text-xl font-bold text-gray-900">{cart.length}</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-600">Total Units</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                  </p>
+                </div>
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <p className="text-xs text-green-700">Cart Value</p>
+                  <p className="text-xl font-bold text-green-900">{formatCurrency(cartTotal)}</p>
+                </div>
               </div>
-
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                fullWidth
-                disabled={recordSaleMutation.isPending || change < 0}
-              >
-                {recordSaleMutation.isPending ? 'Processing...' : '🛒 Complete Sale & Print'}
-              </Button>
-
-              {change < 0 && paymentData.amountPaid > 0 && (
-                <p className="text-sm text-red-600 text-center">
-                  ⚠️ Insufficient payment amount
-                </p>
-              )}
-            </form>
-          </CardBody>
-        </Card>
-
-        {/* Sales Summary */}
-        <Card variant="default" padding="lg">
-          <CardHeader>
-            <CardTitle>Today's Sales Summary</CardTitle>
-          </CardHeader>
-          <CardBody>
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-xl">
-                <p className="text-sm text-gray-600">Total Transactions</p>
-                <p className="text-2xl font-bold text-gray-900">47</p>
-              </div>
-
-              <div className="p-4 bg-gray-50 rounded-xl">
-                <p className="text-sm text-gray-600">Items Sold</p>
-                <p className="text-2xl font-bold text-gray-900">320 units</p>
-              </div>
-
-              <div className="p-4 bg-green-50 rounded-xl border-2 border-green-200">
-                <p className="text-sm text-green-800">Total Revenue Today</p>
-                <p className="text-2xl font-bold text-green-900">Rp 12,450,000</p>
-              </div>
-
-              <div className="p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
-                <p className="text-sm text-blue-800">Average Transaction</p>
-                <p className="text-2xl font-bold text-blue-900">Rp 264,894</p>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
+            </CardBody>
+          </Card>
+        </div>
       </div>
 
       {/* Recent Transactions */}
       <Card variant="default" padding="lg">
         <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
+          <CardTitle>📊 Recent Transactions</CardTitle>
         </CardHeader>
         <CardBody>
-          <div className="space-y-3">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
-              >
-                <div>
-                  <p className="font-semibold text-gray-900">Transaction #{1000 + i}</p>
-                  <p className="text-sm text-gray-500">Product ABC • 5 units</p>
+          {!recentTransactions || recentTransactions.length === 0 ? (
+            <div className="py-8 text-center text-gray-500">
+              No recent transactions
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentTransactions.map((transaction) => (
+                <div
+                  key={transaction.id}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                >
+                  <div>
+                    <p className="font-semibold text-gray-900">{transaction.productName}</p>
+                    <p className="text-sm text-gray-500">
+                      {transaction.outletName} • {formatDateTime(transaction.date)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-gray-900">{formatCurrency(transaction.revenue)}</p>
+                    <p className="text-xs text-gray-500">{transaction.quantity} units</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-gray-900">Rp 250,000</p>
-                  <p className="text-xs text-gray-500">Just now</p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardBody>
       </Card>
 
