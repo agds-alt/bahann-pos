@@ -127,21 +127,22 @@ export const dashboardRouter = router({
       z.object({
         outletId: z.string().uuid().optional(),
         limit: z.number().default(5),
-        startDate: z.string().optional(),
-        endDate: z.string().optional(),
+        days: z.number().default(7),
       }).optional()
     )
     .query(async ({ input }) => {
-      const today = new Date().toISOString().split('T')[0]
-      const startDate = input?.startDate || today
-      const endDate = input?.endDate || today
+      const days = input?.days || 7
       const limit = input?.limit || 5
+
+      const endDate = new Date()
+      const startDate = new Date()
+      startDate.setDate(startDate.getDate() - (days - 1))
 
       let query = supabase
         .from('daily_sales')
         .select('product_id, quantity_sold, revenue')
-        .gte('sale_date', startDate)
-        .lte('sale_date', endDate)
+        .gte('sale_date', startDate.toISOString().split('T')[0])
+        .lte('sale_date', endDate.toISOString().split('T')[0])
 
       if (input?.outletId) {
         query = query.eq('outlet_id', input.outletId)
@@ -150,17 +151,17 @@ export const dashboardRouter = router({
       const { data: salesData } = await query
 
       // Group by product
-      const productMap: Record<string, { productId: string; totalSold: number; totalRevenue: number }> = {}
+      const productMap: Record<string, { productId: string; totalQuantity: number; totalRevenue: number }> = {}
 
       salesData?.forEach((sale) => {
         if (!productMap[sale.product_id]) {
           productMap[sale.product_id] = {
             productId: sale.product_id,
-            totalSold: 0,
+            totalQuantity: 0,
             totalRevenue: 0,
           }
         }
-        productMap[sale.product_id].totalSold += sale.quantity_sold || 0
+        productMap[sale.product_id].totalQuantity += sale.quantity_sold || 0
         productMap[sale.product_id].totalRevenue += sale.revenue || 0
       })
 
@@ -181,7 +182,7 @@ export const dashboardRouter = router({
             productSku: product?.sku || 'N/A',
           }
         })
-        .sort((a, b) => b.totalSold - a.totalSold)
+        .sort((a, b) => b.totalQuantity - a.totalQuantity)
         .slice(0, limit)
 
       return topProducts
@@ -222,7 +223,7 @@ export const dashboardRouter = router({
 
       const { data: products } = await supabase
         .from('products')
-        .select('id, name, sku')
+        .select('id, name, sku, category')
         .in('id', productIds)
 
       const { data: outlets } = await supabase
@@ -238,6 +239,7 @@ export const dashboardRouter = router({
           productId: stock.product_id,
           productName: product?.name || 'Unknown',
           productSku: product?.sku || 'N/A',
+          productCategory: product?.category || null,
           outletId: stock.outlet_id,
           outletName: outlet?.name || 'Unknown',
           currentStock: stock.stock_akhir,
