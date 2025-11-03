@@ -61,4 +61,22 @@ export const authRouter = router({
       session: ctx.session,
     }
   }),
+
+  /**
+   * Get all users (for testing/admin purposes)
+   * WARNING: In production, this should be protected and paginated
+   */
+  getAllUsers: publicProcedure.query(async () => {
+    const { supabase } = await import('@/infra/supabase/client')
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, email, name, outlet_id, role, created_at')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      throw new Error(`Failed to fetch users: ${error.message}`)
+    }
+
+    return data || []
+  }),
 })
