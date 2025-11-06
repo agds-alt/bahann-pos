@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bahann POS - Warehouse & Point of Sale",
-  description: "Modern warehouse and POS management system",
+  title: "AGDS Corp POS - Warehouse & Point of Sale",
+  description: "Modern warehouse and POS management system by AGDS Corp",
 };
 
 export default function RootLayout({

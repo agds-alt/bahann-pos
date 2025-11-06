@@ -1,4 +1,4 @@
-# Bahann POS - Warehouse & Point of Sale System
+# AGDS Corp POS - Warehouse & Point of Sale System
 
 Modern, full-stack warehouse and point-of-sale management system built with **Next.js**, **tRPC**, **JWT authentication**, **Redis**, and **Supabase**.
 

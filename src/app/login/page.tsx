@@ -60,7 +60,7 @@ function LoginContent() {
       <div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Bahann POS</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">AGDS Corp POS</h1>
           <p className="text-gray-600">Warehouse & Point of Sale System</p>
         </div>
 

@@ -136,7 +136,7 @@ export default function AboutPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-5xl font-bold text-gray-900 mb-3">Bahann POS</h1>
+        <h1 className="text-5xl font-bold text-gray-900 mb-3">AGDS Corp POS</h1>
         <p className="text-xl text-gray-600 mb-2">Warehouse & Point of Sale Management System</p>
         <div className="flex items-center justify-center gap-3 text-sm text-gray-500">
           <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full font-semibold">
@@ -158,7 +158,7 @@ export default function AboutPage() {
         </CardHeader>
         <CardBody>
           <p className="text-gray-600 mb-6">
-            Bahann POS adalah sistem manajemen warehouse dan point of sale yang dibangun dengan teknologi modern.
+            AGDS Corp POS adalah sistem manajemen warehouse dan point of sale yang dibangun dengan teknologi modern.
             Dirancang untuk memudahkan pengelolaan inventory, penjualan, dan analytics untuk bisnis retail.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -377,7 +377,7 @@ export default function AboutPage() {
         <CardBody>
           <div className="space-y-4">
             <p className="text-gray-700">
-              Interested in contributing to Bahann POS? We welcome contributions from the community!
+              Interested in contributing to AGDS Corp POS? We welcome contributions from the community!
             </p>
             <div className="space-y-2 text-sm text-gray-700">
               <p><strong>Ways to contribute:</strong></p>
@@ -416,12 +416,12 @@ export default function AboutPage() {
               Contact us for consultation, custom development, or enterprise solutions.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
-              <a href="https://wa.me/6287874415491?text=Hi%20AGDS,%20I'm%20interested%20in%20Bahann%20POS" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/6287874415491?text=Hi%20AGDS,%20I'm%20interested%20in%20AGDS%20Corp%20POS" target="_blank" rel="noopener noreferrer">
                 <Button variant="primary" size="lg">
                   💬 WhatsApp: +62 878-7441-5491
                 </Button>
               </a>
-              <a href="mailto:agdscid@gmail.com?subject=Bahann%20POS%20Inquiry">
+              <a href="mailto:agdscid@gmail.com?subject=AGDS%20Corp%20POS%20Inquiry">
                 <Button variant="secondary" size="lg">
                   📧 Email: agdscid@gmail.com
                 </Button>
@@ -437,7 +437,7 @@ export default function AboutPage() {
           Built with ❤️ by <strong>AGDS Corp</strong>
         </p>
         <p className="text-sm text-gray-500">
-          © {new Date().getFullYear()} Bahann POS. All rights reserved.
+          © {new Date().getFullYear()} AGDS Corp POS. All rights reserved.
         </p>
       </div>
     </div>

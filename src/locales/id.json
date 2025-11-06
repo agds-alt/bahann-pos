@@ -55,7 +55,7 @@
   "sidebar.logout": "Keluar",
   "sidebar.logout.confirm": "Apakah Anda yakin ingin keluar?",
 
-  "login.title": "Masuk ke Bahann POS",
+  "login.title": "Masuk ke AGDS Corp POS",
   "login.subtitle": "Masukkan email dan kata sandi Anda",
   "login.email": "Alamat Email",
   "login.password": "Kata Sandi",
@@ -65,7 +65,7 @@
   "login.error": "Email atau kata sandi salah",
 
   "register.title": "Daftar Akun Baru",
-  "register.subtitle": "Buat akun untuk mulai menggunakan Bahann POS",
+  "register.subtitle": "Buat akun untuk mulai menggunakan AGDS Corp POS",
   "register.name": "Nama Lengkap",
   "register.email": "Alamat Email",
   "register.password": "Kata Sandi",
