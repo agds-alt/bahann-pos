@@ -182,6 +182,11 @@ export function Sidebar() {
             icon="👤"
             label="Profile"
           />
+          <SidebarItem
+            href="/about"
+            icon="ℹ️"
+            label="About"
+          />
         </SidebarSection>
       </nav>
 
