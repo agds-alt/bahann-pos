@@ -19,11 +19,28 @@ export async function createContext(opts: FetchCreateContextFnOptions) {
       const decoded = verifyJWT(token)
       userId = decoded.userId
 
-      // Get session from Redis
+      // Try to get session from Redis (optional)
       const redis = getRedisClient()
-      const sessionData = await redis.get(`session:${userId}`)
-      if (sessionData) {
-        session = JSON.parse(sessionData)
+      if (redis) {
+        try {
+          const sessionData = await redis.get(`session:${userId}`)
+          if (sessionData) {
+            session = JSON.parse(sessionData)
+          }
+        } catch (error) {
+          console.error('Failed to get session from Redis:', error)
+          // Continue without session, JWT is enough
+        }
+      }
+
+      // If no Redis session, create a minimal session from JWT
+      if (!session) {
+        session = {
+          userId: decoded.userId,
+          email: decoded.email,
+          name: decoded.name,
+          role: decoded.role,
+        }
       }
     } catch (error) {
       // Invalid token, continue as unauthenticated
