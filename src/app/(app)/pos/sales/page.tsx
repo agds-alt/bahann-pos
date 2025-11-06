@@ -166,10 +166,10 @@ export default function SalesTransactionPage() {
         }),
         cashier: getUserName(),
         outlet: {
-          name: selectedOutlet?.name || 'Bahann POS',
+          name: selectedOutlet?.name || 'AGDS Corp POS',
           address: selectedOutlet?.address || 'Indonesia',
-          phone: '+62 21 xxxx xxxx',
-          email: 'info@bahann.com',
+          phone: '+62 878-7441-5491',
+          email: 'agdscid@gmail.com',
         },
         items: cart.map(item => ({
           name: item.productName,
@@ -187,7 +187,7 @@ export default function SalesTransactionPage() {
           amount: paymentData.amountPaid,
           change: change > 0 ? change : 0,
         },
-        notes: 'Terima kasih telah berbelanja di Bahann POS',
+        notes: 'Terima kasih telah berbelanja di AGDS Corp POS',
       }
 
       setReceiptData(receipt)

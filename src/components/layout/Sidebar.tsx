@@ -119,7 +119,7 @@ export function Sidebar() {
     <aside className="w-80 h-screen bg-gray-50 border-r-2 border-gray-200 flex flex-col overflow-y-auto">
       {/* Logo/Header */}
       <div className="p-6 border-b-2 border-gray-200">
-        <h1 className="text-2xl font-bold text-gray-900">Bahann POS</h1>
+        <h1 className="text-2xl font-bold text-gray-900">AGDS Corp POS</h1>
         <p className="text-sm text-gray-500 mt-1">Warehouse & Point of Sale</p>
       </div>
 

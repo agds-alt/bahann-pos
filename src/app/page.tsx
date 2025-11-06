@@ -25,7 +25,7 @@ export default function Home() {
     <div className="min-h-screen bg-white flex items-center justify-center">
       <div className="text-center">
         <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-gray-300 border-t-gray-900 mb-4"></div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Bahann POS</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">AGDS Corp POS</h1>
         <p className="text-gray-600">Redirecting...</p>
       </div>
     </div>

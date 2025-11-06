@@ -1,6 +1,6 @@
-# 🚀 Bahann POS - Deployment Guide
+# 🚀 AGDS Corp POS - Deployment Guide
 
-Complete guide for deploying Bahann POS to Vercel.
+Complete guide for deploying AGDS Corp POS to Vercel.
 
 ## 📋 Prerequisites
 
@@ -266,4 +266,4 @@ If you encounter issues:
 
 **Deployment successful? 🎉**
 
-Your Bahann POS is now live and ready for production use!
+Your AGDS Corp POS is now live and ready for production use!
