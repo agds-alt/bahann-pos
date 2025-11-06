@@ -39,24 +39,9 @@ export const stockRouter = router({
     )
     .query(async ({ input }) => {
       const stock = await stockRepository.getLatestByProduct(
-        input.productId,
-        input.outletId
+        input.outletId,
+        input.productId
       )
       return stock
-    }),
-
-  /**
-   * Get stock by date
-   */
-  getByDate: protectedProcedure
-    .input(
-      z.object({
-        outletId: z.string().uuid(),
-        stockDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      })
-    )
-    .query(async ({ input }) => {
-      const stocks = await stockRepository.getByDate(input.outletId, input.stockDate)
-      return stocks
     }),
 })
