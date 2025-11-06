@@ -7,9 +7,11 @@ import { Select } from '@/components/ui/Input'
 import { trpc } from '@/lib/trpc/client'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 export default function DashboardPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [selectedOutletId, setSelectedOutletId] = useState<string>('')
   const [dateRange, setDateRange] = useState<7 | 14 | 30>(7)
 
@@ -71,8 +73,8 @@ export default function DashboardPage() {
       <div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
-            <p className="text-gray-600">Monitor your warehouse and sales performance</p>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">{t('dashboard.title')}</h1>
+            <p className="text-gray-600">{t('dashboard.overview')}</p>
           </div>
 
           {/* Filters */}
@@ -81,7 +83,7 @@ export default function DashboardPage() {
               value={selectedOutletId}
               onChange={(e) => setSelectedOutletId(e.target.value)}
               options={[
-                { value: '', label: 'All Outlets' },
+                { value: '', label: t('dashboard.allOutlets') },
                 ...(outlets?.map(outlet => ({
                   value: outlet.id,
                   label: outlet.name,
@@ -92,9 +94,9 @@ export default function DashboardPage() {
               value={dateRange.toString()}
               onChange={(e) => setDateRange(Number(e.target.value) as 7 | 14 | 30)}
               options={[
-                { value: '7', label: 'Last 7 Days' },
-                { value: '14', label: 'Last 14 Days' },
-                { value: '30', label: 'Last 30 Days' },
+                { value: '7', label: t('dashboard.last7days') },
+                { value: '14', label: '14 ' + t('common.day') },
+                { value: '30', label: t('dashboard.last30days') },
               ]}
             />
           </div>
@@ -105,7 +107,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card variant="default" padding="lg">
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-500">Total Products</p>
+            <p className="text-sm font-semibold text-gray-500">{t('dashboard.totalProducts')}</p>
             {statsLoading ? (
               <div className="h-9 bg-gray-200 rounded animate-pulse" />
             ) : (
@@ -119,7 +121,7 @@ export default function DashboardPage() {
 
         <Card variant="default" padding="lg">
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-500">Total Revenue</p>
+            <p className="text-sm font-semibold text-gray-500">{t('dashboard.totalRevenue')}</p>
             {statsLoading ? (
               <div className="h-9 bg-gray-200 rounded animate-pulse" />
             ) : (
@@ -127,13 +129,13 @@ export default function DashboardPage() {
                 {formatCurrency(stats?.totalRevenue || 0)}
               </p>
             )}
-            <p className="text-sm text-green-600">{stats?.transactionCount || 0} transactions</p>
+            <p className="text-sm text-green-600">{stats?.transactionCount || 0} {t('dashboard.transactions')}</p>
           </div>
         </Card>
 
         <Card variant="default" padding="lg">
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-500">Low Stock Items</p>
+            <p className="text-sm font-semibold text-gray-500">{t('dashboard.lowStock')}</p>
             {statsLoading ? (
               <div className="h-9 bg-gray-200 rounded animate-pulse" />
             ) : (
@@ -142,14 +144,14 @@ export default function DashboardPage() {
               </p>
             )}
             <p className={`text-sm ${(stats?.lowStockCount || 0) > 0 ? 'text-red-600' : 'text-green-600'}`}>
-              {(stats?.lowStockCount || 0) > 0 ? 'Needs attention' : 'Stock healthy'}
+              {(stats?.lowStockCount || 0) > 0 ? t('warehouse.stock.lowStockAlert') : t('warehouse.stock.noLowStock')}
             </p>
           </div>
         </Card>
 
         <Card variant="default" padding="lg">
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-500">Total Outlets</p>
+            <p className="text-sm font-semibold text-gray-500">{t('dashboard.totalOutlets')}</p>
             {statsLoading ? (
               <div className="h-9 bg-gray-200 rounded animate-pulse" />
             ) : (
