@@ -39,8 +39,8 @@ export const salesRouter = router({
     .query(async ({ input }) => {
       const sales = await salesRepository.getByDateRange(
         input.outletId,
-        input.startDate,
-        input.endDate
+        new Date(input.startDate),
+        new Date(input.endDate)
       )
       return sales
     }),
