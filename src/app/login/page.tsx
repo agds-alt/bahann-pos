@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
 import { trpc } from '@/lib/trpc/client'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -47,7 +49,7 @@ function LoginContent() {
       // Redirect to dashboard
       router.push('/dashboard')
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your credentials.')
+      setError(err.message || t('login.error'))
     } finally {
       setIsLoading(false)
     }
@@ -65,7 +67,7 @@ function LoginContent() {
         {/* Login Card */}
         <Card variant="elevated" padding="lg">
           <CardHeader>
-            <CardTitle>Login to your account</CardTitle>
+            <CardTitle>{t('login.title')}</CardTitle>
           </CardHeader>
 
           <CardBody>
@@ -73,7 +75,7 @@ function LoginContent() {
               {showRegisteredMessage && (
                 <div className="p-4 bg-green-50 border-2 border-green-200 rounded-xl">
                   <p className="text-sm font-semibold text-green-600">
-                    ✅ Registration successful! Please login with your credentials.
+                    ✅ {t('register.success')}
                   </p>
                 </div>
               )}
@@ -86,8 +88,8 @@ function LoginContent() {
 
               <Input
                 type="email"
-                label="Email"
-                placeholder="Enter your email"
+                label={t('login.email')}
+                placeholder={t('login.email')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 fullWidth
@@ -96,8 +98,8 @@ function LoginContent() {
 
               <Input
                 type="password"
-                label="Password"
-                placeholder="Enter your password"
+                label={t('login.password')}
+                placeholder={t('login.password')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 fullWidth
@@ -111,15 +113,15 @@ function LoginContent() {
                 fullWidth
                 disabled={isLoading}
               >
-                {isLoading ? 'Logging in...' : 'Login'}
+                {isLoading ? t('common.loading') : t('login.button')}
               </Button>
             </form>
 
             <div className="mt-6 text-center space-y-2">
               <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
+                {t('login.noAccount')}{' '}
                 <a href="/register" className="font-semibold text-gray-900 hover:underline">
-                  Register
+                  {t('login.register')}
                 </a>
               </p>
               <p className="text-xs text-gray-500">
@@ -142,16 +144,20 @@ function LoginContent() {
   )
 }
 
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-gray-900"></div>
+        <p className="mt-4 text-gray-600">Loading...</p>
+      </div>
+    </div>
+  )
+}
+
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-gray-900"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<LoadingFallback />}>
       <LoginContent />
     </Suspense>
   )

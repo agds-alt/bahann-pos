@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { ReactNode, useEffect, useState } from 'react'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface SidebarItemProps {
   href: string
@@ -63,6 +64,7 @@ function SidebarSection({ title, children }: SidebarSectionProps) {
 
 export function Sidebar() {
   const router = useRouter()
+  const { language, setLanguage, t } = useLanguage()
   const [userName, setUserName] = useState('User')
   const [userEmail, setUserEmail] = useState('')
   const [userRole, setUserRole] = useState('user')
@@ -85,7 +87,7 @@ export function Sidebar() {
   }, [])
 
   const handleLogout = () => {
-    if (confirm('Are you sure you want to logout?')) {
+    if (confirm(t('sidebar.logout.confirm'))) {
       // Clear localStorage
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user')
@@ -95,14 +97,18 @@ export function Sidebar() {
     }
   }
 
+  const toggleLanguage = () => {
+    setLanguage(language === 'id' ? 'en' : 'id')
+  }
+
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'admin':
-        return { label: 'Admin', color: 'bg-red-100 text-red-800' }
+        return { label: t('role.admin'), color: 'bg-red-100 text-red-800' }
       case 'manager':
-        return { label: 'Manager', color: 'bg-yellow-100 text-yellow-800' }
+        return { label: t('role.manager'), color: 'bg-yellow-100 text-yellow-800' }
       default:
-        return { label: 'User', color: 'bg-green-100 text-green-800' }
+        return { label: t('role.user'), color: 'bg-green-100 text-green-800' }
     }
   }
 
@@ -119,47 +125,47 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-6">
-        <SidebarSection title="Dashboard">
+        <SidebarSection title={t('sidebar.dashboard')}>
           <SidebarItem
             href="/dashboard"
             icon="📊"
-            label="Overview"
+            label={t('sidebar.dashboard')}
           />
         </SidebarSection>
 
-        <SidebarSection title="Warehouse">
+        <SidebarSection title={t('sidebar.warehouse')}>
           <SidebarItem
             href="/warehouse/stock"
             icon="📦"
-            label="Stock Management"
+            label={t('sidebar.warehouse.stock')}
           />
           <SidebarItem
             href="/warehouse/inventory"
             icon="📋"
-            label="Inventory Monitor"
+            label={t('sidebar.warehouse.inventory')}
           />
           <SidebarItem
             href="/warehouse/reports"
             icon="📈"
-            label="Reports"
+            label={t('sidebar.warehouse.reports')}
           />
         </SidebarSection>
 
-        <SidebarSection title="Point of Sale">
+        <SidebarSection title={t('sidebar.pos')}>
           <SidebarItem
             href="/pos/sales"
             icon="🛒"
-            label="Sales Transaction"
+            label={t('sidebar.pos.sales')}
           />
           <SidebarItem
             href="/pos/history"
             icon="📜"
-            label="Sales History"
+            label={t('sidebar.pos.history')}
           />
           <SidebarItem
             href="/pos/revenue"
             icon="💰"
-            label="Revenue Tracking"
+            label={t('sidebar.pos.revenue')}
           />
         </SidebarSection>
 
@@ -176,16 +182,16 @@ export function Sidebar() {
           />
         </SidebarSection>
 
-        <SidebarSection title="Account">
+        <SidebarSection title={t('sidebar.account')}>
           <SidebarItem
             href="/profile"
             icon="👤"
-            label="Profile"
+            label={t('sidebar.profile')}
           />
           <SidebarItem
             href="/about"
             icon="ℹ️"
-            label="About"
+            label={t('sidebar.about')}
           />
         </SidebarSection>
       </nav>
@@ -201,6 +207,21 @@ export function Sidebar() {
             <p className="text-xs text-gray-500 truncate">{userEmail}</p>
           </div>
         </div>
+
+        {/* Language Switcher */}
+        <div className="mb-3 flex items-center justify-center gap-2 p-2 bg-gray-50 rounded-lg">
+          <button
+            onClick={toggleLanguage}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white hover:bg-gray-100 border border-gray-200 transition-all duration-200 w-full justify-center"
+          >
+            <span className="text-lg">{language === 'id' ? '🇮🇩' : '🇬🇧'}</span>
+            <span className="text-xs font-semibold text-gray-700">
+              {language === 'id' ? 'Bahasa Indonesia' : 'English'}
+            </span>
+            <span className="text-xs text-gray-400">↔</span>
+          </button>
+        </div>
+
         <div className="flex items-center justify-between">
           <span className={`px-2 py-1 rounded-full text-xs font-semibold ${roleBadge.color}`}>
             {roleBadge.label}
@@ -209,7 +230,7 @@ export function Sidebar() {
             onClick={handleLogout}
             className="px-3 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           >
-            🚪 Logout
+            🚪 {t('sidebar.logout')}
           </button>
         </div>
       </div>
