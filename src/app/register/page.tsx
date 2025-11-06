@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
 import { trpc } from '@/lib/trpc/client'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -77,13 +79,13 @@ export default function RegisterPage() {
         {/* Logo/Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Bahann POS</h1>
-          <p className="text-gray-600">Create your account</p>
+          <p className="text-gray-600">{t('register.subtitle')}</p>
         </div>
 
         {/* Register Card */}
         <Card variant="elevated" padding="lg">
           <CardHeader>
-            <CardTitle>Register New User</CardTitle>
+            <CardTitle>{t('register.title')}</CardTitle>
           </CardHeader>
 
           <CardBody>
@@ -91,13 +93,13 @@ export default function RegisterPage() {
               <div className="text-center py-8">
                 <div className="mb-4 text-6xl">✅</div>
                 <h3 className="text-2xl font-bold text-green-600 mb-2">
-                  Registration Successful!
+                  {t('register.success')}
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  Your account has been created successfully.
+                  {t('register.success')}
                 </p>
                 <p className="text-sm text-gray-500">
-                  Redirecting to login page...
+                  {t('common.loading')}
                 </p>
               </div>
             ) : (
@@ -111,8 +113,8 @@ export default function RegisterPage() {
                 <Input
                   type="text"
                   name="name"
-                  label="Full Name"
-                  placeholder="Enter your full name"
+                  label={t('register.name')}
+                  placeholder={t('register.name')}
                   value={formData.name}
                   onChange={handleChange}
                   fullWidth
@@ -122,8 +124,8 @@ export default function RegisterPage() {
                 <Input
                   type="email"
                   name="email"
-                  label="Email Address"
-                  placeholder="your.email@example.com"
+                  label={t('register.email')}
+                  placeholder={t('register.email')}
                   value={formData.email}
                   onChange={handleChange}
                   fullWidth
@@ -133,8 +135,8 @@ export default function RegisterPage() {
                 <Input
                   type="password"
                   name="password"
-                  label="Password"
-                  placeholder="Minimum 8 characters"
+                  label={t('register.password')}
+                  placeholder={t('register.password')}
                   value={formData.password}
                   onChange={handleChange}
                   fullWidth
@@ -144,8 +146,8 @@ export default function RegisterPage() {
                 <Input
                   type="password"
                   name="confirmPassword"
-                  label="Confirm Password"
-                  placeholder="Re-enter your password"
+                  label={t('register.confirmPassword')}
+                  placeholder={t('register.confirmPassword')}
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   fullWidth
@@ -154,13 +156,13 @@ export default function RegisterPage() {
 
                 <Select
                   name="role"
-                  label="Role"
+                  label={t('profile.role')}
                   value={formData.role}
                   onChange={handleChange}
                   options={[
-                    { value: 'user', label: 'User (Cashier)' },
-                    { value: 'manager', label: 'Manager' },
-                    { value: 'admin', label: 'Administrator' },
+                    { value: 'user', label: t('role.user') },
+                    { value: 'manager', label: t('role.manager') },
+                    { value: 'admin', label: t('role.admin') },
                   ]}
                   fullWidth
                 />
@@ -183,15 +185,15 @@ export default function RegisterPage() {
                     fullWidth
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Creating account...' : '✨ Create Account'}
+                    {isLoading ? t('common.loading') : t('register.button')}
                   </Button>
                 </div>
 
                 <div className="pt-2 text-center">
                   <p className="text-sm text-gray-600">
-                    Already have an account?{' '}
+                    {t('register.hasAccount')}{' '}
                     <a href="/login" className="font-semibold text-gray-900 hover:underline">
-                      Login here
+                      {t('register.login')}
                     </a>
                   </p>
                 </div>
