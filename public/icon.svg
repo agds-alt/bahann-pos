@@ -1,0 +1,19 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="110" fill="#1f2937"/>
+
+  <!-- AGDS Text -->
+  <text x="256" y="200" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#ffffff" text-anchor="middle">
+    AGDS
+  </text>
+
+  <!-- POS Text -->
+  <text x="256" y="320" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="#60a5fa" text-anchor="middle">
+    POS
+  </text>
+
+  <!-- Decorative elements -->
+  <circle cx="100" cy="420" r="15" fill="#60a5fa" opacity="0.6"/>
+  <circle cx="412" cy="420" r="15" fill="#60a5fa" opacity="0.6"/>
+  <rect x="130" y="410" width="252" height="4" rx="2" fill="#60a5fa" opacity="0.4"/>
+</svg>
