@@ -1,6 +1,8 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import idTranslations from '@/locales/id.json'
+import enTranslations from '@/locales/en.json'
 
 type Language = 'id' | 'en'
 
@@ -12,9 +14,15 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
 
+// Static translations map - fixes Turbopack dynamic import issues
+const TRANSLATIONS = {
+  id: idTranslations,
+  en: enTranslations,
+} as const
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('id')
-  const [translations, setTranslations] = useState<Record<string, string>>({})
+  const [translations, setTranslations] = useState<Record<string, string>>(TRANSLATIONS.id)
 
   // Load language from localStorage on mount
   useEffect(() => {
@@ -24,17 +32,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Load translations when language changes
+  // Update translations when language changes
   useEffect(() => {
-    const loadTranslations = async () => {
-      try {
-        const module = await import(`@/locales/${language}.json`)
-        setTranslations(module.default)
-      } catch (error) {
-        console.error('Failed to load translations:', error)
-      }
-    }
-    loadTranslations()
+    setTranslations(TRANSLATIONS[language])
   }, [language])
 
   const setLanguage = (lang: Language) => {
