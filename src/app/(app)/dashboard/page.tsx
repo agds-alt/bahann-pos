@@ -16,7 +16,8 @@ export default function DashboardPage() {
   const [dateRange, setDateRange] = useState<7 | 14 | 30>(7)
 
   // Fetch outlets for filter
-  const { data: outlets } = trpc.outlets.getAll.useQuery()
+  const { data: outletsResponse } = trpc.outlets.getAll.useQuery()
+  const outlets = outletsResponse?.outlets || []
 
   // Fetch dashboard data
   const { data: stats, isLoading: statsLoading } = trpc.dashboard.getStats.useQuery({
@@ -84,10 +85,10 @@ export default function DashboardPage() {
               onChange={(e) => setSelectedOutletId(e.target.value)}
               options={[
                 { value: '', label: t('dashboard.allOutlets') },
-                ...(outlets?.map(outlet => ({
+                ...outlets.map(outlet => ({
                   value: outlet.id,
                   label: outlet.name,
-                })) || []),
+                })),
               ]}
             />
             <Select

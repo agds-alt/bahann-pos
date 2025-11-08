@@ -94,7 +94,16 @@ export async function createRefreshToken(
 
     if (insertError) {
       logger.error('Failed to store refresh token', insertError)
-      throw new Error('Failed to create refresh token')
+
+      // Provide helpful error message
+      if (insertError.message?.includes('relation "refresh_tokens" does not exist')) {
+        throw new Error(
+          'Refresh tokens table not found. Please run migration 006_refresh_tokens.sql in Supabase Dashboard.\n' +
+          'Location: supabase/migrations/006_refresh_tokens.sql'
+        )
+      }
+
+      throw new Error(`Failed to create refresh token: ${insertError.message}`)
     }
 
     // Generate short-lived access token
