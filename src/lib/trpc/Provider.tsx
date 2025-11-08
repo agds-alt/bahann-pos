@@ -15,14 +15,6 @@ function getBaseUrl() {
   return `http://localhost:${process.env.PORT ?? 3000}`
 }
 
-/**
- * Get auth token from localStorage
- */
-function getAuthToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem('auth_token')
-}
-
 export function TRPCProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
@@ -39,11 +31,13 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
         httpBatchLink({
           url: `${getBaseUrl()}/api/trpc`,
           transformer: superjson,
-          headers() {
-            const token = getAuthToken()
-            return {
-              authorization: token ? `Bearer ${token}` : '',
-            }
+          // Authentication is now handled via httpOnly cookies
+          // Cookies are sent automatically by the browser
+          fetch(url, options) {
+            return fetch(url, {
+              ...options,
+              credentials: 'include', // Ensure cookies are sent
+            })
           },
         }),
       ],

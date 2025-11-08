@@ -1,18 +1,37 @@
 import { initTRPC, TRPCError } from '@trpc/server'
 import { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch'
 import superjson from 'superjson'
-import { verifyJWT } from '@/lib/jwt'
+import { verifyJWT, JWTPayload } from '@/lib/jwt'
 import { getRedisClient } from '@/lib/redis'
+import { parseAuthCookieFromHeader } from '@/lib/cookies'
+
+/**
+ * Session data interface
+ */
+export interface SessionData extends JWTPayload {
+  userId: string
+  email: string
+  name: string
+  role?: string
+  outletId?: string
+}
 
 /**
  * tRPC Context
  * Contains user session and request info
  */
 export async function createContext(opts: FetchCreateContextFnOptions) {
-  const token = opts.req.headers.get('authorization')?.replace('Bearer ', '')
+  // Get token from httpOnly cookie (primary method)
+  const cookieHeader = opts.req.headers.get('cookie')
+  let token = parseAuthCookieFromHeader(cookieHeader)
+
+  // Fallback: Check Authorization header (for API compatibility during migration)
+  if (!token) {
+    token = opts.req.headers.get('authorization')?.replace('Bearer ', '') || null
+  }
 
   let userId: string | null = null
-  let session: any = null
+  let session: SessionData | null = null
 
   if (token) {
     try {
@@ -28,8 +47,10 @@ export async function createContext(opts: FetchCreateContextFnOptions) {
             session = JSON.parse(sessionData)
           }
         } catch (error) {
-          console.error('Failed to get session from Redis:', error)
-          // Continue without session, JWT is enough
+          // Continue without Redis session, JWT is enough
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Failed to get session from Redis:', error)
+          }
         }
       }
 
@@ -40,11 +61,14 @@ export async function createContext(opts: FetchCreateContextFnOptions) {
           email: decoded.email,
           name: decoded.name,
           role: decoded.role,
+          outletId: decoded.outletId,
         }
       }
     } catch (error) {
       // Invalid token, continue as unauthenticated
-      console.error('Token verification failed:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Token verification failed:', error)
+      }
     }
   }
 
@@ -81,6 +105,34 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
     throw new TRPCError({
       code: 'UNAUTHORIZED',
       message: 'You must be logged in to access this resource',
+    })
+  }
+
+  return next({
+    ctx: {
+      ...ctx,
+      userId: ctx.userId,
+      session: ctx.session,
+    },
+  })
+})
+
+/**
+ * Admin procedure - requires authentication AND admin role
+ */
+export const adminProcedure = t.procedure.use(({ ctx, next }) => {
+  if (!ctx.userId || !ctx.session) {
+    throw new TRPCError({
+      code: 'UNAUTHORIZED',
+      message: 'You must be logged in to access this resource',
+    })
+  }
+
+  // Check if user has admin role
+  if (ctx.session.role !== 'admin') {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'You do not have permission to access this resource. Admin role required.',
     })
   }
 

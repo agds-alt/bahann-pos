@@ -1,9 +1,10 @@
 import { z } from 'zod'
-import { router, publicProcedure, protectedProcedure } from '../trpc'
+import { router, publicProcedure, protectedProcedure, adminProcedure } from '../trpc'
 import { LoginUserUseCase } from '@/use-cases/auth/LoginUserUseCase'
 import { RegisterUserUseCase } from '@/use-cases/auth/RegisterUserUseCase'
 import { LogoutUserUseCase } from '@/use-cases/auth/LogoutUserUseCase'
 import { SupabaseUserRepository } from '@/infra/repositories/SupabaseUserRepository'
+import { setAuthCookie, deleteAuthCookie } from '@/lib/cookies'
 
 const userRepository = new SupabaseUserRepository()
 
@@ -24,6 +25,10 @@ export const authRouter = router({
     .mutation(async ({ input }) => {
       const useCase = new RegisterUserUseCase(userRepository)
       const result = await useCase.execute(input)
+
+      // Set httpOnly cookie with JWT token
+      await setAuthCookie(result.token)
+
       return result
     }),
 
@@ -40,6 +45,10 @@ export const authRouter = router({
     .mutation(async ({ input }) => {
       const useCase = new LoginUserUseCase(userRepository)
       const result = await useCase.execute(input)
+
+      // Set httpOnly cookie with JWT token
+      await setAuthCookie(result.token)
+
       return result
     }),
 
@@ -49,6 +58,10 @@ export const authRouter = router({
   logout: protectedProcedure.mutation(async ({ ctx }) => {
     const useCase = new LogoutUserUseCase()
     await useCase.execute({ userId: ctx.userId })
+
+    // Delete httpOnly cookie
+    await deleteAuthCookie()
+
     return { success: true }
   }),
 
@@ -63,20 +76,50 @@ export const authRouter = router({
   }),
 
   /**
-   * Get all users (for testing/admin purposes)
-   * WARNING: In production, this should be protected and paginated
+   * Get all users - ADMIN ONLY with pagination
+   * SECURE: Now requires admin role and supports pagination
    */
-  getAllUsers: publicProcedure.query(async () => {
-    const { supabase } = await import('@/infra/supabase/client')
-    const { data, error } = await supabase
-      .from('users')
-      .select('id, email, name, outlet_id, role, created_at')
-      .order('created_at', { ascending: false })
+  getAllUsers: adminProcedure
+    .input(
+      z.object({
+        page: z.number().min(1).default(1),
+        limit: z.number().min(1).max(100).default(20),
+        search: z.string().optional(),
+      }).optional()
+    )
+    .query(async ({ input }) => {
+      const { supabase } = await import('@/infra/supabase/client')
+      const page = input?.page || 1
+      const limit = input?.limit || 20
+      const search = input?.search
+      const offset = (page - 1) * limit
 
-    if (error) {
-      throw new Error(`Failed to fetch users: ${error.message}`)
-    }
+      // Build query
+      let query = supabase
+        .from('users')
+        .select('id, email, name, outlet_id, role, created_at', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1)
 
-    return data || []
-  }),
+      // Add search if provided
+      if (search) {
+        query = query.or(`email.ilike.%${search}%,name.ilike.%${search}%`)
+      }
+
+      const { data, error, count } = await query
+
+      if (error) {
+        throw new Error(`Failed to fetch users: ${error.message}`)
+      }
+
+      return {
+        users: data || [],
+        pagination: {
+          page,
+          limit,
+          total: count || 0,
+          totalPages: Math.ceil((count || 0) / limit),
+        },
+      }
+    }),
 })
