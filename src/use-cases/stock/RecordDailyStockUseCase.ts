@@ -17,9 +17,9 @@ export class RecordDailyStockUseCase {
   async execute(input: RecordDailyStockInput): Promise<void> {
     const { productId, outletId, stockDate, stockAwal, stockIn, stockOut, stockAkhir } = input;
 
-    // Validasi logika bisnis
+    // Business logic validation
     if (stockAkhir !== stockAwal + stockIn - stockOut) {
-      throw new Error('Stock akhir tidak sesuai dengan perhitungan: awal + masuk - keluar');
+      throw new Error('Final stock does not match calculation: initial + in - out');
     }
 
     const stock: DailyStock = {

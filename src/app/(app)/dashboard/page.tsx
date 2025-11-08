@@ -5,7 +5,7 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Input'
 import { trpc } from '@/lib/trpc/client'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { RevenueLineChart } from '@/components/charts'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
@@ -172,39 +172,12 @@ export default function DashboardPage() {
         <CardBody>
           {trendLoading ? (
             <div className="h-64 bg-gray-100 rounded animate-pulse" />
-          ) : salesTrend && salesTrend.length > 0 ? (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={salesTrend}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="date"
-                    tickFormatter={formatDate}
-                    stroke="#6b7280"
-                  />
-                  <YAxis
-                    stroke="#6b7280"
-                    tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
-                  />
-                  <Tooltip
-                    formatter={(value: number) => formatCurrency(value)}
-                    labelFormatter={formatDate}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="#2563eb"
-                    strokeWidth={3}
-                    dot={{ fill: '#2563eb', r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
           ) : (
-            <div className="h-64 flex items-center justify-center text-gray-500">
-              No sales data available for the selected period
-            </div>
+            <RevenueLineChart
+              data={salesTrend || []}
+              formatCurrency={formatCurrency}
+              formatDate={formatDate}
+            />
           )}
         </CardBody>
       </Card>
