@@ -7,6 +7,7 @@ import { Input, Select } from '@/components/ui/Input'
 import { trpc } from '@/lib/trpc/client'
 import { PrintPreviewModal } from '@/components/print/PrintPreviewModal'
 import { ReceiptData } from '@/components/print/PrintReceipt'
+import { formatCurrency, formatDateTime, generateTransactionId } from '@/lib/utils'
 
 interface CartItem {
   productId: string
@@ -35,8 +36,11 @@ export default function SalesTransactionPage() {
   const [showSuccess, setShowSuccess] = useState(false)
 
   // Fetch products and outlets for dropdowns
-  const { data: products, isLoading: productsLoading } = trpc.products.getAll.useQuery()
-  const { data: outlets, isLoading: outletsLoading } = trpc.outlets.getAll.useQuery()
+  const { data: productsResponse, isLoading: productsLoading } = trpc.products.getAll.useQuery()
+  const { data: outletsResponse, isLoading: outletsLoading } = trpc.outlets.getAll.useQuery()
+
+  const products = productsResponse?.products || []
+  const outlets = outletsResponse?.outlets || []
 
   // Fetch real dashboard data
   const { data: recentTransactions, refetch: refetchTransactions } = trpc.dashboard.getRecentTransactions.useQuery({ limit: 5 })
@@ -212,22 +216,7 @@ export default function SalesTransactionPage() {
     }
   }
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(value)
-  }
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('id-ID', {
-      day: '2-digit',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
+  // Using centralized utility functions for formatting
 
   return (
     <div className="space-y-8">
@@ -555,15 +544,6 @@ export default function SalesTransactionPage() {
       )}
     </div>
   )
-}
-
-/**
- * Generate unique transaction ID
- */
-function generateTransactionId(): string {
-  const timestamp = Date.now().toString(36)
-  const random = Math.random().toString(36).substring(2, 7)
-  return `TRX-${timestamp}-${random}`.toUpperCase()
 }
 
 /**

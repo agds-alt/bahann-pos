@@ -20,8 +20,11 @@ export default function StockManagementPage() {
   const [error, setError] = useState('')
 
   // Fetch products and outlets for dropdowns
-  const { data: products, isLoading: productsLoading } = trpc.products.getAll.useQuery()
-  const { data: outlets, isLoading: outletsLoading } = trpc.outlets.getAll.useQuery()
+  const { data: productsResponse, isLoading: productsLoading } = trpc.products.getAll.useQuery()
+  const { data: outletsResponse, isLoading: outletsLoading } = trpc.outlets.getAll.useQuery()
+
+  const products = productsResponse?.products || []
+  const outlets = outletsResponse?.outlets || []
 
   // Fetch dashboard stats for summary
   const { data: stats, refetch: refetchStats } = trpc.dashboard.getStats.useQuery({})

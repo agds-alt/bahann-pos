@@ -4,36 +4,69 @@ import { supabase } from '@/infra/supabase/client'
 
 export const productsRouter = router({
   /**
-   * Get all products
+   * Get all products with pagination
    */
   getAll: protectedProcedure
     .input(
       z.object({
         search: z.string().optional(),
         category: z.string().optional(),
+        page: z.number().min(1).default(1),
+        limit: z.number().min(1).max(100).default(50),
       }).optional()
     )
     .query(async ({ input }) => {
-      let query = supabase
+      const page = input?.page || 1
+      const limit = input?.limit || 50
+      const offset = (page - 1) * limit
+
+      // Build count query
+      let countQuery = supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+
+      // Build data query
+      let dataQuery = supabase
         .from('products')
         .select('*')
         .order('name', { ascending: true })
+        .range(offset, offset + limit - 1)
 
+      // Apply filters to both queries
       if (input?.search) {
-        query = query.or(`name.ilike.%${input.search}%,sku.ilike.%${input.search}%`)
+        const searchFilter = `name.ilike.%${input.search}%,sku.ilike.%${input.search}%`
+        countQuery = countQuery.or(searchFilter)
+        dataQuery = dataQuery.or(searchFilter)
       }
 
       if (input?.category) {
-        query = query.eq('category', input.category)
+        countQuery = countQuery.eq('category', input.category)
+        dataQuery = dataQuery.eq('category', input.category)
       }
 
-      const { data, error } = await query
+      // Execute both queries
+      const [{ count, error: countError }, { data, error: dataError }] = await Promise.all([
+        countQuery,
+        dataQuery,
+      ])
 
-      if (error) {
-        throw new Error(`Failed to fetch products: ${error.message}`)
+      if (countError) {
+        throw new Error(`Failed to count products: ${countError.message}`)
       }
 
-      return data || []
+      if (dataError) {
+        throw new Error(`Failed to fetch products: ${dataError.message}`)
+      }
+
+      return {
+        products: data || [],
+        pagination: {
+          page,
+          limit,
+          total: count || 0,
+          totalPages: Math.ceil((count || 0) / limit),
+        },
+      }
     }),
 
   /**

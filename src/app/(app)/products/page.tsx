@@ -15,10 +15,13 @@ export default function ProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const { showToast } = useToast()
 
-  const { data: products, isLoading, refetch } = trpc.products.getAll.useQuery({
+  const { data: productsResponse, isLoading, refetch } = trpc.products.getAll.useQuery({
     search: searchTerm || undefined,
     category: categoryFilter || undefined,
   })
+
+  const products = productsResponse?.products || []
+  const pagination = productsResponse?.pagination
 
   const { data: categories } = trpc.products.getCategories.useQuery()
 

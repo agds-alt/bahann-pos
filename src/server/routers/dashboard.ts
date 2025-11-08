@@ -120,7 +120,7 @@ export const dashboardRouter = router({
     }),
 
   /**
-   * Get top selling products
+   * Get top selling products (OPTIMIZED - using JOIN to avoid N+1)
    */
   getTopProducts: protectedProcedure
     .input(
@@ -138,9 +138,15 @@ export const dashboardRouter = router({
       const startDate = new Date()
       startDate.setDate(startDate.getDate() - (days - 1))
 
+      // OPTIMIZED: Use JOIN to fetch all data in a single query
       let query = supabase
         .from('daily_sales')
-        .select('product_id, quantity_sold, revenue')
+        .select(`
+          product_id,
+          quantity_sold,
+          revenue,
+          products!inner(id, name, sku)
+        `)
         .gte('sale_date', startDate.toISOString().split('T')[0])
         .lte('sale_date', endDate.toISOString().split('T')[0])
 
@@ -150,13 +156,21 @@ export const dashboardRouter = router({
 
       const { data: salesData } = await query
 
-      // Group by product
-      const productMap: Record<string, { productId: string; totalQuantity: number; totalRevenue: number }> = {}
+      // Group by product (data already includes product details from JOIN)
+      const productMap: Record<string, {
+        productId: string
+        productName: string
+        productSku: string
+        totalQuantity: number
+        totalRevenue: number
+      }> = {}
 
-      salesData?.forEach((sale) => {
+      salesData?.forEach((sale: any) => {
         if (!productMap[sale.product_id]) {
           productMap[sale.product_id] = {
             productId: sale.product_id,
+            productName: sale.products?.name || 'Unknown',
+            productSku: sale.products?.sku || 'N/A',
             totalQuantity: 0,
             totalRevenue: 0,
           }
@@ -165,23 +179,8 @@ export const dashboardRouter = router({
         productMap[sale.product_id].totalRevenue += sale.revenue || 0
       })
 
-      // Get product details
-      const productIds = Object.keys(productMap)
-      const { data: products } = await supabase
-        .from('products')
-        .select('id, name, sku')
-        .in('id', productIds)
-
-      // Combine data
+      // Sort and limit
       const topProducts = Object.values(productMap)
-        .map((item) => {
-          const product = products?.find((p) => p.id === item.productId)
-          return {
-            ...item,
-            productName: product?.name || 'Unknown',
-            productSku: product?.sku || 'N/A',
-          }
-        })
         .sort((a, b) => b.totalQuantity - a.totalQuantity)
         .slice(0, limit)
 
@@ -189,7 +188,7 @@ export const dashboardRouter = router({
     }),
 
   /**
-   * Get low stock products
+   * Get low stock products (OPTIMIZED - using JOIN to avoid N+1)
    */
   getLowStock: protectedProcedure
     .input(
@@ -202,9 +201,17 @@ export const dashboardRouter = router({
       const today = new Date().toISOString().split('T')[0]
       const threshold = input?.threshold || 10
 
+      // OPTIMIZED: Use JOIN to fetch all data in a single query
       let query = supabase
         .from('daily_stock')
-        .select('product_id, outlet_id, stock_akhir, stock_date')
+        .select(`
+          product_id,
+          outlet_id,
+          stock_akhir,
+          stock_date,
+          products!inner(id, name, sku, category),
+          outlets!inner(id, name)
+        `)
         .eq('stock_date', today)
         .lt('stock_akhir', threshold)
         .order('stock_akhir', { ascending: true })
@@ -217,39 +224,21 @@ export const dashboardRouter = router({
 
       if (!stockData || stockData.length === 0) return []
 
-      // Get product and outlet details
-      const productIds = [...new Set(stockData.map((s) => s.product_id))]
-      const outletIds = [...new Set(stockData.map((s) => s.outlet_id))]
-
-      const { data: products } = await supabase
-        .from('products')
-        .select('id, name, sku, category')
-        .in('id', productIds)
-
-      const { data: outlets } = await supabase
-        .from('outlets')
-        .select('id, name')
-        .in('id', outletIds)
-
-      // Combine data
-      return stockData.map((stock) => {
-        const product = products?.find((p) => p.id === stock.product_id)
-        const outlet = outlets?.find((o) => o.id === stock.outlet_id)
-        return {
-          productId: stock.product_id,
-          productName: product?.name || 'Unknown',
-          productSku: product?.sku || 'N/A',
-          productCategory: product?.category || null,
-          outletId: stock.outlet_id,
-          outletName: outlet?.name || 'Unknown',
-          currentStock: stock.stock_akhir,
-          date: stock.stock_date,
-        }
-      })
+      // Map the joined data
+      return stockData.map((stock: any) => ({
+        productId: stock.product_id,
+        productName: stock.products?.name || 'Unknown',
+        productSku: stock.products?.sku || 'N/A',
+        productCategory: stock.products?.category || null,
+        outletId: stock.outlet_id,
+        outletName: stock.outlets?.name || 'Unknown',
+        currentStock: stock.stock_akhir,
+        date: stock.stock_date,
+      }))
     }),
 
   /**
-   * Get recent transactions
+   * Get recent transactions (OPTIMIZED - using JOIN to avoid N+1)
    */
   getRecentTransactions: protectedProcedure
     .input(
@@ -261,9 +250,20 @@ export const dashboardRouter = router({
     .query(async ({ input }) => {
       const limit = input?.limit || 10
 
+      // OPTIMIZED: Use JOIN to fetch all data in a single query
       let query = supabase
         .from('daily_sales')
-        .select('id, product_id, outlet_id, sale_date, quantity_sold, revenue, created_at')
+        .select(`
+          id,
+          product_id,
+          outlet_id,
+          sale_date,
+          quantity_sold,
+          revenue,
+          created_at,
+          products!inner(id, name, sku),
+          outlets!inner(id, name)
+        `)
         .order('created_at', { ascending: false })
         .limit(limit)
 
@@ -275,33 +275,16 @@ export const dashboardRouter = router({
 
       if (!sales || sales.length === 0) return []
 
-      // Get product and outlet details
-      const productIds = [...new Set(sales.map((s) => s.product_id))]
-      const outletIds = [...new Set(sales.map((s) => s.outlet_id))]
-
-      const { data: products } = await supabase
-        .from('products')
-        .select('id, name, sku')
-        .in('id', productIds)
-
-      const { data: outlets } = await supabase
-        .from('outlets')
-        .select('id, name')
-        .in('id', outletIds)
-
-      return sales.map((sale) => {
-        const product = products?.find((p) => p.id === sale.product_id)
-        const outlet = outlets?.find((o) => o.id === sale.outlet_id)
-        return {
-          id: sale.id,
-          productName: product?.name || 'Unknown',
-          productSku: product?.sku || 'N/A',
-          outletName: outlet?.name || 'Unknown',
-          date: sale.sale_date,
-          quantity: sale.quantity_sold,
-          revenue: sale.revenue,
-          createdAt: sale.created_at,
-        }
-      })
+      // Map the joined data
+      return sales.map((sale: any) => ({
+        id: sale.id,
+        productName: sale.products?.name || 'Unknown',
+        productSku: sale.products?.sku || 'N/A',
+        outletName: sale.outlets?.name || 'Unknown',
+        date: sale.sale_date,
+        quantity: sale.quantity_sold,
+        revenue: sale.revenue,
+        createdAt: sale.created_at,
+      }))
     }),
 })

@@ -13,7 +13,10 @@ export default function OutletsPage() {
   const [editingOutlet, setEditingOutlet] = useState<Outlet | null>(null)
   const { showToast } = useToast()
 
-  const { data: outlets, isLoading, refetch } = trpc.outlets.getAll.useQuery()
+  const { data: outletsResponse, isLoading, refetch } = trpc.outlets.getAll.useQuery()
+
+  const outlets = outletsResponse?.outlets || []
+  const pagination = outletsResponse?.pagination
 
   const deleteOutlet = trpc.outlets.delete.useMutation({
     onSuccess: () => {
