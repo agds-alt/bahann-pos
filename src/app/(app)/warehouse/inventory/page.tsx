@@ -12,7 +12,8 @@ export default function InventoryMonitorPage() {
   // Fetch data
   const { data: outletsResponse } = trpc.outlets.getAll.useQuery()
   const outlets = outletsResponse?.outlets || []
-  const { data: products } = trpc.products.getAll.useQuery()
+  const { data: productsResponse } = trpc.products.getAll.useQuery()
+  const products = productsResponse?.products || []
   const { data: stats } = trpc.dashboard.getStats.useQuery({
     outletId: selectedOutletId || undefined,
   })
@@ -78,7 +79,7 @@ export default function InventoryMonitorPage() {
           <div className="space-y-2">
             <p className="text-sm font-semibold text-gray-500">Total Products</p>
             <p className="text-3xl font-bold text-gray-900">
-              {stats?.totalProducts || products?.length || 0}
+              {stats?.totalProducts || products.length || 0}
             </p>
             <p className="text-sm text-gray-600">In system</p>
           </div>
