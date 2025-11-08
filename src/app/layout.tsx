@@ -4,6 +4,8 @@ import "./globals.css";
 import { TRPCProvider } from "@/lib/trpc/Provider";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { PWAInstaller } from "@/components/PWAInstaller";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ToastProvider } from "@/components/ui/Toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,9 +49,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white`}
       >
         <PWAInstaller />
-        <TRPCProvider>
-          <LanguageProvider>{children}</LanguageProvider>
-        </TRPCProvider>
+        <ToastProvider>
+          <ErrorBoundary>
+            <TRPCProvider>
+              <LanguageProvider>{children}</LanguageProvider>
+            </TRPCProvider>
+          </ErrorBoundary>
+        </ToastProvider>
       </body>
     </html>
   );

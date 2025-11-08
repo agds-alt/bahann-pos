@@ -5,6 +5,8 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
 import { useRouter } from 'next/navigation'
+import { logger } from '@/lib/logger'
+import { useToast } from '@/components/ui/Toast'
 
 interface UserData {
   id: string
@@ -22,6 +24,7 @@ export default function ProfilePage() {
     name: '',
     email: '',
   })
+  const { showToast } = useToast()
 
   useEffect(() => {
     // Load user data from localStorage
@@ -36,7 +39,7 @@ export default function ProfilePage() {
             email: parsedUser.email || '',
           })
         } catch (error) {
-          console.error('Failed to parse user data:', error)
+          logger.error('Failed to parse user data', error)
           router.push('/login')
         }
       } else {
@@ -59,7 +62,7 @@ export default function ProfilePage() {
     setUserData(updatedUser)
     setIsEditing(false)
 
-    alert('Profile updated successfully!')
+    showToast('Profile updated successfully!', 'success')
   }
 
   const handleCancelEdit = () => {

@@ -5,10 +5,13 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { trpc } from '@/lib/trpc/client'
+import type { Outlet } from '@/types'
+import { useToast } from '@/components/ui/Toast'
 
 export default function OutletsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingOutlet, setEditingOutlet] = useState<any>(null)
+  const [editingOutlet, setEditingOutlet] = useState<Outlet | null>(null)
+  const { showToast } = useToast()
 
   const { data: outlets, isLoading, refetch } = trpc.outlets.getAll.useQuery()
 
@@ -18,7 +21,7 @@ export default function OutletsPage() {
     },
   })
 
-  const handleEdit = (outlet: any) => {
+  const handleEdit = (outlet: Outlet) => {
     setEditingOutlet(outlet)
     setIsModalOpen(true)
   }
@@ -27,9 +30,10 @@ export default function OutletsPage() {
     if (confirm(`Are you sure you want to delete "${name}" outlet?`)) {
       try {
         await deleteOutlet.mutateAsync({ id })
-        alert('Outlet deleted successfully!')
-      } catch (error: any) {
-        alert(error.message || 'Failed to delete outlet')
+        showToast('Outlet deleted successfully!', 'success')
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to delete outlet'
+        showToast(errorMessage, 'error')
       }
     }
   }
@@ -163,13 +167,14 @@ export default function OutletsPage() {
  * Outlet Form Modal Component
  */
 interface OutletFormModalProps {
-  outlet: any | null
+  outlet: Outlet | null
   onClose: () => void
   onSuccess: () => void
 }
 
 function OutletFormModal({ outlet, onClose, onSuccess }: OutletFormModalProps) {
   const [name, setName] = useState(outlet?.name || '')
+  const { showToast } = useToast()
 
   const createOutlet = trpc.outlets.create.useMutation()
   const updateOutlet = trpc.outlets.update.useMutation()
@@ -184,16 +189,17 @@ function OutletFormModal({ outlet, onClose, onSuccess }: OutletFormModalProps) {
           id: outlet.id,
           name,
         })
-        alert('Outlet updated successfully!')
+        showToast('Outlet updated successfully!', 'success')
       } else {
         // Create new outlet
         await createOutlet.mutateAsync({ name })
-        alert('Outlet created successfully!')
+        showToast('Outlet created successfully!', 'success')
       }
 
       onSuccess()
-    } catch (error: any) {
-      alert(error.message || 'Operation failed')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+      showToast(errorMessage, 'error')
     }
   }
 

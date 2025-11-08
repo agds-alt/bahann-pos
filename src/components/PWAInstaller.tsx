@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
+import type { BeforeInstallPromptEvent } from '@/types'
+import { logger } from '@/lib/logger'
 
 export function PWAInstaller() {
   useEffect(() => {
@@ -10,23 +12,23 @@ export function PWAInstaller() {
         navigator.serviceWorker
           .register('/sw.js')
           .then((registration) => {
-            console.log('✅ Service Worker registered successfully:', registration.scope)
+            logger.success('Service Worker registered successfully', { scope: registration.scope })
           })
           .catch((error) => {
-            console.error('❌ Service Worker registration failed:', error)
+            logger.error('Service Worker registration failed', error)
           })
       })
     }
 
     // Handle PWA install prompt
-    let deferredPrompt: any = null
+    let deferredPrompt: BeforeInstallPromptEvent | null = null
 
     const handleBeforeInstallPrompt = (e: Event) => {
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault()
       // Stash the event so it can be triggered later
-      deferredPrompt = e
-      console.log('💡 PWA install prompt available')
+      deferredPrompt = e as BeforeInstallPromptEvent
+      logger.info('PWA install prompt available')
 
       // You can show your custom install button here
       // For now, we'll just log it
@@ -36,7 +38,7 @@ export function PWAInstaller() {
 
     // Detect if app was successfully installed
     const handleAppInstalled = () => {
-      console.log('✅ PWA installed successfully')
+      logger.success('PWA installed successfully')
       deferredPrompt = null
     }
 

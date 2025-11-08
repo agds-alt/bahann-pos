@@ -53,8 +53,9 @@ function LoginContent() {
 
       // Redirect to dashboard
       router.push('/dashboard')
-    } catch (err: any) {
-      setError(err.message || t('login.error'))
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : t('login.error')
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }

@@ -5,6 +5,7 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Input'
 import { trpc } from '@/lib/trpc/client'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { ChartLabelProps } from '@/types'
 
 export default function ReportsPage() {
   const [selectedOutletId, setSelectedOutletId] = useState('')
@@ -304,7 +305,7 @@ export default function ReportsPage() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={(props: any) => {
+                      label={(props: ChartLabelProps) => {
                         const { name, percent } = props
                         return `${name}: ${(percent * 100).toFixed(0)}%`
                       }}

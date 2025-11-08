@@ -206,8 +206,9 @@ export default function SalesTransactionPage() {
       setSelectedOutletId('')
 
       setTimeout(() => setShowSuccess(false), 3000)
-    } catch (err: any) {
-      setError(err.message || 'Failed to record sale')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to record sale'
+      setError(errorMessage)
     }
   }
 
@@ -440,7 +441,7 @@ export default function SalesTransactionPage() {
                 <Select
                   label="Payment Method"
                   value={paymentData.method}
-                  onChange={(e: any) => setPaymentData({ ...paymentData, method: e.target.value })}
+                  onChange={(e) => setPaymentData({ ...paymentData, method: e.target.value })}
                   options={[
                     { value: 'cash', label: '💵 Cash' },
                     { value: 'card', label: '💳 Card' },

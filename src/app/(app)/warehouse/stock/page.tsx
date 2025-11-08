@@ -62,8 +62,9 @@ export default function StockManagementPage() {
 
       // Hide success message after 3 seconds
       setTimeout(() => setShowSuccess(false), 3000)
-    } catch (err: any) {
-      setError(err.message || 'Failed to record stock')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to record stock'
+      setError(errorMessage)
     }
   }
 

@@ -1,4 +1,5 @@
 import Redis from 'ioredis'
+import { logger } from './logger'
 
 let redisClient: Redis | null = null
 let redisAvailable = true
@@ -23,7 +24,7 @@ export function getRedisClient(): Redis | null {
           maxRetriesPerRequest: 3,
           retryStrategy(times) {
             if (times > 3) {
-              console.warn('Redis connection failed, disabling Redis features')
+              logger.warn('Redis connection failed, disabling Redis features')
               redisAvailable = false
               return null
             }
@@ -40,7 +41,7 @@ export function getRedisClient(): Redis | null {
           maxRetriesPerRequest: 3,
           retryStrategy(times) {
             if (times > 3) {
-              console.warn('Redis connection failed, disabling Redis features')
+              logger.warn('Redis connection failed, disabling Redis features')
               redisAvailable = false
               return null
             }
@@ -50,23 +51,23 @@ export function getRedisClient(): Redis | null {
         })
       } else {
         // No Redis config found, disable Redis
-        console.log('No Redis configuration found, sessions will be JWT-only')
+        logger.info('No Redis configuration found, sessions will be JWT-only')
         redisAvailable = false
         return null
       }
 
       redisClient.on('error', (err) => {
-        console.error('Redis connection error:', err.message)
+        logger.error('Redis connection error', err)
         // Don't crash the app, just disable Redis
         redisAvailable = false
       })
 
       redisClient.on('connect', () => {
-        console.log('Redis connected successfully')
+        logger.success('Redis connected successfully')
         redisAvailable = true
       })
     } catch (error) {
-      console.error('Failed to initialize Redis:', error)
+      logger.error('Failed to initialize Redis', error)
       redisAvailable = false
       return null
     }
@@ -100,7 +101,7 @@ export async function createSession(
 ): Promise<void> {
   const redis = getRedisClient()
   if (!redis) {
-    console.log('Redis not available, skipping session creation')
+    logger.debug('Redis not available, skipping session creation')
     return
   }
 
@@ -115,7 +116,7 @@ export async function createSession(
 
     await redis.setex(`session:${userId}`, SESSION_TTL, JSON.stringify(sessionData))
   } catch (error) {
-    console.error('Failed to create session in Redis:', error)
+    logger.error('Failed to create session in Redis', error)
     // Don't throw, just log
   }
 }
@@ -140,7 +141,7 @@ export async function getSession(userId: string): Promise<SessionData | null> {
 
     return session
   } catch (error) {
-    console.error('Failed to get session from Redis:', error)
+    logger.error('Failed to get session from Redis', error)
     return null
   }
 }
@@ -155,7 +156,7 @@ export async function deleteSession(userId: string): Promise<void> {
   try {
     await redis.del(`session:${userId}`)
   } catch (error) {
-    console.error('Failed to delete session from Redis:', error)
+    logger.error('Failed to delete session from Redis', error)
   }
 }
 
@@ -169,6 +170,6 @@ export async function extendSession(userId: string): Promise<void> {
   try {
     await redis.expire(`session:${userId}`, SESSION_TTL)
   } catch (error) {
-    console.error('Failed to extend session in Redis:', error)
+    logger.error('Failed to extend session in Redis', error)
   }
 }
