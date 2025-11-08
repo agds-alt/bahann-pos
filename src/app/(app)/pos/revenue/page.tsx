@@ -11,7 +11,8 @@ export default function RevenueTrackingPage() {
   const [dateRange, setDateRange] = useState<7 | 14 | 30>(7)
 
   // Fetch data
-  const { data: outlets } = trpc.outlets.getAll.useQuery()
+  const { data: outletsResponse } = trpc.outlets.getAll.useQuery()
+  const outlets = outletsResponse?.outlets || []
   const { data: stats } = trpc.dashboard.getStats.useQuery({
     outletId: selectedOutletId || undefined,
   })
@@ -87,10 +88,10 @@ export default function RevenueTrackingPage() {
               onChange={(e) => setSelectedOutletId(e.target.value)}
               options={[
                 { value: '', label: 'All Outlets' },
-                ...(outlets?.map(outlet => ({
+                ...outlets.map(outlet => ({
                   value: outlet.id,
                   label: outlet.name,
-                })) || []),
+                })),
               ]}
               fullWidth
             />
