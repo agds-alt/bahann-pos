@@ -5,12 +5,13 @@ import { RegisterUserUseCase } from '@/use-cases/auth/RegisterUserUseCase'
 import { LogoutUserUseCase } from '@/use-cases/auth/LogoutUserUseCase'
 import { SupabaseUserRepository } from '@/infra/repositories/SupabaseUserRepository'
 import { setAuthCookie, deleteAuthCookie } from '@/lib/cookies'
+import { createAuditLog } from '@/lib/audit'
 
 const userRepository = new SupabaseUserRepository()
 
 export const authRouter = router({
   /**
-   * Register new user
+   * Register new user (with Audit Logging)
    */
   register: publicProcedure
     .input(
@@ -29,11 +30,24 @@ export const authRouter = router({
       // Set httpOnly cookie with JWT token
       await setAuthCookie(result.token)
 
+      // Audit log for registration
+      await createAuditLog({
+        userId: result.user.id,
+        userEmail: result.user.email,
+        action: 'REGISTER',
+        entityType: 'auth',
+        metadata: {
+          name: result.user.name,
+          role: result.user.role,
+          outletId: result.user.outletId,
+        },
+      })
+
       return result
     }),
 
   /**
-   * Login user
+   * Login user (with Audit Logging)
    */
   login: publicProcedure
     .input(
@@ -49,15 +63,39 @@ export const authRouter = router({
       // Set httpOnly cookie with JWT token
       await setAuthCookie(result.token)
 
+      // Audit log for login
+      await createAuditLog({
+        userId: result.user.id,
+        userEmail: result.user.email,
+        action: 'LOGIN',
+        entityType: 'auth',
+        metadata: {
+          name: result.user.name,
+          role: result.user.role,
+        },
+      })
+
       return result
     }),
 
   /**
-   * Logout user
+   * Logout user (with Audit Logging)
    */
   logout: protectedProcedure.mutation(async ({ ctx }) => {
     const useCase = new LogoutUserUseCase()
     await useCase.execute({ userId: ctx.userId })
+
+    // Audit log for logout
+    await createAuditLog({
+      userId: ctx.userId,
+      userEmail: ctx.session?.email || 'unknown',
+      action: 'LOGOUT',
+      entityType: 'auth',
+      metadata: {
+        name: ctx.session?.name,
+        role: ctx.session?.role,
+      },
+    })
 
     // Delete httpOnly cookie
     await deleteAuthCookie()

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { router, protectedProcedure, adminProcedure } from '../trpc'
 import { supabase } from '@/infra/supabase/client'
+import { createAuditLog } from '@/lib/audit'
 
 export const outletsRouter = router({
   /**
@@ -83,7 +84,7 @@ export const outletsRouter = router({
     }),
 
   /**
-   * Create new outlet - ADMIN ONLY
+   * Create new outlet - ADMIN ONLY (with Audit Logging)
    */
   create: adminProcedure
     .input(
@@ -91,7 +92,7 @@ export const outletsRouter = router({
         name: z.string().min(1),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const { data, error } = await supabase
         .from('outlets')
         .insert({
@@ -104,11 +105,22 @@ export const outletsRouter = router({
         throw new Error(`Failed to create outlet: ${error.message}`)
       }
 
+      // Audit log
+      await createAuditLog({
+        userId: ctx.userId,
+        userEmail: ctx.session?.email || 'unknown',
+        action: 'CREATE',
+        entityType: 'outlet',
+        entityId: data.id,
+        changes: { created: input },
+        metadata: { name: input.name },
+      })
+
       return data
     }),
 
   /**
-   * Update outlet - ADMIN ONLY
+   * Update outlet - ADMIN ONLY (with Audit Logging)
    */
   update: adminProcedure
     .input(
@@ -117,7 +129,14 @@ export const outletsRouter = router({
         name: z.string().min(1),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      // Get old data for audit trail
+      const { data: oldData } = await supabase
+        .from('outlets')
+        .select('*')
+        .eq('id', input.id)
+        .single()
+
       const { data, error } = await supabase
         .from('outlets')
         .update({
@@ -131,15 +150,36 @@ export const outletsRouter = router({
         throw new Error(`Failed to update outlet: ${error.message}`)
       }
 
+      // Audit log
+      await createAuditLog({
+        userId: ctx.userId,
+        userEmail: ctx.session?.email || 'unknown',
+        action: 'UPDATE',
+        entityType: 'outlet',
+        entityId: input.id,
+        changes: {
+          before: oldData,
+          after: { name: input.name },
+        },
+        metadata: { name: input.name },
+      })
+
       return data
     }),
 
   /**
-   * Delete outlet - ADMIN ONLY
+   * Delete outlet - ADMIN ONLY (with Audit Logging)
    */
   delete: adminProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      // Get outlet data before deletion for audit trail
+      const { data: outletData } = await supabase
+        .from('outlets')
+        .select('*')
+        .eq('id', input.id)
+        .single()
+
       const { error } = await supabase
         .from('outlets')
         .delete()
@@ -148,6 +188,17 @@ export const outletsRouter = router({
       if (error) {
         throw new Error(`Failed to delete outlet: ${error.message}`)
       }
+
+      // Audit log
+      await createAuditLog({
+        userId: ctx.userId,
+        userEmail: ctx.session?.email || 'unknown',
+        action: 'DELETE',
+        entityType: 'outlet',
+        entityId: input.id,
+        changes: { deleted: outletData },
+        metadata: { name: outletData?.name },
+      })
 
       return { success: true }
     }),
