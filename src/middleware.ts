@@ -1,12 +1,12 @@
 import { authMiddleware } from './middleware/auth';
 import { type NextRequest } from 'next/server';
 
-// HARUS statis — tidak boleh variabel dinamis
+// MUST be static — dynamic variables not allowed
 export const config = {
   matcher: [
     '/api/sales',
     '/api/stock',
-    // Tambahkan route lain di sini secara manual jika perlu
+    // Add other routes here manually if needed
   ],
 };
 
