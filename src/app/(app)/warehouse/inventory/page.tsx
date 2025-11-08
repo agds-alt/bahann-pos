@@ -10,7 +10,8 @@ export default function InventoryMonitorPage() {
   const [stockThreshold, setStockThreshold] = useState<10 | 20 | 50>(10)
 
   // Fetch data
-  const { data: outlets } = trpc.outlets.getAll.useQuery()
+  const { data: outletsResponse } = trpc.outlets.getAll.useQuery()
+  const outlets = outletsResponse?.outlets || []
   const { data: products } = trpc.products.getAll.useQuery()
   const { data: stats } = trpc.dashboard.getStats.useQuery({
     outletId: selectedOutletId || undefined,
@@ -20,7 +21,7 @@ export default function InventoryMonitorPage() {
     threshold: stockThreshold,
   })
 
-  const selectedOutlet = outlets?.find(o => o.id === selectedOutletId)
+  const selectedOutlet = outlets.find(o => o.id === selectedOutletId)
 
   return (
     <div className="space-y-8">
@@ -42,10 +43,10 @@ export default function InventoryMonitorPage() {
               onChange={(e) => setSelectedOutletId(e.target.value)}
               options={[
                 { value: '', label: 'All Outlets' },
-                ...(outlets?.map(outlet => ({
+                ...outlets.map(outlet => ({
                   value: outlet.id,
                   label: outlet.name,
-                })) || []),
+                })),
               ]}
               fullWidth
             />
@@ -87,7 +88,7 @@ export default function InventoryMonitorPage() {
           <div className="space-y-2">
             <p className="text-sm font-semibold text-gray-500">Total Outlets</p>
             <p className="text-3xl font-bold text-gray-900">
-              {selectedOutletId ? '1' : stats?.totalOutlets || outlets?.length || 0}
+              {selectedOutletId ? '1' : stats?.totalOutlets || outlets.length || 0}
             </p>
             <p className="text-sm text-gray-600">Locations</p>
           </div>

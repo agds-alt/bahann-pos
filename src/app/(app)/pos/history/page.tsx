@@ -12,7 +12,8 @@ export default function SalesHistoryPage() {
   const [searchQuery, setSearchQuery] = useState('')
 
   // Fetch outlets for filter
-  const { data: outlets } = trpc.outlets.getAll.useQuery()
+  const { data: outletsResponse } = trpc.outlets.getAll.useQuery()
+  const outlets = outletsResponse?.outlets || []
 
   // Fetch sales data
   const { data: salesTrend } = trpc.dashboard.getSalesTrend.useQuery({
@@ -86,10 +87,10 @@ export default function SalesHistoryPage() {
               onChange={(e) => setSelectedOutletId(e.target.value)}
               options={[
                 { value: '', label: 'All Outlets' },
-                ...(outlets?.map(outlet => ({
+                ...outlets.map(outlet => ({
                   value: outlet.id,
                   label: outlet.name,
-                })) || []),
+                })),
               ]}
               fullWidth
             />
