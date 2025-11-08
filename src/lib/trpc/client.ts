@@ -22,31 +22,29 @@ function getBaseUrl() {
 }
 
 /**
- * Get auth token from localStorage
- */
-function getAuthToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem('auth_token')
-}
-
-/**
  * React hooks for tRPC
  */
 export const trpc = createTRPCReact<AppRouter>()
 
 /**
  * Vanilla tRPC client (for use outside React components)
+ *
+ * NOTE: Authentication is now handled via httpOnly cookies.
+ * The browser automatically sends cookies with each request.
+ * No need to manually set Authorization header.
  */
 export const vanillaTrpc = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
       url: `${getBaseUrl()}/api/trpc`,
       transformer: superjson,
-      headers() {
-        const token = getAuthToken()
-        return {
-          authorization: token ? `Bearer ${token}` : '',
-        }
+      // Cookies are sent automatically by the browser
+      // credentials: 'include' is the default for same-origin requests
+      fetch(url, options) {
+        return fetch(url, {
+          ...options,
+          credentials: 'include', // Ensure cookies are sent
+        })
       },
     }),
   ],

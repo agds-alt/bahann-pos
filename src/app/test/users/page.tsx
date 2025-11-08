@@ -1,13 +1,25 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
 import { trpc } from '@/lib/trpc/client'
 import { useRouter } from 'next/navigation'
 
 export default function TestUsersPage() {
   const router = useRouter()
-  const { data: users, isLoading, error, refetch } = trpc.auth.getAllUsers.useQuery()
+  const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+
+  const { data, isLoading, error, refetch } = trpc.auth.getAllUsers.useQuery({
+    page,
+    limit: 20,
+    search: search || undefined,
+  })
+
+  const users = data?.users || []
+  const pagination = data?.pagination
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('id-ID', {
@@ -58,13 +70,30 @@ export default function TestUsersPage() {
           <p className="text-sm text-yellow-900 font-semibold">
             ⚠️ This page is for testing purposes only. In production, user data should be protected.
           </p>
+          <p className="text-xs text-yellow-800 mt-1">
+            🔒 This page now requires ADMIN role to access.
+          </p>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-6">
+          <Input
+            type="text"
+            placeholder="Search by name or email..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setPage(1) // Reset to page 1 on search
+            }}
+            fullWidth
+          />
         </div>
 
         {/* Users List */}
         <Card variant="elevated" padding="lg">
           <CardHeader>
             <CardTitle>
-              All Users {users && `(${users.length})`}
+              All Users {pagination && `(${pagination.total} total, page ${pagination.page}/${pagination.totalPages})`}
             </CardTitle>
           </CardHeader>
 
@@ -178,13 +207,36 @@ export default function TestUsersPage() {
           </CardBody>
         </Card>
 
+        {/* Pagination Controls */}
+        {pagination && pagination.totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-center gap-4">
+            <Button
+              variant="outline"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1 || isLoading}
+            >
+              ← Previous
+            </Button>
+            <span className="text-sm text-gray-600">
+              Page {page} of {pagination.totalPages}
+            </span>
+            <Button
+              variant="outline"
+              onClick={() => setPage(p => p + 1)}
+              disabled={page >= pagination.totalPages || isLoading}
+            >
+              Next →
+            </Button>
+          </div>
+        )}
+
         {/* Stats Card */}
         {users && users.length > 0 && (
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card variant="default" padding="lg">
               <div className="text-center">
                 <p className="text-sm text-gray-600 mb-1">Total Users</p>
-                <p className="text-3xl font-bold text-gray-900">{users.length}</p>
+                <p className="text-3xl font-bold text-gray-900">{pagination?.total || 0}</p>
               </div>
             </Card>
 

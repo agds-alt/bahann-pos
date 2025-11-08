@@ -40,11 +40,16 @@ function LoginContent() {
         password,
       })
 
-      // Store token in localStorage
-      localStorage.setItem('auth_token', result.token)
+      // ✅ SECURITY: Auth token is now stored in httpOnly cookie (set by server)
+      // No localStorage for token = protection against XSS attacks
 
-      // Store user data
-      localStorage.setItem('user', JSON.stringify(result.user))
+      // Store minimal user data in localStorage for UI display only
+      // Do NOT store sensitive data or tokens
+      localStorage.setItem('user', JSON.stringify({
+        name: result.user.name,
+        email: result.user.email,
+        role: result.user.role,
+      }))
 
       // Redirect to dashboard
       router.push('/dashboard')

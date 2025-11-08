@@ -1,12 +1,16 @@
 import jwt from 'jsonwebtoken'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
-const JWT_EXPIRES_IN = '7d' // 7 days session
-
-// Warn if using default secret in production
-if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
-  console.warn('⚠️  WARNING: Using default JWT_SECRET in production! Set JWT_SECRET environment variable.')
+// Validate JWT_SECRET is set - CRITICAL for security
+if (!process.env.JWT_SECRET) {
+  throw new Error(
+    '❌ CRITICAL: JWT_SECRET environment variable is not set!\n' +
+    'Set JWT_SECRET in your .env file before starting the application.\n' +
+    'Generate a secure secret with: openssl rand -base64 32'
+  )
 }
+
+const JWT_SECRET = process.env.JWT_SECRET
+const JWT_EXPIRES_IN = '7d' // 7 days session
 
 export interface JWTPayload {
   userId: string

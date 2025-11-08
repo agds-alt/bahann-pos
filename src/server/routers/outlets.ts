@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { router, protectedProcedure } from '../trpc'
+import { router, protectedProcedure, adminProcedure } from '../trpc'
 import { supabase } from '@/infra/supabase/client'
 
 export const outletsRouter = router({
@@ -39,9 +39,9 @@ export const outletsRouter = router({
     }),
 
   /**
-   * Create new outlet
+   * Create new outlet - ADMIN ONLY
    */
-  create: protectedProcedure
+  create: adminProcedure
     .input(
       z.object({
         name: z.string().min(1),
@@ -64,9 +64,9 @@ export const outletsRouter = router({
     }),
 
   /**
-   * Update outlet
+   * Update outlet - ADMIN ONLY
    */
-  update: protectedProcedure
+  update: adminProcedure
     .input(
       z.object({
         id: z.string().uuid(),
@@ -91,9 +91,9 @@ export const outletsRouter = router({
     }),
 
   /**
-   * Delete outlet
+   * Delete outlet - ADMIN ONLY
    */
-  delete: protectedProcedure
+  delete: adminProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ input }) => {
       const { error } = await supabase
