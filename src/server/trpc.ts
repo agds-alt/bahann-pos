@@ -4,6 +4,7 @@ import superjson from 'superjson'
 import { verifyJWT, JWTPayload } from '@/lib/jwt'
 import { getRedisClient } from '@/lib/redis'
 import { parseAuthCookieFromHeader } from '@/lib/cookies'
+import { logger } from '@/lib/logger'
 
 /**
  * Session data interface
@@ -48,9 +49,7 @@ export async function createContext(opts: FetchCreateContextFnOptions) {
           }
         } catch (error) {
           // Continue without Redis session, JWT is enough
-          if (process.env.NODE_ENV === 'development') {
-            console.error('Failed to get session from Redis:', error)
-          }
+          logger.debug('Failed to get session from Redis', { error })
         }
       }
 
@@ -66,9 +65,7 @@ export async function createContext(opts: FetchCreateContextFnOptions) {
       }
     } catch (error) {
       // Invalid token, continue as unauthenticated
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Token verification failed:', error)
-      }
+      logger.debug('Token verification failed', { error })
     }
   }
 

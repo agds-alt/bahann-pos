@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { ReactNode, useEffect, useState } from 'react'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { logger } from '@/lib/logger'
 
 interface SidebarItemProps {
   href: string
@@ -97,7 +98,7 @@ export function Sidebar() {
           setUserEmail(userData.email || '')
           setUserRole(userData.role || 'user')
         } catch (error) {
-          console.error('Failed to parse user data:', error)
+          logger.error('Failed to parse user data', error)
         }
       }
 

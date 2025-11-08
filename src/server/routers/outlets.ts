@@ -4,20 +4,64 @@ import { supabase } from '@/infra/supabase/client'
 
 export const outletsRouter = router({
   /**
-   * Get all outlets
+   * Get all outlets with pagination
    */
-  getAll: protectedProcedure.query(async () => {
-    const { data, error } = await supabase
-      .from('outlets')
-      .select('*')
-      .order('name', { ascending: true })
+  getAll: protectedProcedure
+    .input(
+      z.object({
+        search: z.string().optional(),
+        page: z.number().min(1).default(1),
+        limit: z.number().min(1).max(100).default(50),
+      }).optional()
+    )
+    .query(async ({ input }) => {
+      const page = input?.page || 1
+      const limit = input?.limit || 50
+      const offset = (page - 1) * limit
 
-    if (error) {
-      throw new Error(`Failed to fetch outlets: ${error.message}`)
-    }
+      // Build count query
+      let countQuery = supabase
+        .from('outlets')
+        .select('*', { count: 'exact', head: true })
 
-    return data || []
-  }),
+      // Build data query
+      let dataQuery = supabase
+        .from('outlets')
+        .select('*')
+        .order('name', { ascending: true })
+        .range(offset, offset + limit - 1)
+
+      // Apply search filter
+      if (input?.search) {
+        const searchFilter = `name.ilike.%${input.search}%,address.ilike.%${input.search}%`
+        countQuery = countQuery.or(searchFilter)
+        dataQuery = dataQuery.or(searchFilter)
+      }
+
+      // Execute both queries
+      const [{ count, error: countError }, { data, error: dataError }] = await Promise.all([
+        countQuery,
+        dataQuery,
+      ])
+
+      if (countError) {
+        throw new Error(`Failed to count outlets: ${countError.message}`)
+      }
+
+      if (dataError) {
+        throw new Error(`Failed to fetch outlets: ${dataError.message}`)
+      }
+
+      return {
+        outlets: data || [],
+        pagination: {
+          page,
+          limit,
+          total: count || 0,
+          totalPages: Math.ceil((count || 0) / limit),
+        },
+      }
+    }),
 
   /**
    * Get outlet by ID

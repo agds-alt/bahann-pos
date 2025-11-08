@@ -66,8 +66,9 @@ export default function RegisterPage() {
       setTimeout(() => {
         router.push('/login?registered=true')
       }, 2000)
-    } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Registration failed. Please try again.'
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }

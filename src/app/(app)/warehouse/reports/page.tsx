@@ -5,13 +5,17 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Input'
 import { trpc } from '@/lib/trpc/client'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { ChartLabelProps } from '@/types'
+import { formatCurrency, formatDate } from '@/lib/utils'
 
 export default function ReportsPage() {
   const [selectedOutletId, setSelectedOutletId] = useState('')
   const [dateRange, setDateRange] = useState<7 | 14 | 30>(30)
 
   // Fetch data
-  const { data: outlets } = trpc.outlets.getAll.useQuery()
+  const { data: outletsResponse } = trpc.outlets.getAll.useQuery()
+  const outlets = outletsResponse?.outlets || []
+
   const { data: stats } = trpc.dashboard.getStats.useQuery({
     outletId: selectedOutletId || undefined,
   })
@@ -24,21 +28,7 @@ export default function ReportsPage() {
     days: dateRange,
   })
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(value)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-    })
-  }
-
+  // Using centralized utility functions for formatting
   const COLORS = ['#2563eb', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981']
 
   // Calculate metrics
@@ -304,7 +294,7 @@ export default function ReportsPage() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={(props: any) => {
+                      label={(props: ChartLabelProps) => {
                         const { name, percent } = props
                         return `${name}: ${(percent * 100).toFixed(0)}%`
                       }}

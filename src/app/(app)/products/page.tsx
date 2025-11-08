@@ -5,17 +5,23 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
 import { trpc } from '@/lib/trpc/client'
+import type { Product, InputChangeEvent, SelectChangeEvent } from '@/types'
+import { useToast } from '@/components/ui/Toast'
 
 export default function ProductsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingProduct, setEditingProduct] = useState<any>(null)
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const { showToast } = useToast()
 
-  const { data: products, isLoading, refetch } = trpc.products.getAll.useQuery({
+  const { data: productsResponse, isLoading, refetch } = trpc.products.getAll.useQuery({
     search: searchTerm || undefined,
     category: categoryFilter || undefined,
   })
+
+  const products = productsResponse?.products || []
+  const pagination = productsResponse?.pagination
 
   const { data: categories } = trpc.products.getCategories.useQuery()
 
@@ -25,7 +31,7 @@ export default function ProductsPage() {
     },
   })
 
-  const handleEdit = (product: any) => {
+  const handleEdit = (product: Product) => {
     setEditingProduct(product)
     setIsModalOpen(true)
   }
@@ -34,9 +40,10 @@ export default function ProductsPage() {
     if (confirm(`Are you sure you want to delete "${name}"?`)) {
       try {
         await deleteProduct.mutateAsync({ id })
-        alert('Product deleted successfully!')
-      } catch (error: any) {
-        alert(error.message || 'Failed to delete product')
+        showToast('Product deleted successfully!', 'success')
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to delete product'
+        showToast(errorMessage, 'error')
       }
     }
   }
@@ -118,7 +125,7 @@ export default function ProductsPage() {
           <div className="w-full md:w-64">
             <Select
               value={categoryFilter}
-              onChange={(e: any) => setCategoryFilter(e.target.value)}
+              onChange={(e: SelectChangeEvent) => setCategoryFilter(e.target.value)}
               options={[
                 { value: '', label: 'All Categories' },
                 ...(categories || []).map((cat) => ({ value: cat, label: cat })),
@@ -250,7 +257,7 @@ export default function ProductsPage() {
  * Product Form Modal Component
  */
 interface ProductFormModalProps {
-  product: any | null
+  product: Product | null
   onClose: () => void
   onSuccess: () => void
 }
@@ -262,6 +269,7 @@ function ProductFormModal({ product, onClose, onSuccess }: ProductFormModalProps
     category: product?.category || '',
     price: product?.price || '',
   })
+  const { showToast } = useToast()
 
   const createProduct = trpc.products.create.useMutation()
   const updateProduct = trpc.products.update.useMutation()
@@ -283,16 +291,17 @@ function ProductFormModal({ product, onClose, onSuccess }: ProductFormModalProps
           id: product.id,
           ...data,
         })
-        alert('Product updated successfully!')
+        showToast('Product updated successfully!', 'success')
       } else {
         // Create new product
         await createProduct.mutateAsync(data)
-        alert('Product created successfully!')
+        showToast('Product created successfully!', 'success')
       }
 
       onSuccess()
-    } catch (error: any) {
-      alert(error.message || 'Operation failed')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Operation failed'
+      showToast(errorMessage, 'error')
     }
   }
 
