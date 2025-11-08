@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { router, protectedProcedure, adminProcedure } from '../trpc'
 import { supabase } from '@/infra/supabase/client'
+import { createAuditLog } from '@/lib/audit'
 
 export const productsRouter = router({
   /**
@@ -89,7 +90,7 @@ export const productsRouter = router({
     }),
 
   /**
-   * Create new product - ADMIN ONLY
+   * Create new product - ADMIN ONLY (with Audit Logging)
    */
   create: adminProcedure
     .input(
@@ -100,7 +101,7 @@ export const productsRouter = router({
         price: z.number().positive().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const { data, error } = await supabase
         .from('products')
         .insert({
@@ -116,11 +117,22 @@ export const productsRouter = router({
         throw new Error(`Failed to create product: ${error.message}`)
       }
 
+      // Audit log
+      await createAuditLog({
+        userId: ctx.userId,
+        userEmail: ctx.session?.email || 'unknown',
+        action: 'CREATE',
+        entityType: 'product',
+        entityId: data.id,
+        changes: { created: input },
+        metadata: { sku: input.sku, name: input.name },
+      })
+
       return data
     }),
 
   /**
-   * Update product - ADMIN ONLY
+   * Update product - ADMIN ONLY (with Audit Logging)
    */
   update: adminProcedure
     .input(
@@ -132,7 +144,14 @@ export const productsRouter = router({
         price: z.number().positive().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      // Get old data for audit trail
+      const { data: oldData } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', input.id)
+        .single()
+
       const { data, error } = await supabase
         .from('products')
         .update({
@@ -149,15 +168,36 @@ export const productsRouter = router({
         throw new Error(`Failed to update product: ${error.message}`)
       }
 
+      // Audit log with before/after comparison
+      await createAuditLog({
+        userId: ctx.userId,
+        userEmail: ctx.session?.email || 'unknown',
+        action: 'UPDATE',
+        entityType: 'product',
+        entityId: input.id,
+        changes: {
+          before: oldData,
+          after: { sku: input.sku, name: input.name, category: input.category, price: input.price },
+        },
+        metadata: { sku: input.sku, name: input.name },
+      })
+
       return data
     }),
 
   /**
-   * Delete product - ADMIN ONLY
+   * Delete product - ADMIN ONLY (with Audit Logging)
    */
   delete: adminProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      // Get product data before deletion for audit trail
+      const { data: productData } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', input.id)
+        .single()
+
       const { error } = await supabase
         .from('products')
         .delete()
@@ -166,6 +206,20 @@ export const productsRouter = router({
       if (error) {
         throw new Error(`Failed to delete product: ${error.message}`)
       }
+
+      // Audit log
+      await createAuditLog({
+        userId: ctx.userId,
+        userEmail: ctx.session?.email || 'unknown',
+        action: 'DELETE',
+        entityType: 'product',
+        entityId: input.id,
+        changes: { deleted: productData },
+        metadata: {
+          sku: productData?.sku,
+          name: productData?.name,
+        },
+      })
 
       return { success: true }
     }),
