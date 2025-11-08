@@ -4,14 +4,15 @@ import { LoginUserUseCase } from '@/use-cases/auth/LoginUserUseCase'
 import { RegisterUserUseCase } from '@/use-cases/auth/RegisterUserUseCase'
 import { LogoutUserUseCase } from '@/use-cases/auth/LogoutUserUseCase'
 import { SupabaseUserRepository } from '@/infra/repositories/SupabaseUserRepository'
-import { setAuthCookie, deleteAuthCookie } from '@/lib/cookies'
+import { setAuthCookie, deleteAuthCookie, setRefreshCookie, deleteRefreshCookie, getRefreshCookie } from '@/lib/cookies'
 import { createAuditLog } from '@/lib/audit'
+import { createRefreshToken, rotateRefreshToken, revokeRefreshToken, revokeAllUserTokens } from '@/lib/refreshToken'
 
 const userRepository = new SupabaseUserRepository()
 
 export const authRouter = router({
   /**
-   * Register new user (with Audit Logging)
+   * Register new user (with Audit Logging and Refresh Tokens)
    */
   register: publicProcedure
     .input(
@@ -27,8 +28,12 @@ export const authRouter = router({
       const useCase = new RegisterUserUseCase(userRepository)
       const result = await useCase.execute(input)
 
-      // Set httpOnly cookie with JWT token
-      await setAuthCookie(result.token)
+      // Create refresh token and new short-lived access token
+      const { refreshToken, accessToken } = await createRefreshToken(result.user.id)
+
+      // Set httpOnly cookies (access token = 30 min, refresh token = 30 days)
+      await setAuthCookie(accessToken)
+      await setRefreshCookie(refreshToken)
 
       // Audit log for registration
       await createAuditLog({
@@ -43,11 +48,14 @@ export const authRouter = router({
         },
       })
 
-      return result
+      return {
+        ...result,
+        token: accessToken, // Return new access token
+      }
     }),
 
   /**
-   * Login user (with Audit Logging)
+   * Login user (with Audit Logging and Refresh Tokens)
    */
   login: publicProcedure
     .input(
@@ -60,8 +68,12 @@ export const authRouter = router({
       const useCase = new LoginUserUseCase(userRepository)
       const result = await useCase.execute(input)
 
-      // Set httpOnly cookie with JWT token
-      await setAuthCookie(result.token)
+      // Create refresh token and new short-lived access token
+      const { refreshToken, accessToken } = await createRefreshToken(result.user.id)
+
+      // Set httpOnly cookies (access token = 30 min, refresh token = 30 days)
+      await setAuthCookie(accessToken)
+      await setRefreshCookie(refreshToken)
 
       // Audit log for login
       await createAuditLog({
@@ -75,15 +87,28 @@ export const authRouter = router({
         },
       })
 
-      return result
+      return {
+        ...result,
+        token: accessToken, // Return new access token
+      }
     }),
 
   /**
-   * Logout user (with Audit Logging)
+   * Logout user (with Audit Logging and Refresh Token Revocation)
    */
   logout: protectedProcedure.mutation(async ({ ctx }) => {
     const useCase = new LogoutUserUseCase()
     await useCase.execute({ userId: ctx.userId })
+
+    // Revoke refresh token if exists
+    const refreshToken = await getRefreshCookie()
+    if (refreshToken) {
+      try {
+        await revokeRefreshToken(refreshToken)
+      } catch (error) {
+        // Token might already be invalid, continue with logout
+      }
+    }
 
     // Audit log for logout
     await createAuditLog({
@@ -97,8 +122,9 @@ export const authRouter = router({
       },
     })
 
-    // Delete httpOnly cookie
+    // Delete httpOnly cookies
     await deleteAuthCookie()
+    await deleteRefreshCookie()
 
     return { success: true }
   }),
@@ -110,6 +136,69 @@ export const authRouter = router({
     return {
       userId: ctx.userId,
       session: ctx.session,
+    }
+  }),
+
+  /**
+   * Refresh access token using refresh token
+   * This implements token rotation for security
+   */
+  refresh: publicProcedure.mutation(async () => {
+    // Get refresh token from cookie
+    const refreshToken = await getRefreshCookie()
+
+    if (!refreshToken) {
+      throw new Error('No refresh token found')
+    }
+
+    try {
+      // Rotate refresh token (generates new refresh + access tokens)
+      const { refreshToken: newRefreshToken, accessToken: newAccessToken } =
+        await rotateRefreshToken(refreshToken)
+
+      // Set new cookies
+      await setAuthCookie(newAccessToken)
+      await setRefreshCookie(newRefreshToken)
+
+      return {
+        success: true,
+        message: 'Tokens refreshed successfully',
+      }
+    } catch (error) {
+      // Invalid/expired/revoked token - clear cookies
+      await deleteAuthCookie()
+      await deleteRefreshCookie()
+
+      throw new Error('Failed to refresh token - please login again')
+    }
+  }),
+
+  /**
+   * Revoke all refresh tokens for current user (logout from all devices)
+   */
+  revokeAllSessions: protectedProcedure.mutation(async ({ ctx }) => {
+    await revokeAllUserTokens(ctx.userId)
+
+    // Audit log
+    await createAuditLog({
+      userId: ctx.userId,
+      userEmail: ctx.session?.email || 'unknown',
+      action: 'LOGOUT',
+      entityType: 'auth',
+      metadata: {
+        type: 'all_sessions',
+        name: ctx.session?.name,
+        role: ctx.session?.role,
+      },
+    })
+
+    // Delete current session cookies
+    await deleteAuthCookie()
+    await deleteRefreshCookie()
+
+    return {
+      success: true,
+      message: 'All sessions revoked successfully',
     }
   }),
 
