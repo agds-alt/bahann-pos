@@ -30,6 +30,13 @@ export default function SalesTransactionPage() {
     amountPaid: 0,
   })
 
+  const [promoCode, setPromoCode] = useState('')
+  const [appliedPromo, setAppliedPromo] = useState<{
+    discountAmount: number
+    promoName: string
+    promoId: string
+  } | null>(null)
+
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false)
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
   const [error, setError] = useState('')
@@ -46,6 +53,9 @@ export default function SalesTransactionPage() {
   const { data: recentTransactions, refetch: refetchTransactions } = trpc.dashboard.getRecentTransactions.useQuery({ limit: 5 })
 
   const recordSaleMutation = trpc.sales.record.useMutation()
+  const createTransactionMutation = trpc.transactions.create.useMutation()
+  const validatePromoMutation = trpc.promotions.validate.useMutation()
+  const recordPromoUsageMutation = trpc.promotions.recordUsage.useMutation()
 
   const selectedProduct = products?.find(p => p.id === selectedProductId)
   const selectedOutlet = outlets?.find(o => o.id === selectedOutletId)
@@ -117,8 +127,42 @@ export default function SalesTransactionPage() {
 
   // Calculate cart totals
   const cartSubtotal = cart.reduce((sum, item) => sum + item.total, 0)
-  const cartTotal = cartSubtotal // Can add tax/discount here
+  const discountAmount = appliedPromo?.discountAmount || 0
+  const cartTotal = cartSubtotal - discountAmount // Apply discount
   const change = paymentData.amountPaid - cartTotal
+
+  // Handle apply promo code
+  const handleApplyPromo = async () => {
+    if (!promoCode) {
+      setError('Please enter a promo code')
+      return
+    }
+
+    try {
+      const result = await validatePromoMutation.mutateAsync({
+        code: promoCode,
+        cartTotal: cartSubtotal,
+        items: cart.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
+      })
+
+      setAppliedPromo(result)
+      setError('')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Invalid promo code'
+      setError(errorMessage)
+      setAppliedPromo(null)
+    }
+  }
+
+  // Remove promo
+  const handleRemovePromo = () => {
+    setAppliedPromo(null)
+    setPromoCode('')
+  }
 
   // Complete sale
   const handleCompleteSale = async () => {
@@ -141,23 +185,36 @@ export default function SalesTransactionPage() {
     }
 
     try {
-      // Record each sale item
-      for (const item of cart) {
-        await recordSaleMutation.mutateAsync({
+      // Create transaction using new system
+      const result = await createTransactionMutation.mutateAsync({
+        outletId: selectedOutletId,
+        items: cart.map(item => ({
           productId: item.productId,
-          outletId: selectedOutletId,
-          saleDate,
-          quantitySold: item.quantity,
+          productName: item.productName,
+          productSku: item.productSku,
+          quantity: item.quantity,
           unitPrice: item.unitPrice,
+        })),
+        paymentMethod: paymentData.method as 'cash' | 'card' | 'transfer' | 'ewallet',
+        amountPaid: paymentData.amountPaid,
+        discountAmount: discountAmount,
+        notes: appliedPromo ? `Promo applied: ${appliedPromo.promoName}` : undefined,
+      })
+
+      // Record promotion usage if applied
+      if (appliedPromo && result.transaction) {
+        await recordPromoUsageMutation.mutateAsync({
+          promotionId: appliedPromo.promoId,
+          transactionId: result.transaction.id,
+          discountApplied: discountAmount,
         })
       }
 
       // Generate receipt data
-      const transactionId = generateTransactionId()
       const now = new Date()
 
       const receipt: ReceiptData = {
-        transactionId,
+        transactionId: result.transactionId,
         date: now.toLocaleDateString('id-ID', {
           day: '2-digit',
           month: 'long',
@@ -184,14 +241,16 @@ export default function SalesTransactionPage() {
         })),
         subtotal: cartSubtotal,
         tax: 0,
-        discount: 0,
+        discount: discountAmount,
         total: cartTotal,
         payment: {
           method: paymentData.method,
           amount: paymentData.amountPaid,
           change: change > 0 ? change : 0,
         },
-        notes: 'Terima kasih telah berbelanja di AGDS Corp POS',
+        notes: appliedPromo
+          ? `Promo: ${appliedPromo.promoName} • Terima kasih!`
+          : 'Terima kasih telah berbelanja di AGDS Corp POS',
       }
 
       setReceiptData(receipt)
@@ -208,6 +267,8 @@ export default function SalesTransactionPage() {
         amountPaid: 0,
       })
       setSelectedOutletId('')
+      setPromoCode('')
+      setAppliedPromo(null)
 
       setTimeout(() => setShowSuccess(false), 3000)
     } catch (err: unknown) {
@@ -439,6 +500,70 @@ export default function SalesTransactionPage() {
                   ]}
                   fullWidth
                 />
+
+                {/* Promo Code Section */}
+                <div className="border-t pt-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Promo Code (Optional)
+                  </label>
+                  {!appliedPromo ? (
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Enter promo code"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                        fullWidth
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={handleApplyPromo}
+                        disabled={!promoCode || validatePromoMutation.isPending}
+                      >
+                        {validatePromoMutation.isPending ? 'Checking...' : 'Apply'}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-green-50 border-2 border-green-200 rounded-xl">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs text-green-600 font-semibold">Applied</p>
+                          <p className="text-sm font-bold text-green-900">{appliedPromo.promoName}</p>
+                          <p className="text-xs text-green-700">
+                            Discount: -{formatCurrency(appliedPromo.discountAmount)}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRemovePromo}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cart Summary */}
+                {cart.length > 0 && (
+                  <div className="p-3 bg-gray-50 rounded-xl space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Subtotal:</span>
+                      <span className="font-semibold">{formatCurrency(cartSubtotal)}</span>
+                    </div>
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>Discount:</span>
+                        <span className="font-semibold">-{formatCurrency(discountAmount)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-base font-bold pt-2 border-t">
+                      <span>Total:</span>
+                      <span>{formatCurrency(cartTotal)}</span>
+                    </div>
+                  </div>
+                )}
 
                 <Input
                   type="number"
