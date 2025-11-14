@@ -1,10 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Input'
 import { trpc } from '@/lib/trpc/client'
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { ChartSkeleton } from '@/components/ui/Skeletons'
+
+// Lazy load chart components - only loaded when needed
+const RevenueAreaChart = lazy(() => import('@/components/charts/RevenueAreaChartLazy'))
+const DailyRevenueBarChart = lazy(() => import('@/components/charts/DailyRevenueBarChartLazy'))
 
 export default function RevenueTrackingPage() {
   const [selectedOutletId, setSelectedOutletId] = useState('')
@@ -160,39 +164,14 @@ export default function RevenueTrackingPage() {
         </CardHeader>
         <CardBody>
           {salesTrend && salesTrend.length > 0 ? (
-            <div className="h-96">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={salesTrend}>
-                  <defs>
-                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.1}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="date"
-                    tickFormatter={formatDate}
-                    stroke="#6b7280"
-                  />
-                  <YAxis
-                    stroke="#6b7280"
-                    tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
-                  />
-                  <Tooltip
-                    formatter={(value: number) => formatCurrency(value)}
-                    labelFormatter={formatDate}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="#10b981"
-                    strokeWidth={3}
-                    fill="url(#colorRevenue)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            <Suspense fallback={<ChartSkeleton height={384} />}>
+              <RevenueAreaChart
+                data={salesTrend}
+                formatCurrency={formatCurrency}
+                formatDate={formatDate}
+                height={384}
+              />
+            </Suspense>
           ) : (
             <div className="h-96 flex items-center justify-center text-gray-500">
               No revenue data available
@@ -208,33 +187,14 @@ export default function RevenueTrackingPage() {
         </CardHeader>
         <CardBody>
           {salesTrend && salesTrend.length > 0 ? (
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={salesTrend}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="date"
-                    tickFormatter={formatDate}
-                    stroke="#6b7280"
-                  />
-                  <YAxis
-                    stroke="#6b7280"
-                    tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
-                  />
-                  <Tooltip
-                    formatter={(value: number) => formatCurrency(value)}
-                    labelFormatter={formatDate}
-                  />
-                  <Legend />
-                  <Bar
-                    dataKey="revenue"
-                    name="Daily Revenue"
-                    fill="#10b981"
-                    radius={[8, 8, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <Suspense fallback={<ChartSkeleton height={320} />}>
+              <DailyRevenueBarChart
+                data={salesTrend}
+                formatCurrency={formatCurrency}
+                formatDate={formatDate}
+                height={320}
+              />
+            </Suspense>
           ) : (
             <div className="h-80 flex items-center justify-center text-gray-500">
               No data available
