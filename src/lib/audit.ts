@@ -25,6 +25,10 @@ export type AuditEntity =
   | 'sale'
   | 'stock'
   | 'auth'
+  | 'transaction'
+  | 'cash_session'
+  | 'promotion'
+  | 'stock_alert'
 
 export interface AuditLogData {
   userId: string

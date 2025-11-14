@@ -5,6 +5,11 @@ import { salesRouter } from './sales'
 import { productsRouter } from './products'
 import { outletsRouter } from './outlets'
 import { dashboardRouter } from './dashboard'
+import { transactionsRouter } from './transactions'
+import { cashSessionsRouter } from './cashSessions'
+import { promotionsRouter } from './promotions'
+import { stockAlertsRouter } from './stockAlerts'
+import { usersRouter } from './users'
 
 /**
  * Main tRPC app router
@@ -17,6 +22,11 @@ export const appRouter = router({
   products: productsRouter,
   outlets: outletsRouter,
   dashboard: dashboardRouter,
+  transactions: transactionsRouter,
+  cashSessions: cashSessionsRouter,
+  promotions: promotionsRouter,
+  stockAlerts: stockAlertsRouter,
+  users: usersRouter,
 })
 
 export type AppRouter = typeof appRouter

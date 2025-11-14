@@ -1,0 +1,443 @@
+/**
+ * Transactions Router
+ * Handles transaction creation, void, refund, and management
+ */
+
+import { z } from 'zod'
+import { router, protectedProcedure } from '../trpc'
+import { supabase } from '@/infra/supabase/client'
+import { createAuditLog } from '@/lib/audit'
+import { TRPCError } from '@trpc/server'
+
+export const transactionsRouter = router({
+  /**
+   * Create new transaction (replaces direct sales.record for atomic transactions)
+   */
+  create: protectedProcedure
+    .input(
+      z.object({
+        outletId: z.string().uuid(),
+        items: z.array(
+          z.object({
+            productId: z.string().uuid(),
+            productName: z.string(),
+            productSku: z.string(),
+            quantity: z.number().positive(),
+            unitPrice: z.number(),
+          })
+        ),
+        paymentMethod: z.enum(['cash', 'card', 'transfer', 'ewallet']),
+        amountPaid: z.number(),
+        discountAmount: z.number().default(0),
+        notes: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      // Calculate totals
+      const subtotal = input.items.reduce(
+        (sum, item) => sum + item.quantity * item.unitPrice,
+        0
+      )
+      const taxAmount = 0 // Can be calculated if needed
+      const totalAmount = subtotal - input.discountAmount + taxAmount
+      const changeAmount = input.amountPaid - totalAmount
+
+      if (changeAmount < 0) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Insufficient payment amount',
+        })
+      }
+
+      // Generate transaction ID
+      const transactionId = `TRX-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+
+      try {
+        // Create transaction
+        const { data: transaction, error: txError } = await supabase
+          .from('transactions')
+          .insert({
+            transaction_id: transactionId,
+            outlet_id: input.outletId,
+            cashier_id: ctx.userId,
+            status: 'completed',
+            subtotal,
+            discount_amount: input.discountAmount,
+            tax_amount: taxAmount,
+            total_amount: totalAmount,
+            payment_method: input.paymentMethod,
+            amount_paid: input.amountPaid,
+            change_amount: changeAmount,
+            notes: input.notes,
+          })
+          .select()
+          .single()
+
+        if (txError) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: `Failed to create transaction: ${txError.message}`,
+          })
+        }
+
+        // Insert transaction items
+        const items = input.items.map((item) => ({
+          transaction_id: transaction.id,
+          product_id: item.productId,
+          product_name: item.productName,
+          product_sku: item.productSku,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          line_total: item.quantity * item.unitPrice,
+        }))
+
+        const { error: itemsError } = await supabase
+          .from('transaction_items')
+          .insert(items)
+
+        if (itemsError) {
+          // Rollback transaction by voiding it
+          await supabase
+            .from('transactions')
+            .update({ status: 'voided', void_reason: 'Failed to insert items' })
+            .eq('id', transaction.id)
+
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: `Failed to create transaction items: ${itemsError.message}`,
+          })
+        }
+
+        // Record in daily_sales for backward compatibility
+        for (const item of input.items) {
+          await supabase.from('daily_sales').insert({
+            product_id: item.productId,
+            outlet_id: input.outletId,
+            sale_date: new Date().toISOString().split('T')[0],
+            quantity_sold: item.quantity,
+            unit_price: item.unitPrice,
+            revenue: item.quantity * item.unitPrice,
+          })
+        }
+
+        // Create audit log
+        await createAuditLog({
+          userId: ctx.userId,
+          userEmail: ctx.session?.email || 'unknown',
+          action: 'CREATE',
+          entityType: 'transaction',
+          entityId: transaction.id,
+          changes: { transaction },
+          metadata: { transactionId, totalAmount },
+        })
+
+        return {
+          success: true,
+          transaction,
+          transactionId,
+        }
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'An unexpected error occurred while creating transaction',
+        })
+      }
+    }),
+
+  /**
+   * Void transaction (before end of day)
+   * Can only void completed transactions from today
+   */
+  void: protectedProcedure
+    .input(
+      z.object({
+        transactionId: z.string().uuid(),
+        reason: z.string().min(10, 'Reason must be at least 10 characters'),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      // Get transaction
+      const { data: transaction, error: fetchError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('id', input.transactionId)
+        .single()
+
+      if (fetchError || !transaction) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Transaction not found',
+        })
+      }
+
+      if (transaction.status !== 'completed') {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Can only void completed transactions',
+        })
+      }
+
+      // Check if same day (can only void same-day transactions)
+      const txDate = new Date(transaction.created_at).toDateString()
+      const today = new Date().toDateString()
+      if (txDate !== today) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message:
+            'Can only void transactions from today. Use refund for older transactions.',
+        })
+      }
+
+      // Update transaction status
+      const { error } = await supabase
+        .from('transactions')
+        .update({
+          status: 'voided',
+          void_reason: input.reason,
+          voided_by: ctx.userId,
+          voided_at: new Date().toISOString(),
+        })
+        .eq('id', input.transactionId)
+
+      if (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to void transaction: ${error.message}`,
+        })
+      }
+
+      // Create audit log
+      await createAuditLog({
+        userId: ctx.userId,
+        userEmail: ctx.session?.email || 'unknown',
+        action: 'UPDATE',
+        entityType: 'transaction',
+        entityId: input.transactionId,
+        changes: {
+          before: { status: 'completed' },
+          after: { status: 'voided', reason: input.reason },
+        },
+        metadata: { action: 'void' },
+      })
+
+      return { success: true }
+    }),
+
+  /**
+   * Refund transaction (after end of day or for partial refunds)
+   */
+  refund: protectedProcedure
+    .input(
+      z.object({
+        transactionId: z.string().uuid(),
+        reason: z.string().min(10),
+        refundAmount: z.number().positive().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { data: transaction, error: fetchError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('id', input.transactionId)
+        .single()
+
+      if (fetchError || !transaction) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Transaction not found',
+        })
+      }
+
+      if (transaction.status === 'voided' || transaction.status === 'refunded') {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Transaction already voided or refunded',
+        })
+      }
+
+      const refundAmount = input.refundAmount || transaction.total_amount
+
+      if (refundAmount > transaction.total_amount) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Refund amount cannot exceed transaction total',
+        })
+      }
+
+      const { error } = await supabase
+        .from('transactions')
+        .update({
+          status: 'refunded',
+          refund_reason: input.reason,
+          refunded_by: ctx.userId,
+          refunded_at: new Date().toISOString(),
+          refund_amount: refundAmount,
+        })
+        .eq('id', input.transactionId)
+
+      if (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to refund transaction: ${error.message}`,
+        })
+      }
+
+      await createAuditLog({
+        userId: ctx.userId,
+        userEmail: ctx.session?.email || 'unknown',
+        action: 'UPDATE',
+        entityType: 'transaction',
+        entityId: input.transactionId,
+        changes: {
+          before: { status: transaction.status },
+          after: { status: 'refunded', refundAmount },
+        },
+        metadata: { action: 'refund' },
+      })
+
+      return { success: true }
+    }),
+
+  /**
+   * Get transaction by ID with items
+   */
+  getById: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ input }) => {
+      const { data: transaction, error } = await supabase
+        .from('transactions')
+        .select(
+          `
+          *,
+          transaction_items (*),
+          outlets (id, name, address),
+          cashier:users!cashier_id (id, name, email)
+        `
+        )
+        .eq('id', input.id)
+        .single()
+
+      if (error) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Transaction not found',
+        })
+      }
+
+      return transaction
+    }),
+
+  /**
+   * List transactions with filters
+   */
+  list: protectedProcedure
+    .input(
+      z.object({
+        outletId: z.string().uuid().optional(),
+        status: z.enum(['pending', 'completed', 'voided', 'refunded']).optional(),
+        dateFrom: z.string().optional(),
+        dateTo: z.string().optional(),
+        limit: z.number().default(50),
+        offset: z.number().default(0),
+      })
+    )
+    .query(async ({ input }) => {
+      let query = supabase
+        .from('transactions')
+        .select(
+          `
+          *,
+          transaction_items (*),
+          outlets (id, name),
+          cashier:users!cashier_id (id, name)
+        `,
+          { count: 'exact' }
+        )
+        .order('created_at', { ascending: false })
+
+      if (input.outletId) query = query.eq('outlet_id', input.outletId)
+      if (input.status) query = query.eq('status', input.status)
+      if (input.dateFrom) query = query.gte('created_at', input.dateFrom)
+      if (input.dateTo) query = query.lte('created_at', input.dateTo)
+
+      query = query.range(input.offset, input.offset + input.limit - 1)
+
+      const { data, count, error } = await query
+
+      if (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to fetch transactions: ${error.message}`,
+        })
+      }
+
+      return {
+        transactions: data || [],
+        total: count || 0,
+      }
+    }),
+
+  /**
+   * Get transaction summary for a date range
+   */
+  getSummary: protectedProcedure
+    .input(
+      z.object({
+        outletId: z.string().uuid().optional(),
+        dateFrom: z.string(),
+        dateTo: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      let query = supabase
+        .from('transactions')
+        .select('*')
+        .gte('created_at', input.dateFrom)
+        .lte('created_at', input.dateTo)
+
+      if (input.outletId) {
+        query = query.eq('outlet_id', input.outletId)
+      }
+
+      const { data: transactions, error } = await query
+
+      if (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to fetch transaction summary: ${error.message}`,
+        })
+      }
+
+      const summary = {
+        totalTransactions: transactions?.length || 0,
+        completedTransactions: transactions?.filter((t) => t.status === 'completed')
+          .length || 0,
+        voidedTransactions: transactions?.filter((t) => t.status === 'voided').length || 0,
+        refundedTransactions: transactions?.filter((t) => t.status === 'refunded')
+          .length || 0,
+        totalRevenue: transactions
+          ?.filter((t) => t.status === 'completed')
+          .reduce((sum, t) => sum + t.total_amount, 0) || 0,
+        totalDiscounts: transactions
+          ?.filter((t) => t.status === 'completed')
+          .reduce((sum, t) => sum + t.discount_amount, 0) || 0,
+        cashSales: transactions
+          ?.filter((t) => t.status === 'completed' && t.payment_method === 'cash')
+          .reduce((sum, t) => sum + t.total_amount, 0) || 0,
+        cardSales: transactions
+          ?.filter((t) => t.status === 'completed' && t.payment_method === 'card')
+          .reduce((sum, t) => sum + t.total_amount, 0) || 0,
+        transferSales: transactions
+          ?.filter((t) => t.status === 'completed' && t.payment_method === 'transfer')
+          .reduce((sum, t) => sum + t.total_amount, 0) || 0,
+        ewalletSales: transactions
+          ?.filter((t) => t.status === 'completed' && t.payment_method === 'ewallet')
+          .reduce((sum, t) => sum + t.total_amount, 0) || 0,
+      }
+
+      return summary
+    }),
+})

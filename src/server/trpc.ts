@@ -141,3 +141,46 @@ export const adminProcedure = t.procedure.use(({ ctx, next }) => {
     },
   })
 })
+
+/**
+ * Create a middleware that checks for specific permission
+ * @param permission - The permission key to check (e.g., 'canVoidTransactions')
+ */
+export const requirePermission = (permission: string) => {
+  return t.middleware(async ({ ctx, next }) => {
+    if (!ctx.userId || !ctx.session) {
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'You must be logged in to access this resource',
+      })
+    }
+
+    // Admins have all permissions
+    if (ctx.session.role === 'admin') {
+      return next()
+    }
+
+    // Check if user has the specific permission
+    const { data: user } = await (await import('@/infra/supabase/client')).supabase
+      .from('users')
+      .select('permissions')
+      .eq('id', ctx.userId)
+      .single()
+
+    const permissions = user?.permissions || {}
+
+    if (!permissions[permission]) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: `Permission denied: ${permission}`,
+      })
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        permissions,
+      },
+    })
+  })
+}
