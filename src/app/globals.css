@@ -10,6 +10,43 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Mobile-first Typography (iOS/Android standards) */
+  --font-size-xs: 0.75rem;     /* 12px - labels, captions */
+  --font-size-sm: 0.875rem;    /* 14px - body small, secondary text */
+  --font-size-base: 1rem;      /* 16px - body text (mobile baseline) */
+  --font-size-lg: 1.125rem;    /* 18px - emphasized text */
+  --font-size-xl: 1.25rem;     /* 20px - card headers */
+  --font-size-2xl: 1.5rem;     /* 24px - page headers */
+  --font-size-3xl: 1.875rem;   /* 30px - hero text */
+
+  /* Line heights optimized for mobile readability */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* Mobile-first spacing system */
+  --space-xs: 0.25rem;    /* 4px */
+  --space-sm: 0.5rem;     /* 8px */
+  --space-md: 0.75rem;    /* 12px */
+  --space-lg: 1rem;       /* 16px */
+  --space-xl: 1.5rem;     /* 24px */
+  --space-2xl: 2rem;      /* 32px */
+
+  /* Container sizes for mobile-first */
+  --container-mobile: 100%;
+  --container-tablet: 768px;
+  --container-desktop: 1024px;
+
+  /* Card/Component sizing */
+  --card-padding-mobile: var(--space-lg);
+  --card-padding-tablet: var(--space-xl);
+  --card-radius: 0.75rem;         /* 12px - modern rounded corners */
+  --input-height-mobile: 2.75rem; /* 44px - iOS touch target minimum */
+  --button-height-mobile: 2.75rem; /* 44px - iOS touch target minimum */
+
+  /* Touch targets (minimum 44x44px for mobile) */
+  --touch-target-min: 2.75rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,7 +59,42 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mobile-first utility classes */
+.text-mobile-xs { font-size: var(--font-size-xs); }
+.text-mobile-sm { font-size: var(--font-size-sm); }
+.text-mobile-base { font-size: var(--font-size-base); }
+.text-mobile-lg { font-size: var(--font-size-lg); }
+.text-mobile-xl { font-size: var(--font-size-xl); }
+.text-mobile-2xl { font-size: var(--font-size-2xl); }
+.text-mobile-3xl { font-size: var(--font-size-3xl); }
+
+.card-mobile {
+  padding: var(--card-padding-mobile);
+  border-radius: var(--card-radius);
+}
+
+.btn-mobile, .input-mobile {
+  min-height: var(--touch-target-min);
+  padding: var(--space-md) var(--space-lg);
+  font-size: var(--font-size-base);
+}
+
+/* Tablet responsive adjustments */
+@media (min-width: 768px) {
+  .card-mobile {
+    padding: var(--card-padding-tablet);
+  }
+
+  .text-mobile-base { font-size: 1.0625rem; } /* 17px on tablet */
+  .text-mobile-xl { font-size: 1.375rem; }    /* 22px on tablet */
+  .text-mobile-2xl { font-size: 1.75rem; }    /* 28px on tablet */
 }
 
 /* Toast Animation */
