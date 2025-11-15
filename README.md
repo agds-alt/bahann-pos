@@ -411,47 +411,135 @@ The UI is **optimized for tablets/iPad** as the primary target:
 
 ## 🚀 Deployment
 
-### Vercel (Recommended)
-```bash
-# Install Vercel CLI
-pnpm add -g vercel
+### Production Deployment (Vercel)
 
-# Deploy
-vercel
+**Quick Deploy:**
+```bash
+# Run deployment script (includes pre-deployment checks)
+./scripts/deploy.sh
+
+# Or deploy manually
+vercel --prod
 ```
 
 ### Environment Variables (Production)
-Set in Vercel dashboard:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `JWT_SECRET` (use strong random secret!)
-- `REDIS_HOST`
-- `REDIS_PORT`
-- `REDIS_PASSWORD`
+
+**Required:**
+- `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key (server-only)
+- `JWT_SECRET` - Strong random secret (32+ characters)
+- `REDIS_URL` - Upstash Redis connection URL
+- `REDIS_TOKEN` - Upstash Redis token
+- `NEXT_PUBLIC_APP_URL` - Production domain URL
+
+**Optional:**
+- `NEXT_PUBLIC_SENTRY_DSN` - Error tracking (Sentry)
+- `NEXT_PUBLIC_GA_ID` - Google Analytics
+
+See [deployment/ENV_VARIABLES.md](deployment/ENV_VARIABLES.md) for complete list.
 
 ### Redis (Production)
-Use a managed Redis service:
-- **Upstash** (recommended for Vercel)
-- **Redis Cloud**
-- **AWS ElastiCache**
 
-## 📝 Development Scripts
+**Recommended: Upstash** (optimized for serverless/Vercel)
+
+1. Sign up at [Upstash](https://console.upstash.com)
+2. Create database: `agds-pos-production`
+3. Copy Redis URL and Token
+4. Add to Vercel environment variables
+
+Alternative Upstash Redis client available: `src/lib/redis-upstash.ts`
+
+### Health Checks
+
+After deployment, verify system health:
+
+```bash
+# Automated health check
+./scripts/health-check.sh https://pos.yourdomain.com
+
+# Or check manually
+curl https://pos.yourdomain.com/api/health
+curl https://pos.yourdomain.com/api/health/database
+curl https://pos.yourdomain.com/api/health/redis
+```
+
+### Production Documentation
+
+Comprehensive guides available in `/deployment`:
+
+- **[ENV_VARIABLES.md](deployment/ENV_VARIABLES.md)** - Environment variables reference
+- **[PRE_DEPLOYMENT_CHECKLIST.md](deployment/PRE_DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist
+- **[MONITORING_SETUP.md](deployment/MONITORING_SETUP.md)** - Monitoring & alerting setup
+- **[SECURITY.md](deployment/SECURITY.md)** - Security best practices & audit
+- **[RUNBOOK.md](deployment/RUNBOOK.md)** - Operations guide & troubleshooting
+
+### Performance Optimizations
+
+This application includes comprehensive performance optimizations:
+
+- ✅ Code splitting (30-40% bundle size reduction)
+- ✅ Lazy loading for heavy components (Recharts, modals, forms)
+- ✅ Optimized webpack configuration
+- ✅ Security headers enabled
+- ✅ Production build optimizations
+
+See [docs/CODE_SPLITTING_OPTIMIZATION.md](docs/CODE_SPLITTING_OPTIMIZATION.md) for details.
+
+### Deployment Workflow
+
+1. **Pre-Deployment Checks**
+   - Run `./scripts/deploy.sh` (automated checks)
+   - Review [deployment/PRE_DEPLOYMENT_CHECKLIST.md](deployment/PRE_DEPLOYMENT_CHECKLIST.md)
+
+2. **Deploy to Vercel**
+   - Automatic deployment from `main` branch
+   - Or manual: `vercel --prod`
+
+3. **Post-Deployment**
+   - Health checks: `./scripts/health-check.sh`
+   - Monitor errors and performance
+   - Verify critical features
+
+4. **Rollback (if needed)**
+   - Vercel Dashboard → Deployments → Rollback
+   - Or CLI: `vercel rollback`
+
+## 📝 Scripts
+
+### Development Scripts
 
 ```bash
 # Development
-pnpm dev
+npm run dev
 
 # Build for production
-pnpm build
+npm run build
 
 # Start production server
-pnpm start
+npm start
 
 # Linting
-pnpm lint
+npm run lint
 
 # Generate Supabase types
-pnpm gen:types
+npm run gen:types
+
+# Bundle analysis
+npm run analyze
+```
+
+### Deployment & Operations Scripts
+
+```bash
+# Deploy to production (with pre-deployment checks)
+./scripts/deploy.sh
+
+# Health check
+./scripts/health-check.sh https://pos.yourdomain.com
+
+# Database backup
+./scripts/backup-database.sh
 ```
 
 ## 🧪 Testing

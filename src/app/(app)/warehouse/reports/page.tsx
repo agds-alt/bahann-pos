@@ -1,16 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Select } from '@/components/ui/Input'
+import { Select, Button } from '@/components/ui/Input'
 import { trpc } from '@/lib/trpc/client'
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { ChartLabelProps } from '@/types'
+import { ChartSkeleton, ExportLoadingSkeleton } from '@/components/ui/Skeletons'
 import { formatCurrency, formatDate } from '@/lib/utils'
+
+// Lazy load heavy chart components - only loaded when data is available
+const RevenueLineChart = lazy(() => import('@/components/charts/RevenueLineChartLazy'))
+const ItemsSoldBarChart = lazy(() => import('@/components/charts/ItemsSoldBarChartLazy'))
+const RevenuePieChart = lazy(() => import('@/components/charts/RevenuePieChartLazy'))
+
+// Lazy load export functionality - only when user clicks export
+const ReportExporter = lazy(() => import('@/components/reports/ReportExporter'))
 
 export default function ReportsPage() {
   const [selectedOutletId, setSelectedOutletId] = useState('')
   const [dateRange, setDateRange] = useState<7 | 14 | 30>(30)
+  const [showExporter, setShowExporter] = useState(false)
 
   // Fetch data
   const { data: outletsResponse } = trpc.outlets.getAll.useQuery()
@@ -140,43 +148,20 @@ export default function ReportsPage() {
         </Card>
       </div>
 
-      {/* Revenue Trend Chart */}
+      {/* Revenue Trend Chart - Lazy loaded with Suspense */}
       <Card variant="elevated" padding="lg">
         <CardHeader>
           <CardTitle>📈 Revenue Trend</CardTitle>
         </CardHeader>
         <CardBody>
           {salesTrend && salesTrend.length > 0 ? (
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={salesTrend}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="date"
-                    tickFormatter={formatDate}
-                    stroke="#6b7280"
-                  />
-                  <YAxis
-                    stroke="#6b7280"
-                    tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
-                  />
-                  <Tooltip
-                    formatter={(value: number) => formatCurrency(value)}
-                    labelFormatter={formatDate}
-                  />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="revenue"
-                    name="Revenue"
-                    stroke="#10b981"
-                    strokeWidth={3}
-                    dot={{ fill: '#10b981', r: 5 }}
-                    activeDot={{ r: 7 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            <Suspense fallback={<ChartSkeleton height={320} />}>
+              <RevenueLineChart
+                data={salesTrend}
+                formatCurrency={formatCurrency}
+                formatDate={formatDate}
+              />
+            </Suspense>
           ) : (
             <div className="h-80 flex items-center justify-center text-gray-500">
               No revenue data available for the selected period
@@ -185,34 +170,19 @@ export default function ReportsPage() {
         </CardBody>
       </Card>
 
-      {/* Items Sold Trend */}
+      {/* Items Sold Trend - Lazy loaded */}
       <Card variant="elevated" padding="lg">
         <CardHeader>
           <CardTitle>📦 Items Sold Trend</CardTitle>
         </CardHeader>
         <CardBody>
           {salesTrend && salesTrend.length > 0 ? (
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={salesTrend}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="date"
-                    tickFormatter={formatDate}
-                    stroke="#6b7280"
-                  />
-                  <YAxis stroke="#6b7280" />
-                  <Tooltip labelFormatter={formatDate} />
-                  <Legend />
-                  <Bar
-                    dataKey="itemsSold"
-                    name="Items Sold"
-                    fill="#2563eb"
-                    radius={[8, 8, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <Suspense fallback={<ChartSkeleton height={320} />}>
+              <ItemsSoldBarChart
+                data={salesTrend}
+                formatDate={formatDate}
+              />
+            </Suspense>
           ) : (
             <div className="h-80 flex items-center justify-center text-gray-500">
               No sales data available
@@ -279,37 +249,19 @@ export default function ReportsPage() {
           </CardBody>
         </Card>
 
-        {/* Revenue Distribution Pie Chart */}
+        {/* Revenue Distribution Pie Chart - Lazy loaded */}
         <Card variant="default" padding="lg">
           <CardHeader>
             <CardTitle>📊 Revenue Distribution</CardTitle>
           </CardHeader>
           <CardBody>
             {pieData && pieData.length > 0 ? (
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={(props: ChartLabelProps) => {
-                        const { name, percent } = props
-                        return `${name}: ${(percent * 100).toFixed(0)}%`
-                      }}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+              <Suspense fallback={<ChartSkeleton height={320} />}>
+                <RevenuePieChart
+                  data={pieData}
+                  formatCurrency={formatCurrency}
+                />
+              </Suspense>
             ) : (
               <div className="h-80 flex items-center justify-center text-gray-500">
                 No revenue distribution data
@@ -359,6 +311,32 @@ export default function ReportsPage() {
             </div>
           </div>
         </CardBody>
+      </Card>
+
+      {/* Export Section - Lazy loaded only when opened */}
+      <Card variant="default" padding="lg">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Export Report</h3>
+          <Button
+            variant="primary"
+            onClick={() => setShowExporter(!showExporter)}
+          >
+            📥 Export Data
+          </Button>
+        </div>
+
+        {showExporter && (
+          <Suspense fallback={<ExportLoadingSkeleton />}>
+            <ReportExporter
+              data={{
+                salesTrend: salesTrend || [],
+                topProducts: topProducts || [],
+                stats,
+              }}
+              onClose={() => setShowExporter(false)}
+            />
+          </Suspense>
+        )}
       </Card>
 
       {/* Info Box */}
