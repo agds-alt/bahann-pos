@@ -126,6 +126,77 @@ export const transactionsRouter = router({
           }
         }
 
+        // Update stock - deduct sold items from inventory
+        const today = new Date().toISOString().split('T')[0]
+
+        for (const item of input.items) {
+          // Get latest stock for this product at this outlet
+          const { data: latestStock } = await supabase
+            .from('daily_stock')
+            .select('*')
+            .eq('product_id', item.productId)
+            .eq('outlet_id', input.outletId)
+            .eq('stock_date', today)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single()
+
+          if (latestStock) {
+            // Update existing stock record - add to stock_out and recalculate stock_akhir
+            const newStockOut = (latestStock.stock_out || 0) + item.quantity
+            const newStockAkhir = latestStock.stock_awal + (latestStock.stock_in || 0) - newStockOut
+
+            const { error: stockUpdateError } = await supabase
+              .from('daily_stock')
+              .update({
+                stock_out: newStockOut,
+                stock_akhir: newStockAkhir,
+              })
+              .eq('id', latestStock.id)
+
+            if (stockUpdateError) {
+              console.error('Failed to update stock:', stockUpdateError)
+              // Don't fail transaction, but log for monitoring
+            }
+          } else {
+            // No stock record for today - create new one with stock_out
+            // Get yesterday's stock as stock_awal
+            const yesterday = new Date()
+            yesterday.setDate(yesterday.getDate() - 1)
+            const yesterdayDate = yesterday.toISOString().split('T')[0]
+
+            const { data: yesterdayStock } = await supabase
+              .from('daily_stock')
+              .select('stock_akhir')
+              .eq('product_id', item.productId)
+              .eq('outlet_id', input.outletId)
+              .eq('stock_date', yesterdayDate)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .single()
+
+            const stockAwal = yesterdayStock?.stock_akhir || 0
+            const stockAkhir = stockAwal - item.quantity
+
+            const { error: stockInsertError } = await supabase
+              .from('daily_stock')
+              .insert({
+                product_id: item.productId,
+                outlet_id: input.outletId,
+                stock_date: today,
+                stock_awal: stockAwal,
+                stock_in: 0,
+                stock_out: item.quantity,
+                stock_akhir: stockAkhir,
+              })
+
+            if (stockInsertError) {
+              console.error('Failed to create stock record:', stockInsertError)
+              // Don't fail transaction, but log for monitoring
+            }
+          }
+        }
+
         // Create audit log
         await createAuditLog({
           userId: ctx.userId,
