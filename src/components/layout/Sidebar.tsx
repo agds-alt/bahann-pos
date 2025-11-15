@@ -246,6 +246,17 @@ export function Sidebar() {
           />
         </SidebarSection>
 
+        {userRole === 'admin' && (
+          <SidebarSection title="Settings" isCollapsed={isCollapsed}>
+            <SidebarItem
+              href="/settings/audit-logs"
+              icon="📋"
+              label="Audit Logs"
+              isCollapsed={isCollapsed}
+            />
+          </SidebarSection>
+        )}
+
         <SidebarSection title={t('sidebar.account')} isCollapsed={isCollapsed}>
           <SidebarItem
             href="/profile"
