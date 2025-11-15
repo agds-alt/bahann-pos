@@ -81,7 +81,7 @@ function ToastContainer({
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-3 max-w-md">
+    <div className="fixed top-4 right-4 left-4 sm:left-auto z-50 space-y-3 sm:max-w-md">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
       ))}
@@ -126,25 +126,27 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
     <div
       className={`
         ${style.bg} ${style.border} ${style.text}
-        border-2 rounded-xl p-4 shadow-xl
+        border-2 rounded-xl shadow-xl
         animate-slide-in-right
         flex items-center gap-3
-        min-w-[300px] max-w-md
+        w-full sm:min-w-[300px] sm:max-w-md
+        p-4
       `}
       role="alert"
     >
       <span className="text-2xl flex-shrink-0">{style.icon}</span>
-      <p className="flex-1 font-semibold text-sm">{toast.message}</p>
+      <p className="flex-1 font-semibold text-mobile-sm">{toast.message}</p>
       <button
         onClick={onClose}
         className={`
           ${style.text} hover:opacity-70
-          transition-opacity font-bold text-xl
-          flex-shrink-0 w-6 h-6 flex items-center justify-center
+          transition-opacity font-bold
+          flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center
+          -mr-2
         `}
         aria-label="Close"
       >
-        ×
+        <span className="text-2xl">×</span>
       </button>
     </div>
   )
