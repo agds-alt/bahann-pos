@@ -367,27 +367,32 @@ export default function SalesTransactionPage() {
                     </p>
                   </div>
                 )}
-                <Select
-                  label="Select Product"
-                  value={selectedProductId}
-                  onChange={(e) => setSelectedProductId(e.target.value)}
-                  options={[
-                    { value: '', label: selectedOutletId ? 'Choose a product...' : 'Select outlet first...' },
-                    ...(products?.map(product => {
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Select Product
+                  </label>
+                  <select
+                    value={selectedProductId}
+                    onChange={(e) => setSelectedProductId(e.target.value)}
+                    disabled={!selectedOutletId}
+                    className="input-mobile w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="">
+                      {selectedOutletId ? 'Choose a product...' : 'Select outlet first...'}
+                    </option>
+                    {products?.map(product => {
                       const stockInfo = inventoryList?.find(p => p.id === product.id)
                       const stock = stockInfo?.currentStock || 0
-                      const stockLabel = selectedOutletId
-                        ? ` • Stock: ${stock}`
-                        : ''
-                      return {
-                        value: product.id,
-                        label: `${product.name} - ${formatCurrency(product.price || 0)}${stockLabel}`,
-                      }
-                    }) || []),
-                  ]}
-                  fullWidth
-                  disabled={!selectedOutletId}
-                />
+                      const stockStatus = stock === 0 ? '❌ Out' : stock <= 10 ? '⚠️ Low' : '✅'
+
+                      return (
+                        <option key={product.id} value={product.id}>
+                          {product.name} • {formatCurrency(product.price || 0)} • {stockStatus} {stock} pcs
+                        </option>
+                      )
+                    })}
+                  </select>
+                </div>
 
                 {selectedProduct && (
                   <div className="p-3 bg-blue-50 border-2 border-blue-200 rounded-xl">
