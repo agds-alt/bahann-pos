@@ -97,13 +97,34 @@ export function isNonNegativeNumber(value: number | string): boolean {
 }
 
 /**
- * Sanitize string input (remove special characters)
+ * Sanitize string input (prevent XSS)
  *
  * @param input - String to sanitize
  * @returns Sanitized string
  */
 export function sanitizeString(input: string): string {
-  return input.replace(/[<>]/g, '')
+  return input
+    .replace(/[<>]/g, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+=/gi, '')
+    .trim()
+}
+
+/**
+ * Sanitize HTML content (more aggressive)
+ *
+ * @param html - HTML string to sanitize
+ * @returns Sanitized HTML string
+ */
+export function sanitizeHTML(html: string): string {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+    .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
+    .replace(/<embed[^>]*>/gi, '')
+    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/javascript:/gi, '')
+    .trim()
 }
 
 /**
