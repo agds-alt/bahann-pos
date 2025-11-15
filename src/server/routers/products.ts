@@ -241,4 +241,47 @@ export const productsRouter = router({
     const categories = [...new Set(data.map((p) => p.category).filter(Boolean))]
     return categories as string[]
   }),
+
+  /**
+   * Batch update category - ADMIN ONLY
+   */
+  batchUpdateCategory: adminProcedure
+    .input(
+      z.object({
+        productIds: z.array(z.string().uuid()).min(1),
+        category: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { productIds, category } = input
+
+      // Update all selected products
+      const { error } = await supabase
+        .from('products')
+        .update({ category: category || null })
+        .in('id', productIds)
+
+      if (error) {
+        throw new Error(`Failed to batch update: ${error.message}`)
+      }
+
+      // Audit log
+      await createAuditLog({
+        userId: ctx.userId,
+        userEmail: ctx.session?.email || 'unknown',
+        action: 'UPDATE',
+        entityType: 'product',
+        entityId: 'batch',
+        changes: {
+          productIds,
+          newCategory: category,
+        },
+        metadata: {
+          count: productIds.length,
+          category,
+        },
+      })
+
+      return { success: true, count: productIds.length }
+    }),
 })

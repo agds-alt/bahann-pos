@@ -13,6 +13,8 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set())
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false)
   const { showToast } = useToast()
 
   const { data: productsResponse, isLoading, refetch } = trpc.products.getAll.useQuery({
@@ -51,6 +53,36 @@ export default function ProductsPage() {
   const handleAddNew = () => {
     setEditingProduct(null)
     setIsModalOpen(true)
+  }
+
+  const handleToggleSelect = (productId: string) => {
+    const newSelected = new Set(selectedProducts)
+    if (newSelected.has(productId)) {
+      newSelected.delete(productId)
+    } else {
+      newSelected.add(productId)
+    }
+    setSelectedProducts(newSelected)
+  }
+
+  const handleSelectAll = () => {
+    if (selectedProducts.size === products.length) {
+      setSelectedProducts(new Set())
+    } else {
+      setSelectedProducts(new Set(products.map(p => p.id)))
+    }
+  }
+
+  const handleBatchUpdateCategory = () => {
+    if (selectedProducts.size === 0) {
+      showToast('Please select at least one product', 'error')
+      return
+    }
+    setIsBatchModalOpen(true)
+  }
+
+  const handleClearSelection = () => {
+    setSelectedProducts(new Set())
   }
 
   const formatCurrency = (amount: number | null) => {
@@ -108,6 +140,27 @@ export default function ProductsPage() {
           </div>
         </Card>
       </div>
+
+      {/* Batch Action Toolbar */}
+      {selectedProducts.size > 0 && (
+        <Card variant="elevated" padding="lg" className="bg-blue-50 border-2 border-blue-200">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-blue-900">
+                {selectedProducts.size} product{selectedProducts.size > 1 ? 's' : ''} selected
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="primary" size="sm" onClick={handleBatchUpdateCategory}>
+                🏷️ Update Category
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleClearSelection}>
+                ✕ Clear
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Filters and Actions */}
       <Card variant="elevated" padding="lg">
@@ -172,6 +225,14 @@ export default function ProductsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b-2 border-gray-200">
+                    <th className="text-center py-3 px-4 w-12">
+                      <input
+                        type="checkbox"
+                        checked={selectedProducts.size === products.length && products.length > 0}
+                        onChange={handleSelectAll}
+                        className="w-4 h-4 cursor-pointer"
+                      />
+                    </th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">SKU</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Name</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Category</th>
@@ -186,8 +247,17 @@ export default function ProductsPage() {
                       className={`
                         border-b border-gray-100 hover:bg-gray-50 transition-colors
                         ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                        ${selectedProducts.has(product.id) ? 'bg-blue-50' : ''}
                       `}
                     >
+                      <td className="py-4 px-4 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedProducts.has(product.id)}
+                          onChange={() => handleToggleSelect(product.id)}
+                          className="w-4 h-4 cursor-pointer"
+                        />
+                      </td>
                       <td className="py-4 px-4">
                         <span className="font-mono text-sm text-gray-900">{product.sku}</span>
                       </td>
@@ -247,6 +317,21 @@ export default function ProductsPage() {
             setIsModalOpen(false)
             setEditingProduct(null)
           }}
+        />
+      )}
+
+      {/* Batch Update Category Modal */}
+      {isBatchModalOpen && (
+        <BatchUpdateCategoryModal
+          selectedCount={selectedProducts.size}
+          onClose={() => setIsBatchModalOpen(false)}
+          onSuccess={() => {
+            refetch()
+            setIsBatchModalOpen(false)
+            setSelectedProducts(new Set())
+          }}
+          productIds={Array.from(selectedProducts)}
+          categories={categories || []}
         />
       )}
     </div>
@@ -381,6 +466,131 @@ function ProductFormModal({ product, onClose, onSuccess }: ProductFormModalProps
                 disabled={isLoading}
               >
                 {isLoading ? 'Saving...' : product ? 'Update Product' : 'Create Product'}
+              </Button>
+            </div>
+          </form>
+        </CardBody>
+      </Card>
+    </div>
+  )
+}
+
+/**
+ * Batch Update Category Modal
+ */
+interface BatchUpdateCategoryModalProps {
+  selectedCount: number
+  onClose: () => void
+  onSuccess: () => void
+  productIds: string[]
+  categories: string[]
+}
+
+function BatchUpdateCategoryModal({
+  selectedCount,
+  onClose,
+  onSuccess,
+  productIds,
+  categories,
+}: BatchUpdateCategoryModalProps) {
+  const [newCategory, setNewCategory] = useState('')
+  const { showToast } = useToast()
+
+  const batchUpdate = trpc.products.batchUpdateCategory.useMutation()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!newCategory.trim()) {
+      showToast('Please enter a category', 'error')
+      return
+    }
+
+    try {
+      const result = await batchUpdate.mutateAsync({
+        productIds,
+        category: newCategory.trim(),
+      })
+      showToast(`✅ ${result.count} products updated successfully!`, 'success')
+      onSuccess()
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update products'
+      showToast(errorMessage, 'error')
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <Card variant="elevated" padding="lg" className="w-full max-w-md">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Batch Update Category</CardTitle>
+            <button
+              onClick={onClose}
+              className="text-2xl text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+          </div>
+        </CardHeader>
+
+        <CardBody>
+          <div className="mb-4 p-3 bg-blue-50 border-2 border-blue-200 rounded-xl">
+            <p className="text-sm text-blue-900 font-semibold">
+              {selectedCount} product{selectedCount > 1 ? 's' : ''} selected
+            </p>
+            <p className="text-xs text-blue-700 mt-1">
+              The category will be updated for all selected products
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Input
+                label="New Category *"
+                type="text"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                placeholder="e.g., Electronics"
+                fullWidth
+                required
+              />
+              {categories.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-xs text-gray-600 mb-1">Existing categories:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {categories.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setNewCategory(cat)}
+                        className="px-2 py-1 text-xs bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-900 rounded-md transition-colors"
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={onClose}
+                fullWidth
+                disabled={batchUpdate.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                fullWidth
+                disabled={batchUpdate.isPending}
+              >
+                {batchUpdate.isPending ? 'Updating...' : 'Update All'}
               </Button>
             </div>
           </form>
