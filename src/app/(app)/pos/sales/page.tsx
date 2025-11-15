@@ -436,7 +436,7 @@ export default function SalesTransactionPage() {
                     <Button
                       variant="primary"
                       onClick={handleAddToCart}
-                      disabled={!selectedProduct || productsLoading || (selectedOutletId && availableStock === 0)}
+                      disabled={!selectedProduct || productsLoading || (!!selectedOutletId && availableStock === 0)}
                     >
                       ➕ Add to Cart
                     </Button>
