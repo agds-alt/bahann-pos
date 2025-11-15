@@ -10,6 +10,7 @@ import { cashSessionsRouter } from './cashSessions'
 import { promotionsRouter } from './promotions'
 import { stockAlertsRouter } from './stockAlerts'
 import { usersRouter } from './users'
+import { auditRouter } from './audit'
 
 /**
  * Main tRPC app router
@@ -27,6 +28,7 @@ export const appRouter = router({
   promotions: promotionsRouter,
   stockAlerts: stockAlertsRouter,
   users: usersRouter,
+  audit: auditRouter,
 })
 
 export type AppRouter = typeof appRouter
