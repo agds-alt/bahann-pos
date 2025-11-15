@@ -29,21 +29,24 @@ export const dashboardRouter = router({
         .from('outlets')
         .select('*', { count: 'exact', head: true })
 
-      // Get today's sales
-      let salesQuery = supabase
-        .from('daily_sales')
-        .select('quantity_sold, revenue')
-        .gte('sale_date', startDate)
-        .lte('sale_date', endDate)
+      // Get sales from transactions table (more reliable than daily_sales)
+      let transactionsQuery = supabase
+        .from('transactions')
+        .select('total_amount, created_at, transaction_items(quantity)')
+        .eq('status', 'completed')
+        .gte('created_at', `${startDate}T00:00:00`)
+        .lte('created_at', `${endDate}T23:59:59`)
 
       if (input?.outletId) {
-        salesQuery = salesQuery.eq('outlet_id', input.outletId)
+        transactionsQuery = transactionsQuery.eq('outlet_id', input.outletId)
       }
 
-      const { data: salesData } = await salesQuery
+      const { data: transactions } = await transactionsQuery
 
-      const totalRevenue = salesData?.reduce((sum, sale) => sum + (sale.revenue || 0), 0) || 0
-      const totalItemsSold = salesData?.reduce((sum, sale) => sum + (sale.quantity_sold || 0), 0) || 0
+      const totalRevenue = transactions?.reduce((sum, tx) => sum + (tx.total_amount || 0), 0) || 0
+      const totalItemsSold = transactions?.reduce((sum, tx) => {
+        return sum + (tx.transaction_items?.reduce((itemSum: number, item: any) => itemSum + (item.quantity || 0), 0) || 0)
+      }, 0) || 0
 
       // Get low stock items (stock < 10)
       let stockQuery = supabase
@@ -64,12 +67,12 @@ export const dashboardRouter = router({
         totalRevenue,
         totalItemsSold,
         lowStockCount: lowStockCount || 0,
-        transactionCount: salesData?.length || 0,
+        transactionCount: transactions?.length || 0,
       }
     }),
 
   /**
-   * Get sales trend (last 7 days)
+   * Get sales trend (last 7 days) - from transactions table
    */
   getSalesTrend: protectedProcedure
     .input(
@@ -84,18 +87,20 @@ export const dashboardRouter = router({
       const startDate = new Date()
       startDate.setDate(startDate.getDate() - (days - 1))
 
+      // Query from transactions table
       let query = supabase
-        .from('daily_sales')
-        .select('sale_date, quantity_sold, revenue')
-        .gte('sale_date', startDate.toISOString().split('T')[0])
-        .lte('sale_date', endDate.toISOString().split('T')[0])
-        .order('sale_date', { ascending: true })
+        .from('transactions')
+        .select('created_at, total_amount, transaction_items(quantity)')
+        .eq('status', 'completed')
+        .gte('created_at', `${startDate.toISOString().split('T')[0]}T00:00:00`)
+        .lte('created_at', `${endDate.toISOString().split('T')[0]}T23:59:59`)
+        .order('created_at', { ascending: true })
 
       if (input?.outletId) {
         query = query.eq('outlet_id', input.outletId)
       }
 
-      const { data } = await query
+      const { data: transactions } = await query
 
       // Group by date
       const trendMap: Record<string, { date: string; revenue: number; itemsSold: number }> = {}
@@ -108,11 +113,14 @@ export const dashboardRouter = router({
         trendMap[dateStr] = { date: dateStr, revenue: 0, itemsSold: 0 }
       }
 
-      // Fill with actual data
-      data?.forEach((sale) => {
-        if (trendMap[sale.sale_date]) {
-          trendMap[sale.sale_date].revenue += sale.revenue || 0
-          trendMap[sale.sale_date].itemsSold += sale.quantity_sold || 0
+      // Fill with actual data from transactions
+      transactions?.forEach((tx: any) => {
+        const txDate = new Date(tx.created_at).toISOString().split('T')[0]
+        if (trendMap[txDate]) {
+          trendMap[txDate].revenue += tx.total_amount || 0
+          // Sum all items quantity
+          const itemsCount = tx.transaction_items?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0
+          trendMap[txDate].itemsSold += itemsCount
         }
       })
 
@@ -120,7 +128,7 @@ export const dashboardRouter = router({
     }),
 
   /**
-   * Get top selling products (OPTIMIZED - using JOIN to avoid N+1)
+   * Get top selling products - from transactions table
    */
   getTopProducts: protectedProcedure
     .input(
@@ -138,25 +146,29 @@ export const dashboardRouter = router({
       const startDate = new Date()
       startDate.setDate(startDate.getDate() - (days - 1))
 
-      // OPTIMIZED: Use JOIN to fetch all data in a single query
+      // Query from transactions table with transaction_items
       let query = supabase
-        .from('daily_sales')
+        .from('transactions')
         .select(`
-          product_id,
-          quantity_sold,
-          revenue,
-          products!inner(id, name, sku)
+          transaction_items (
+            product_id,
+            product_name,
+            product_sku,
+            quantity,
+            line_total
+          )
         `)
-        .gte('sale_date', startDate.toISOString().split('T')[0])
-        .lte('sale_date', endDate.toISOString().split('T')[0])
+        .eq('status', 'completed')
+        .gte('created_at', `${startDate.toISOString().split('T')[0]}T00:00:00`)
+        .lte('created_at', `${endDate.toISOString().split('T')[0]}T23:59:59`)
 
       if (input?.outletId) {
         query = query.eq('outlet_id', input.outletId)
       }
 
-      const { data: salesData } = await query
+      const { data: transactions } = await query
 
-      // Group by product (data already includes product details from JOIN)
+      // Group by product
       const productMap: Record<string, {
         productId: string
         productName: string
@@ -165,18 +177,21 @@ export const dashboardRouter = router({
         totalRevenue: number
       }> = {}
 
-      salesData?.forEach((sale: any) => {
-        if (!productMap[sale.product_id]) {
-          productMap[sale.product_id] = {
-            productId: sale.product_id,
-            productName: sale.products?.name || 'Unknown',
-            productSku: sale.products?.sku || 'N/A',
-            totalQuantity: 0,
-            totalRevenue: 0,
+      // Flatten transaction_items and aggregate by product
+      transactions?.forEach((tx: any) => {
+        tx.transaction_items?.forEach((item: any) => {
+          if (!productMap[item.product_id]) {
+            productMap[item.product_id] = {
+              productId: item.product_id,
+              productName: item.product_name || 'Unknown',
+              productSku: item.product_sku || 'N/A',
+              totalQuantity: 0,
+              totalRevenue: 0,
+            }
           }
-        }
-        productMap[sale.product_id].totalQuantity += sale.quantity_sold || 0
-        productMap[sale.product_id].totalRevenue += sale.revenue || 0
+          productMap[item.product_id].totalQuantity += item.quantity || 0
+          productMap[item.product_id].totalRevenue += item.line_total || 0
+        })
       })
 
       // Sort and limit
