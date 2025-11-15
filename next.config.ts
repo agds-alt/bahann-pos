@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
   // Enable strict mode for better error detection
   reactStrictMode: true,
 
+  // Turbopack configuration (Next.js 16+)
+  // Empty config acknowledges Turbopack but allows webpack config below
+  turbopack: {},
+
   // Performance optimizations
   experimental: {
     // Enable optimizeCss for production builds
