@@ -63,7 +63,9 @@ export default function SalesHistoryPage() {
     return (
       transaction.productName.toLowerCase().includes(query) ||
       transaction.outletName.toLowerCase().includes(query) ||
-      transaction.productSku?.toLowerCase().includes(query)
+      transaction.productSku?.toLowerCase().includes(query) ||
+      transaction.transactionId?.toLowerCase().includes(query) ||
+      transaction.cashierName?.toLowerCase().includes(query)
     )
   })
 
@@ -108,7 +110,7 @@ export default function SalesHistoryPage() {
             <Input
               type="text"
               label="Search"
-              placeholder="Product name, SKU, outlet..."
+              placeholder="Transaction ID, product, SKU, outlet, cashier..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               fullWidth
@@ -246,9 +248,11 @@ export default function SalesHistoryPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b-2 border-gray-200">
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Transaction ID</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Date & Time</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Product</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Outlet</th>
+                    <th className="text-center py-3 px-4 font-semibold text-gray-700">Status</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-700">Quantity</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-700">Revenue</th>
                   </tr>
@@ -261,6 +265,11 @@ export default function SalesHistoryPage() {
                         index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                       }`}
                     >
+                      <td className="py-4 px-4">
+                        <p className="text-xs font-mono text-gray-600">
+                          {transaction.transactionId || 'N/A'}
+                        </p>
+                      </td>
                       <td className="py-4 px-4">
                         <p className="text-sm font-semibold text-gray-900">
                           {formatDateTime(transaction.date)}
@@ -276,6 +285,24 @@ export default function SalesHistoryPage() {
                       </td>
                       <td className="py-4 px-4">
                         <p className="text-gray-700">{transaction.outletName}</p>
+                        {transaction.cashierName && (
+                          <p className="text-xs text-gray-500">
+                            Cashier: {transaction.cashierName}
+                          </p>
+                        )}
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          transaction.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          transaction.status === 'voided' ? 'bg-red-100 text-red-800' :
+                          transaction.status === 'refunded' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {transaction.status === 'completed' ? '✓ Completed' :
+                           transaction.status === 'voided' ? '✕ Voided' :
+                           transaction.status === 'refunded' ? '↩ Refunded' :
+                           transaction.status || 'Unknown'}
+                        </span>
                       </td>
                       <td className="py-4 px-4 text-right">
                         <span className="px-3 py-1 bg-blue-100 text-blue-800 font-semibold rounded-full text-sm">

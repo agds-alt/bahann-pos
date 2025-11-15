@@ -238,7 +238,7 @@ export const dashboardRouter = router({
     }),
 
   /**
-   * Get recent transactions (OPTIMIZED - using JOIN to avoid N+1)
+   * Get recent transactions (MIGRATED - using transactions table for reliability)
    */
   getRecentTransactions: protectedProcedure
     .input(
@@ -250,19 +250,26 @@ export const dashboardRouter = router({
     .query(async ({ input }) => {
       const limit = input?.limit || 10
 
-      // OPTIMIZED: Use JOIN to fetch all data in a single query
+      // Query from transactions table with JOIN to get all related data
       let query = supabase
-        .from('daily_sales')
+        .from('transactions')
         .select(`
           id,
-          product_id,
+          transaction_id,
           outlet_id,
-          sale_date,
-          quantity_sold,
-          revenue,
+          status,
+          total_amount,
           created_at,
-          products!inner(id, name, sku),
-          outlets!inner(id, name)
+          transaction_items (
+            product_id,
+            product_name,
+            product_sku,
+            quantity,
+            unit_price,
+            line_total
+          ),
+          outlets!inner(id, name),
+          cashier:users!cashier_id(id, name, email)
         `)
         .order('created_at', { ascending: false })
         .limit(limit)
@@ -271,20 +278,51 @@ export const dashboardRouter = router({
         query = query.eq('outlet_id', input.outletId)
       }
 
-      const { data: sales } = await query
+      const { data: transactions } = await query
 
-      if (!sales || sales.length === 0) return []
+      if (!transactions || transactions.length === 0) return []
 
-      // Map the joined data
-      return sales.map((sale: any) => ({
-        id: sale.id,
-        productName: sale.products?.name || 'Unknown',
-        productSku: sale.products?.sku || 'N/A',
-        outletName: sale.outlets?.name || 'Unknown',
-        date: sale.sale_date,
-        quantity: sale.quantity_sold,
-        revenue: sale.revenue,
-        createdAt: sale.created_at,
-      }))
+      // Map transactions to flat format for compatibility with existing UI
+      // Each transaction item becomes a separate row
+      const flatTransactions: any[] = []
+
+      transactions.forEach((tx: any) => {
+        if (tx.transaction_items && tx.transaction_items.length > 0) {
+          tx.transaction_items.forEach((item: any) => {
+            flatTransactions.push({
+              id: `${tx.id}-${item.product_id}`,
+              transactionId: tx.transaction_id,
+              productName: item.product_name,
+              productSku: item.product_sku || 'N/A',
+              outletName: tx.outlets?.name || 'Unknown',
+              cashierName: tx.cashier?.name || 'Unknown',
+              date: tx.created_at,
+              quantity: item.quantity,
+              revenue: item.line_total,
+              status: tx.status,
+              totalAmount: tx.total_amount,
+              createdAt: tx.created_at,
+            })
+          })
+        } else {
+          // Transaction without items (shouldn't happen, but handle gracefully)
+          flatTransactions.push({
+            id: tx.id,
+            transactionId: tx.transaction_id,
+            productName: 'No items',
+            productSku: 'N/A',
+            outletName: tx.outlets?.name || 'Unknown',
+            cashierName: tx.cashier?.name || 'Unknown',
+            date: tx.created_at,
+            quantity: 0,
+            revenue: 0,
+            status: tx.status,
+            totalAmount: tx.total_amount,
+            createdAt: tx.created_at,
+          })
+        }
+      })
+
+      return flatTransactions
     }),
 })
