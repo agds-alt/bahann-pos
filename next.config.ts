@@ -12,10 +12,6 @@ const nextConfig: NextConfig = {
   // Enable strict mode for better error detection
   reactStrictMode: true,
 
-  // Turbopack configuration (Next.js 16+)
-  // Empty config acknowledges Turbopack but allows webpack config below
-  turbopack: {},
-
   // Performance optimizations
   experimental: {
     // Enable optimizeCss for production builds
@@ -67,46 +63,6 @@ const nextConfig: NextConfig = {
         ]
       }
     ]
-  },
-
-  // Webpack bundle optimization
-  webpack: (config, { isServer }) => {
-    // Optimize bundle size
-    if (!isServer) {
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            // Separate Recharts into its own chunk
-            recharts: {
-              test: /[\\/]node_modules[\\/](recharts|d3-.*)[\\/]/,
-              name: 'recharts',
-              priority: 20,
-            },
-            // Separate tRPC into its own chunk
-            trpc: {
-              test: /[\\/]node_modules[\\/](@trpc|@tanstack\/react-query)[\\/]/,
-              name: 'trpc',
-              priority: 15,
-            },
-            // Separate Supabase into its own chunk
-            supabase: {
-              test: /[\\/]node_modules[\\/](@supabase)[\\/]/,
-              name: 'supabase',
-              priority: 15,
-            },
-            // Default vendor chunk
-            defaultVendors: {
-              test: /[\\/]node_modules[\\/]/,
-              priority: 10,
-              reuseExistingChunk: true,
-            },
-          },
-        },
-      }
-    }
-    return config
   },
 };
 

@@ -16,12 +16,12 @@ export const TransactionIdSchema = z.object({
 })
 
 export const PaymentMethodSchema = z.enum(['cash', 'card', 'transfer', 'ewallet'], {
-  errorMap: () => ({ message: 'Invalid payment method' }),
+  message: 'Invalid payment method',
 })
 
 export const TransactionStatusSchema = z.enum(
   ['pending', 'completed', 'voided', 'refunded'],
-  { errorMap: () => ({ message: 'Invalid transaction status' }) }
+  { message: 'Invalid transaction status' }
 )
 
 // ============================================================================

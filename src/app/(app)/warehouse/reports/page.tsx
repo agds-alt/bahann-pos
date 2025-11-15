@@ -2,7 +2,8 @@
 
 import { lazy, Suspense, useState } from 'react'
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Select, Button } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
 import { trpc } from '@/lib/trpc/client'
 import { ChartSkeleton, ExportLoadingSkeleton } from '@/components/ui/Skeletons'
 import { formatCurrency, formatDate } from '@/lib/utils'

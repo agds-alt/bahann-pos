@@ -4,7 +4,6 @@
 'use client'
 
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
-import { ChartLabelProps } from '@/types'
 
 interface RevenuePieChartProps {
   data: Array<{ name: string; value: number; color: string }>
@@ -26,7 +25,7 @@ export default function RevenuePieChartLazy({
             cx="50%"
             cy="50%"
             labelLine={false}
-            label={(props: ChartLabelProps) => {
+            label={(props: any) => {
               const name = props.value as string
               const percent = (props.index !== undefined && data[props.index])
                 ? (data[props.index].value / data.reduce((sum, d) => sum + d.value, 0)) * 100

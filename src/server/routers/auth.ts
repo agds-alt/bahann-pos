@@ -29,7 +29,7 @@ export const authRouter = router({
       const result = await useCase.execute(input)
 
       // Create refresh token and new short-lived access token
-      const { refreshToken, accessToken } = await createRefreshToken(result.user.id)
+      const { refreshToken, accessToken } = await createRefreshToken(result.userId)
 
       // Set httpOnly cookies (access token = 30 min, refresh token = 30 days)
       await setAuthCookie(accessToken)
@@ -37,14 +37,12 @@ export const authRouter = router({
 
       // Audit log for registration
       await createAuditLog({
-        userId: result.user.id,
-        userEmail: result.user.email,
+        userId: result.userId,
+        userEmail: result.email,
         action: 'REGISTER',
         entityType: 'auth',
         metadata: {
-          name: result.user.name,
-          role: result.user.role,
-          outletId: result.user.outletId,
+          name: result.name,
         },
       })
 

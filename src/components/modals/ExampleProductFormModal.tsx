@@ -17,7 +17,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
-import { Input, TextArea, Select } from '@/components/ui/Input'
+import { Input, Textarea, Select } from '@/components/ui/Input'
 
 interface ProductFormModalProps {
   onSubmit: (data: any) => void | Promise<void>
@@ -165,7 +165,7 @@ export default function ExampleProductFormModal({
         />
       </div>
 
-      <TextArea
+      <Textarea
         label="Description"
         value={formData.description}
         onChange={(e) => handleChange('description', e.target.value)}
