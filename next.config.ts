@@ -82,13 +82,12 @@ const nextConfig: NextConfig = {
 
 export default withSentryConfig(nextConfig, {
   // Sentry build options
-  silent: true, // Suppresses Sentry CLI logs
+  silent: true,
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
 
-  // Upload source maps only in production
+  // Source maps
   widenClientFileUpload: true,
   tunnelRoute: "/monitoring",
-  hideSourceMaps: true,
   disableLogger: true,
 });
