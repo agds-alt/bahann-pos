@@ -49,6 +49,13 @@ export default function SalesTransactionPage() {
   const products = productsResponse?.products || []
   const outlets = outletsResponse?.outlets || []
 
+  // Fetch inventory with stock (filtered by selected outlet)
+  const { data: inventoryList } = trpc.stock.getInventoryList.useQuery({
+    outletId: selectedOutletId || undefined,
+  }, {
+    enabled: !!selectedOutletId, // Only fetch when outlet is selected
+  })
+
   // Fetch real dashboard data
   const { data: recentTransactions, refetch: refetchTransactions } = trpc.dashboard.getRecentTransactions.useQuery({ limit: 5 })
 
@@ -60,6 +67,10 @@ export default function SalesTransactionPage() {
   const selectedProduct = products?.find(p => p.id === selectedProductId)
   const selectedOutlet = outlets?.find(o => o.id === selectedOutletId)
 
+  // Get stock info for selected product
+  const selectedProductStock = inventoryList?.find(p => p.id === selectedProductId)
+  const availableStock = selectedProductStock?.currentStock || 0
+
   // Add item to cart
   const handleAddToCart = () => {
     if (!selectedProduct) {
@@ -69,6 +80,12 @@ export default function SalesTransactionPage() {
 
     if (quantity <= 0) {
       setError('Quantity must be greater than 0')
+      return
+    }
+
+    // Check stock availability
+    if (selectedOutletId && availableStock < quantity) {
+      setError(`Insufficient stock! Only ${availableStock} units available`)
       return
     }
 
@@ -343,29 +360,57 @@ export default function SalesTransactionPage() {
             </CardHeader>
             <CardBody>
               <div className="space-y-4">
+                {!selectedOutletId && (
+                  <div className="p-3 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
+                    <p className="text-xs text-yellow-800 font-semibold">
+                      ⚠️ Please select an outlet first to view product stock
+                    </p>
+                  </div>
+                )}
                 <Select
                   label="Select Product"
                   value={selectedProductId}
                   onChange={(e) => setSelectedProductId(e.target.value)}
                   options={[
-                    { value: '', label: 'Choose a product...' },
-                    ...(products?.map(product => ({
-                      value: product.id,
-                      label: `${product.name} - ${formatCurrency(product.price || 0)}`,
-                    })) || []),
+                    { value: '', label: selectedOutletId ? 'Choose a product...' : 'Select outlet first...' },
+                    ...(products?.map(product => {
+                      const stockInfo = inventoryList?.find(p => p.id === product.id)
+                      const stock = stockInfo?.currentStock || 0
+                      const stockLabel = selectedOutletId
+                        ? ` • Stock: ${stock}`
+                        : ''
+                      return {
+                        value: product.id,
+                        label: `${product.name} - ${formatCurrency(product.price || 0)}${stockLabel}`,
+                      }
+                    }) || []),
                   ]}
                   fullWidth
+                  disabled={!selectedOutletId}
                 />
 
                 {selectedProduct && (
                   <div className="p-3 bg-blue-50 border-2 border-blue-200 rounded-xl">
                     <div className="flex justify-between items-start">
-                      <div>
+                      <div className="flex-1">
                         <p className="text-xs text-blue-600 font-semibold">Selected Product:</p>
                         <p className="text-sm font-semibold text-blue-900">{selectedProduct.name}</p>
                         <p className="text-xs text-blue-700">
                           SKU: {selectedProduct.sku} • {selectedProduct.category || 'N/A'}
                         </p>
+                        {selectedOutletId && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className={`text-xs font-bold ${
+                              availableStock === 0 ? 'text-red-600' :
+                              availableStock <= 10 ? 'text-yellow-600' :
+                              'text-green-600'
+                            }`}>
+                              {availableStock === 0 ? '❌ Out of stock' :
+                               availableStock <= 10 ? `⚠️ Low stock: ${availableStock} units` :
+                               `✅ In stock: ${availableStock} units`}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-bold text-blue-900">
@@ -391,7 +436,7 @@ export default function SalesTransactionPage() {
                     <Button
                       variant="primary"
                       onClick={handleAddToCart}
-                      disabled={!selectedProduct || productsLoading}
+                      disabled={!selectedProduct || productsLoading || (selectedOutletId && availableStock === 0)}
                     >
                       ➕ Add to Cart
                     </Button>
