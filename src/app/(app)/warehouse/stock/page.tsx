@@ -146,7 +146,7 @@ export default function StockManagementPage() {
                   { value: '', label: 'Choose an outlet...' },
                   ...(outlets?.map(outlet => ({
                     value: outlet.id,
-                    label: `${outlet.name} (${outlet.address})`,
+                    label: outlet.address ? `${outlet.name} (${outlet.address})` : outlet.name,
                   })) || []),
                 ]}
                 fullWidth
