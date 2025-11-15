@@ -88,7 +88,6 @@ export default withSentryConfig(nextConfig, {
 
   // Upload source maps only in production
   widenClientFileUpload: true,
-  transpileClientSDK: true,
   tunnelRoute: "/monitoring",
   hideSourceMaps: true,
   disableLogger: true,
