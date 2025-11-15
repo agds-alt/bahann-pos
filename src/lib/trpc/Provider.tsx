@@ -20,7 +20,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
     defaultOptions: {
       queries: {
         staleTime: 5 * 60 * 1000, // 5 minutes (reduce API calls)
-        cacheTime: 10 * 60 * 1000, // 10 minutes (keep in memory)
+        gcTime: 10 * 60 * 1000, // 10 minutes (keep in memory)
         refetchOnWindowFocus: false, // Don't refetch on window focus
         refetchOnReconnect: true, // Refetch on network reconnect
         retry: 2, // Retry failed requests twice
