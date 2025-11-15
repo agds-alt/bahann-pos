@@ -31,9 +31,9 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
 
     const paddingStyles = {
       none: '',
-      sm: 'p-4',
-      md: 'p-6',
-      lg: 'p-8',
+      sm: 'p-3 sm:p-4',
+      md: 'p-4 sm:p-6',
+      lg: 'p-5 sm:p-8',
     }
 
     return (
@@ -71,7 +71,7 @@ CardHeader.displayName = 'CardHeader'
 export const CardTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingElement>>(
   ({ children, className = '', ...props }, ref) => {
     return (
-      <h3 ref={ref} className={`text-2xl font-bold text-gray-900 ${className}`} {...props}>
+      <h3 ref={ref} className={`text-lg sm:text-xl md:text-2xl font-bold text-gray-900 ${className}`} {...props}>
         {children}
       </h3>
     )
