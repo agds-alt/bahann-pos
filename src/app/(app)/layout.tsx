@@ -13,8 +13,9 @@ export default function AppGroupLayout({
 
   useEffect(() => {
     // Check if user is authenticated
-    const token = localStorage.getItem('auth_token')
-    if (!token) {
+    // Token is stored in httpOnly cookie, check user data presence
+    const user = localStorage.getItem('user')
+    if (!user) {
       router.push('/login')
     }
   }, [router])
