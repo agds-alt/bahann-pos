@@ -274,6 +274,10 @@ export default function SalesTransactionPage() {
       setIsPrintModalOpen(true)
       setShowSuccess(true)
 
+      // Debug log
+      console.log('Receipt data:', receipt)
+      console.log('Print modal opened:', true)
+
       // Refetch transactions
       refetchTransactions()
 
