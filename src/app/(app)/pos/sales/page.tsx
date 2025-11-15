@@ -74,18 +74,18 @@ export default function SalesTransactionPage() {
   // Add item to cart
   const handleAddToCart = () => {
     if (!selectedProduct) {
-      setError('Please select a product')
+      setError('Silakan pilih produk')
       return
     }
 
     if (quantity <= 0) {
-      setError('Quantity must be greater than 0')
+      setError('Jumlah harus lebih dari 0')
       return
     }
 
     // Check stock availability
     if (selectedOutletId && availableStock < quantity) {
-      setError(`Insufficient stock! Only ${availableStock} units available`)
+      setError(`Stok tidak cukup! Hanya ${availableStock} unit tersedia`)
       return
     }
 
@@ -187,17 +187,17 @@ export default function SalesTransactionPage() {
     setShowSuccess(false)
 
     if (cart.length === 0) {
-      setError('Cart is empty. Please add items to cart.')
+      setError('Keranjang kosong. Silakan tambahkan item ke keranjang.')
       return
     }
 
     if (!selectedOutletId) {
-      setError('Please select an outlet')
+      setError('Silakan pilih outlet')
       return
     }
 
     if (paymentData.amountPaid < cartTotal) {
-      setError('Insufficient payment amount')
+      setError('Jumlah pembayaran tidak cukup')
       return
     }
 
@@ -293,7 +293,7 @@ export default function SalesTransactionPage() {
 
       setTimeout(() => setShowSuccess(false), 3000)
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to record sale'
+      const errorMessage = err instanceof Error ? err.message : 'Gagal mencatat penjualan'
       setError(errorMessage)
     }
   }
@@ -304,14 +304,14 @@ export default function SalesTransactionPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-4xl font-bold text-gray-900 mb-2">Point of Sale</h1>
-        <p className="text-gray-600">Process sales transactions with multi-item cart</p>
+        <p className="text-gray-600">Proses transaksi penjualan dengan keranjang multi-item</p>
       </div>
 
       {/* Success Message */}
       {showSuccess && (
         <div className="p-4 bg-green-50 border-2 border-green-200 rounded-xl">
           <p className="text-sm font-semibold text-green-600">
-            ✅ Sale completed successfully!
+            ✅ Penjualan berhasil dicatat!
           </p>
         </div>
       )}
@@ -331,14 +331,14 @@ export default function SalesTransactionPage() {
           {/* Outlet Selection */}
           <Card variant="elevated" padding="lg">
             <CardHeader>
-              <CardTitle>Select Outlet</CardTitle>
+              <CardTitle>Pilih Outlet</CardTitle>
             </CardHeader>
             <CardBody>
               <Select
                 value={selectedOutletId}
                 onChange={(e) => setSelectedOutletId(e.target.value)}
                 options={[
-                  { value: '', label: 'Choose an outlet...' },
+                  { value: '', label: 'Pilih outlet...' },
                   ...(outlets?.map(outlet => ({
                     value: outlet.id,
                     label: outlet.address ? `${outlet.name} - ${outlet.address}` : outlet.name,
@@ -349,7 +349,7 @@ export default function SalesTransactionPage() {
               />
               {selectedOutlet && (
                 <div className="mt-3 p-3 bg-purple-50 border-2 border-purple-200 rounded-xl">
-                  <p className="text-xs text-purple-600 font-semibold">Selected Outlet:</p>
+                  <p className="text-xs text-purple-600 font-semibold">Outlet Terpilih:</p>
                   <p className="text-sm font-semibold text-purple-900">{selectedOutlet.name}</p>
                   <p className="text-xs text-purple-700">{selectedOutlet.address}</p>
                 </div>
@@ -360,20 +360,20 @@ export default function SalesTransactionPage() {
           {/* Add Product to Cart */}
           <Card variant="elevated" padding="lg">
             <CardHeader>
-              <CardTitle>Add Item to Cart</CardTitle>
+              <CardTitle>Tambah Item ke Keranjang</CardTitle>
             </CardHeader>
             <CardBody>
               <div className="space-y-4">
                 {!selectedOutletId && (
                   <div className="p-3 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
                     <p className="text-xs text-yellow-800 font-semibold">
-                      ⚠️ Please select an outlet first to view product stock
+                      ⚠️ Silakan pilih outlet terlebih dahulu untuk melihat stok produk
                     </p>
                   </div>
                 )}
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-gray-700">
-                    Select Product
+                    Pilih Produk
                   </label>
                   <select
                     value={selectedProductId}
@@ -382,12 +382,12 @@ export default function SalesTransactionPage() {
                     className="input-mobile w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
                     <option value="">
-                      {selectedOutletId ? 'Choose a product...' : 'Select outlet first...'}
+                      {selectedOutletId ? 'Pilih produk...' : 'Pilih outlet terlebih dahulu...'}
                     </option>
                     {products?.map(product => {
                       const stockInfo = inventoryList?.find(p => p.id === product.id)
                       const stock = stockInfo?.currentStock || 0
-                      const stockStatus = stock === 0 ? '❌ Out' : stock <= 10 ? '⚠️ Low' : '✅'
+                      const stockStatus = stock === 0 ? '❌ Habis' : stock <= 10 ? '⚠️ Sedikit' : '✅'
 
                       return (
                         <option key={product.id} value={product.id}>
@@ -402,7 +402,7 @@ export default function SalesTransactionPage() {
                   <div className="p-3 bg-blue-50 border-2 border-blue-200 rounded-xl">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <p className="text-xs text-blue-600 font-semibold">Selected Product:</p>
+                        <p className="text-xs text-blue-600 font-semibold">Produk Terpilih:</p>
                         <p className="text-sm font-semibold text-blue-900">{selectedProduct.name}</p>
                         <p className="text-xs text-blue-700">
                           SKU: {selectedProduct.sku} • {selectedProduct.category || 'N/A'}
@@ -414,9 +414,9 @@ export default function SalesTransactionPage() {
                               availableStock <= 10 ? 'text-yellow-600' :
                               'text-green-600'
                             }`}>
-                              {availableStock === 0 ? '❌ Out of stock' :
-                               availableStock <= 10 ? `⚠️ Low stock: ${availableStock} units` :
-                               `✅ In stock: ${availableStock} units`}
+                              {availableStock === 0 ? '❌ Stok habis' :
+                               availableStock <= 10 ? `⚠️ Stok sedikit: ${availableStock} unit` :
+                               `✅ Tersedia: ${availableStock} unit`}
                             </span>
                           </div>
                         )}
@@ -434,7 +434,7 @@ export default function SalesTransactionPage() {
                   <div className="flex-1">
                     <Input
                       type="number"
-                      label="Quantity"
+                      label="Jumlah"
                       min="1"
                       value={quantity}
                       onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
@@ -447,7 +447,7 @@ export default function SalesTransactionPage() {
                       onClick={handleAddToCart}
                       disabled={!selectedProduct || productsLoading || (!!selectedOutletId && availableStock === 0)}
                     >
-                      ➕ Add to Cart
+                      ➕ Tambah ke Keranjang
                     </Button>
                   </div>
                 </div>
@@ -459,9 +459,9 @@ export default function SalesTransactionPage() {
           <Card variant="default" padding="lg">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>🛒 Shopping Cart</CardTitle>
+                <CardTitle>🛒 Keranjang Belanja</CardTitle>
                 <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">
-                  {cart.length} items
+                  {cart.length} item
                 </span>
               </div>
             </CardHeader>
@@ -469,8 +469,8 @@ export default function SalesTransactionPage() {
               {cart.length === 0 ? (
                 <div className="py-12 text-center text-gray-500">
                   <div className="text-6xl mb-4">🛒</div>
-                  <p className="font-semibold">Cart is empty</p>
-                  <p className="text-sm">Add products to start a transaction</p>
+                  <p className="font-semibold">Keranjang kosong</p>
+                  <p className="text-sm">Tambahkan produk untuk memulai transaksi</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -525,7 +525,7 @@ export default function SalesTransactionPage() {
 
                   {/* Cart Total */}
                   <div className="p-4 bg-gray-900 rounded-xl border-2 border-gray-700">
-                    <p className="text-sm text-gray-400 mb-1">Cart Total</p>
+                    <p className="text-sm text-gray-400 mb-1">Total Keranjang</p>
                     <p className="text-3xl font-bold text-white">
                       {formatCurrency(cartTotal)}
                     </p>
@@ -541,17 +541,17 @@ export default function SalesTransactionPage() {
           {/* Payment Section */}
           <Card variant="elevated" padding="lg">
             <CardHeader>
-              <CardTitle>Payment</CardTitle>
+              <CardTitle>Pembayaran</CardTitle>
             </CardHeader>
             <CardBody>
               <div className="space-y-4">
                 <Select
-                  label="Payment Method"
+                  label="Metode Pembayaran"
                   value={paymentData.method}
                   onChange={(e) => setPaymentData({ ...paymentData, method: e.target.value })}
                   options={[
-                    { value: 'cash', label: '💵 Cash' },
-                    { value: 'card', label: '💳 Card' },
+                    { value: 'cash', label: '💵 Tunai' },
+                    { value: 'card', label: '💳 Kartu' },
                     { value: 'transfer', label: '🏦 Transfer' },
                     { value: 'ewallet', label: '📱 E-Wallet' },
                   ]}
@@ -561,13 +561,13 @@ export default function SalesTransactionPage() {
                 {/* Promo Code Section */}
                 <div className="border-t pt-4">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Promo Code (Optional)
+                    Kode Promo (Opsional)
                   </label>
                   {!appliedPromo ? (
                     <div className="flex gap-2">
                       <Input
                         type="text"
-                        placeholder="Enter promo code"
+                        placeholder="Masukkan kode promo"
                         value={promoCode}
                         onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                         fullWidth
@@ -577,17 +577,17 @@ export default function SalesTransactionPage() {
                         onClick={handleApplyPromo}
                         disabled={!promoCode || validatePromoMutation.isPending}
                       >
-                        {validatePromoMutation.isPending ? 'Checking...' : 'Apply'}
+                        {validatePromoMutation.isPending ? 'Memeriksa...' : 'Terapkan'}
                       </Button>
                     </div>
                   ) : (
                     <div className="p-3 bg-green-50 border-2 border-green-200 rounded-xl">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-xs text-green-600 font-semibold">Applied</p>
+                          <p className="text-xs text-green-600 font-semibold">Diterapkan</p>
                           <p className="text-sm font-bold text-green-900">{appliedPromo.promoName}</p>
                           <p className="text-xs text-green-700">
-                            Discount: -{formatCurrency(appliedPromo.discountAmount)}
+                            Diskon: -{formatCurrency(appliedPromo.discountAmount)}
                           </p>
                         </div>
                         <Button
@@ -595,7 +595,7 @@ export default function SalesTransactionPage() {
                           size="sm"
                           onClick={handleRemovePromo}
                         >
-                          Remove
+                          Hapus
                         </Button>
                       </div>
                     </div>
@@ -611,7 +611,7 @@ export default function SalesTransactionPage() {
                     </div>
                     {discountAmount > 0 && (
                       <div className="flex justify-between text-sm text-green-600">
-                        <span>Discount:</span>
+                        <span>Diskon:</span>
                         <span className="font-semibold">-{formatCurrency(discountAmount)}</span>
                       </div>
                     )}
@@ -624,7 +624,7 @@ export default function SalesTransactionPage() {
 
                 <Input
                   type="number"
-                  label="Amount Paid"
+                  label="Jumlah Dibayar"
                   min="0"
                   step="1000"
                   value={paymentData.amountPaid}
@@ -635,7 +635,7 @@ export default function SalesTransactionPage() {
 
                 {change >= 0 && paymentData.amountPaid > 0 && (
                   <div className="p-4 bg-green-50 rounded-xl border-2 border-green-200">
-                    <p className="text-sm text-green-700 font-semibold">Change</p>
+                    <p className="text-sm text-green-700 font-semibold">Kembalian</p>
                     <p className="text-2xl font-bold text-green-900">
                       {formatCurrency(change)}
                     </p>
@@ -649,7 +649,7 @@ export default function SalesTransactionPage() {
                   onClick={handleCompleteSale}
                   disabled={recordSaleMutation.isPending || cart.length === 0 || !selectedOutletId || change < 0}
                 >
-                  {recordSaleMutation.isPending ? 'Processing...' : '✅ Complete Sale & Print'}
+                  {recordSaleMutation.isPending ? 'Memproses...' : '✅ Selesaikan & Cetak Struk'}
                 </Button>
               </div>
             </CardBody>
@@ -658,22 +658,22 @@ export default function SalesTransactionPage() {
           {/* Quick Stats */}
           <Card variant="default" padding="lg">
             <CardHeader>
-              <CardTitle>Session Stats</CardTitle>
+              <CardTitle>Statistik Sesi</CardTitle>
             </CardHeader>
             <CardBody>
               <div className="space-y-3">
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-600">Items in Cart</p>
+                  <p className="text-xs text-gray-600">Item di Keranjang</p>
                   <p className="text-xl font-bold text-gray-900">{cart.length}</p>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-600">Total Units</p>
+                  <p className="text-xs text-gray-600">Total Unit</p>
                   <p className="text-xl font-bold text-gray-900">
                     {cart.reduce((sum, item) => sum + item.quantity, 0)}
                   </p>
                 </div>
                 <div className="p-3 bg-green-50 rounded-lg">
-                  <p className="text-xs text-green-700">Cart Value</p>
+                  <p className="text-xs text-green-700">Nilai Keranjang</p>
                   <p className="text-xl font-bold text-green-900">{formatCurrency(cartTotal)}</p>
                 </div>
               </div>
@@ -685,12 +685,12 @@ export default function SalesTransactionPage() {
       {/* Recent Transactions */}
       <Card variant="default" padding="lg">
         <CardHeader>
-          <CardTitle>📊 Recent Transactions</CardTitle>
+          <CardTitle>📊 Transaksi Terbaru</CardTitle>
         </CardHeader>
         <CardBody>
           {!recentTransactions || recentTransactions.length === 0 ? (
             <div className="py-8 text-center text-gray-500">
-              No recent transactions
+              Tidak ada transaksi terbaru
             </div>
           ) : (
             <div className="space-y-3">
