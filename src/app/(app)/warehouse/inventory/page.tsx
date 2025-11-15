@@ -12,8 +12,9 @@ export default function InventoryMonitorPage() {
   // Fetch data
   const { data: outletsResponse } = trpc.outlets.getAll.useQuery()
   const outlets = outletsResponse?.outlets || []
-  const { data: productsResponse } = trpc.products.getAll.useQuery()
-  const products = productsResponse?.products || []
+  const { data: inventoryList, isLoading: inventoryLoading } = trpc.stock.getInventoryList.useQuery({
+    outletId: selectedOutletId || undefined,
+  })
   const { data: stats } = trpc.dashboard.getStats.useQuery({
     outletId: selectedOutletId || undefined,
   })
@@ -21,6 +22,8 @@ export default function InventoryMonitorPage() {
     outletId: selectedOutletId || undefined,
     threshold: stockThreshold,
   })
+
+  const products = inventoryList || []
 
   const selectedOutlet = outlets.find(o => o.id === selectedOutletId)
 
@@ -238,7 +241,12 @@ export default function InventoryMonitorPage() {
           <CardTitle>📋 All Products Inventory</CardTitle>
         </CardHeader>
         <CardBody>
-          {!products || products.length === 0 ? (
+          {inventoryLoading ? (
+            <div className="py-12 text-center text-gray-500">
+              <div className="text-4xl mb-4">⏳</div>
+              <p className="font-semibold">Loading inventory...</p>
+            </div>
+          ) : !products || products.length === 0 ? (
             <div className="py-12 text-center text-gray-500">
               <div className="text-6xl mb-4">📦</div>
               <p className="font-semibold">No products found</p>
@@ -252,39 +260,53 @@ export default function InventoryMonitorPage() {
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Product Name</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">SKU</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Category</th>
+                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Current Stock</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-700">Price</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map((product, index) => (
-                    <tr
-                      key={product.id}
-                      className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                      }`}
-                    >
-                      <td className="py-4 px-4">
-                        <p className="font-semibold text-gray-900">{product.name}</p>
-                      </td>
-                      <td className="py-4 px-4">
-                        <p className="text-gray-600 font-mono text-sm">{product.sku}</p>
-                      </td>
-                      <td className="py-4 px-4">
-                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                          {product.category || 'Uncategorized'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-right">
-                        <p className="font-semibold text-gray-900">
-                          {new Intl.NumberFormat('id-ID', {
-                            style: 'currency',
-                            currency: 'IDR',
-                            minimumFractionDigits: 0,
-                          }).format(product.price || 0)}
-                        </p>
-                      </td>
-                    </tr>
-                  ))}
+                  {products.map((product, index) => {
+                    const stockStatus = product.currentStock === 0 ? 'out' : product.currentStock <= 10 ? 'low' : 'normal'
+                    const stockColor = stockStatus === 'out' ? 'text-red-600' : stockStatus === 'low' ? 'text-yellow-600' : 'text-green-600'
+
+                    return (
+                      <tr
+                        key={product.id}
+                        className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                          index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                        }`}
+                      >
+                        <td className="py-4 px-4">
+                          <p className="font-semibold text-gray-900">{product.name}</p>
+                        </td>
+                        <td className="py-4 px-4">
+                          <p className="text-gray-600 font-mono text-sm">{product.sku}</p>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                            {product.category || 'Uncategorized'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          <p className={`text-xl font-bold ${stockColor}`}>
+                            {product.currentStock.toLocaleString()}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {stockStatus === 'out' ? '❌ Out of stock' : stockStatus === 'low' ? '⚠️ Low' : '✅ Available'}
+                          </p>
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          <p className="font-semibold text-gray-900">
+                            {new Intl.NumberFormat('id-ID', {
+                              style: 'currency',
+                              currency: 'IDR',
+                              minimumFractionDigits: 0,
+                            }).format(product.price || 0)}
+                          </p>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

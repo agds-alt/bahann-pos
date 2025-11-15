@@ -44,4 +44,72 @@ export const stockRouter = router({
       )
       return stock
     }),
+
+  /**
+   * Get inventory list with current stock quantities
+   */
+  getInventoryList: protectedProcedure
+    .input(
+      z.object({
+        outletId: z.string().uuid().optional(),
+      }).optional()
+    )
+    .query(async ({ input }) => {
+      const { supabase } = await import('@/infra/supabase/client')
+
+      // Get all products with their latest stock per outlet
+      const { data: products, error: productsError } = await supabase
+        .from('products')
+        .select('*')
+        .order('name', { ascending: true })
+
+      if (productsError) {
+        throw new Error(`Failed to fetch products: ${productsError.message}`)
+      }
+
+      // For each product, get latest stock
+      const inventoryList = await Promise.all(
+        (products || []).map(async (product) => {
+          let stockQuery = supabase
+            .from('daily_stock')
+            .select('outlet_id, stock_akhir, stock_date, outlets(name)')
+            .eq('product_id', product.id)
+
+          if (input?.outletId) {
+            stockQuery = stockQuery.eq('outlet_id', input.outletId)
+          }
+
+          const { data: stockRecords } = await stockQuery
+
+          // Group by outlet and get latest for each
+          const stockByOutlet = (stockRecords || []).reduce((acc: any[], record: any) => {
+            const existing = acc.find(r => r.outlet_id === record.outlet_id)
+            if (!existing || new Date(record.stock_date) > new Date(existing.stock_date)) {
+              return [...acc.filter(r => r.outlet_id !== record.outlet_id), record]
+            }
+            return acc
+          }, [])
+
+          // Calculate total stock across all outlets
+          const totalStock = stockByOutlet.reduce((sum, record) => sum + (record.stock_akhir || 0), 0)
+
+          return {
+            id: product.id,
+            sku: product.sku,
+            name: product.name,
+            category: product.category,
+            price: product.price,
+            currentStock: totalStock,
+            stockByOutlet: stockByOutlet.map((record: any) => ({
+              outletId: record.outlet_id,
+              outletName: record.outlets?.name || 'Unknown',
+              stock: record.stock_akhir || 0,
+              lastUpdated: record.stock_date,
+            })),
+          }
+        })
+      )
+
+      return inventoryList
+    }),
 })
