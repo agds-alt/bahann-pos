@@ -110,7 +110,7 @@ export const transactionsRouter = router({
 
         // Record in daily_sales for backward compatibility
         for (const item of input.items) {
-          await supabase.from('daily_sales').insert({
+          const { error: salesError } = await supabase.from('daily_sales').insert({
             product_id: item.productId,
             outlet_id: input.outletId,
             sale_date: new Date().toISOString().split('T')[0],
@@ -118,6 +118,12 @@ export const transactionsRouter = router({
             unit_price: item.unitPrice,
             revenue: item.quantity * item.unitPrice,
           })
+
+          if (salesError) {
+            console.error('Failed to insert daily_sales:', salesError)
+            // Don't fail the whole transaction, but log the error
+            // Transaction is already committed, daily_sales is just for reporting
+          }
         }
 
         // Create audit log
