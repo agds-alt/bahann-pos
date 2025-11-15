@@ -477,35 +477,37 @@ export default function SalesTransactionPage() {
                   {cart.map((item) => (
                     <div
                       key={item.productId}
-                      className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border-2 border-gray-200"
+                      className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-4 bg-gray-50 rounded-xl border-2 border-gray-200"
                     >
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-900">{item.productName}</p>
-                        <p className="text-sm text-gray-600">SKU: {item.productSku}</p>
-                        <p className="text-sm text-gray-700 font-semibold">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 truncate">{item.productName}</p>
+                        <p className="text-xs sm:text-sm text-gray-600 truncate">SKU: {item.productSku}</p>
+                        <p className="text-xs sm:text-sm text-gray-700 font-semibold">
                           {formatCurrency(item.unitPrice)} × {item.quantity}
                         </p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
+                        <div className="flex items-center gap-1 sm:gap-2">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleUpdateQuantity(item.productId, item.quantity - 1)}
+                            className="min-w-[36px] sm:min-w-[40px] px-2"
                           >
                             -
                           </Button>
-                          <span className="w-12 text-center font-bold">{item.quantity}</span>
+                          <span className="w-8 sm:w-12 text-center font-bold text-sm">{item.quantity}</span>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleUpdateQuantity(item.productId, item.quantity + 1)}
+                            className="min-w-[36px] sm:min-w-[40px] px-2"
                           >
                             +
                           </Button>
                         </div>
-                        <div className="w-32 text-right">
-                          <p className="text-lg font-bold text-gray-900">
+                        <div className="min-w-[80px] sm:min-w-[120px] text-right">
+                          <p className="text-base sm:text-lg font-bold text-gray-900">
                             {formatCurrency(item.total)}
                           </p>
                         </div>
@@ -513,6 +515,7 @@ export default function SalesTransactionPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleRemoveFromCart(item.productId)}
+                          className="min-w-[36px] sm:min-w-[40px] px-2"
                         >
                           🗑️
                         </Button>
