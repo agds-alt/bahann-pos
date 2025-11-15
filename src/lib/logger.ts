@@ -8,6 +8,8 @@
  * - Supports different log levels (debug, info, warn, error)
  */
 
+import * as Sentry from '@sentry/nextjs'
+
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
 interface LogContext {
@@ -35,20 +37,27 @@ class Logger {
 
   /**
    * Send log to external monitoring service
-   * TODO: Integrate with Sentry, LogRocket, or other monitoring services
    */
   private sendToMonitoring(level: LogLevel, message: string, context?: LogContext): void {
-    // Placeholder for external logging service integration
-    // Example integrations:
-    // - Sentry.captureMessage(message, { level, extra: context })
-    // - LogRocket.log(message, context)
-    // - Custom API endpoint for centralized logging
-
-    // For now, this is a no-op in production
+    // Only send to Sentry in production
     if (!this.isDevelopment) {
-      // In production, you might want to send critical errors to a monitoring service
+      // Map log levels to Sentry severity
+      const sentryLevel = level === 'debug' ? 'debug' :
+                          level === 'info' ? 'info' :
+                          level === 'warn' ? 'warning' : 'error'
+
       if (level === 'error') {
-        // TODO: Send to monitoring service
+        // For errors, capture as exception for better tracking
+        Sentry.captureException(new Error(message), {
+          level: sentryLevel,
+          extra: context,
+        })
+      } else if (level === 'warn') {
+        // For warnings, capture as message
+        Sentry.captureMessage(message, {
+          level: sentryLevel,
+          extra: context,
+        })
       }
     }
   }

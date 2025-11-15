@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 // Bundle Analyzer Configuration
 // Install with: npm install --save-dev @next/bundle-analyzer
@@ -79,4 +80,16 @@ const nextConfig: NextConfig = {
 //   enabled: process.env.ANALYZE === 'true',
 // })(nextConfig)
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Sentry build options
+  silent: true, // Suppresses Sentry CLI logs
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+
+  // Upload source maps only in production
+  widenClientFileUpload: true,
+  transpileClientSDK: true,
+  tunnelRoute: "/monitoring",
+  hideSourceMaps: true,
+  disableLogger: true,
+});
