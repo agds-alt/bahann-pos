@@ -391,14 +391,30 @@ export const PrintReceipt = forwardRef<HTMLDivElement, PrintReceiptProps>(
 
           /* Print Styles */
           @media print {
-            .receipt-container {
-              padding: 0;
-              max-width: 80mm;
+            @page {
+              size: 80mm auto;
               margin: 0;
+            }
+
+            body {
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+
+            .receipt-container {
+              padding: 0 !important;
+              max-width: 80mm !important;
+              width: 80mm !important;
+              margin: 0 !important;
+              background: white !important;
+              position: absolute;
+              left: 0;
+              top: 0;
             }
 
             .receipt {
               font-size: 11px;
+              background: white !important;
             }
 
             .receipt-divider,
@@ -408,6 +424,11 @@ export const PrintReceipt = forwardRef<HTMLDivElement, PrintReceiptProps>(
 
             .receipt-items-table tr {
               page-break-inside: avoid;
+            }
+
+            .receipt-notes {
+              background: white !important;
+              border-color: #000 !important;
             }
           }
         `}</style>

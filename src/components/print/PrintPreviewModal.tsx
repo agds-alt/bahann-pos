@@ -185,27 +185,49 @@ export function PrintPreviewModal({ isOpen, onClose, receiptData }: PrintPreview
         }
 
         @media print {
+          /* Hide all page content */
+          body * {
+            visibility: hidden !important;
+          }
+
+          /* Show only the receipt and its children */
+          .receipt-container,
+          .receipt-container * {
+            visibility: visible !important;
+          }
+
+          /* Position receipt for printing */
+          .receipt-container {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 80mm !important;
+          }
+
           .modal-overlay {
             background: white !important;
             backdrop-filter: none !important;
+            position: static !important;
           }
 
           .modal-header,
           .modal-footer {
             display: none !important;
+            visibility: hidden !important;
           }
 
           .modal-container {
-            max-width: none;
-            box-shadow: none;
-            border: none;
-            border-radius: 0;
-            max-height: none;
+            max-width: none !important;
+            box-shadow: none !important;
+            border: none !important;
+            border-radius: 0 !important;
+            max-height: none !important;
+            position: static !important;
           }
 
           .modal-body {
-            padding: 0;
-            overflow: visible;
+            padding: 0 !important;
+            overflow: visible !important;
           }
 
           .receipt-preview-wrapper {
