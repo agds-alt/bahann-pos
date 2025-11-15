@@ -18,6 +18,13 @@ const nextConfig: NextConfig = {
     optimizeCss: true,
   },
 
+  // Image optimization
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200],
+    imageSizes: [16, 32, 48, 64, 96],
+  },
+
   // Production build optimizations
   compiler: {
     // Remove console logs in production
