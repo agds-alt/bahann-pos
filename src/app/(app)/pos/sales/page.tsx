@@ -520,11 +520,11 @@ export default function SalesTransactionPage() {
                   </select>
                 </div>
 
-                {/* Barcode Scanner Section */}
-                <div className="space-y-3 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-xl">
+                {/* Barcode Scanner Section - Enhanced visibility for mobile */}
+                <div className="space-y-3 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-4 border-purple-400 rounded-xl shadow-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">📷</span>
-                    <p className="text-sm font-semibold text-gray-800">Scan Barcode</p>
+                    <span className="text-2xl">📷</span>
+                    <p className="text-base font-bold text-gray-900">Scan Barcode</p>
                   </div>
 
                   {/* Barcode Manual Input (USB Scanner) */}
@@ -563,13 +563,13 @@ export default function SalesTransactionPage() {
                   </div>
 
                   {/* Camera Scanner Button */}
-                  <div className="pt-2 border-t border-purple-200">
+                  <div className="pt-2 border-t-2 border-purple-300">
                     <Button
                       variant="secondary"
                       onClick={() => setIsScannerOpen(true)}
                       disabled={!selectedOutletId}
                       fullWidth
-                      className="bg-white hover:bg-purple-50"
+                      className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-bold py-3 shadow-md"
                     >
                       📷 Buka Kamera Scanner
                     </Button>
