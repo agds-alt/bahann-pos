@@ -882,10 +882,12 @@ export default function SalesTransactionPage() {
                   value={paymentData.method}
                   onChange={(e) => setPaymentData({ ...paymentData, method: e.target.value })}
                   options={[
-                    { value: 'cash', label: '💵 Tunai' },
-                    { value: 'card', label: '💳 Kartu' },
-                    { value: 'transfer', label: '🏦 Transfer' },
-                    { value: 'ewallet', label: '📱 E-Wallet' },
+                    { value: 'cash', label: '💵 Cash / Tunai' },
+                    { value: 'qris', label: '📱 QRIS' },
+                    { value: 'bank_transfer', label: '🏦 Bank Transfer' },
+                    { value: 'debit', label: '💳 Debit Card' },
+                    { value: 'credit', label: '💳 Credit Card' },
+                    { value: 'ewallet', label: '📲 E-Wallet (Manual)' },
                   ]}
                   fullWidth
                 />
