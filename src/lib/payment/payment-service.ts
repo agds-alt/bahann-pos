@@ -98,7 +98,7 @@ export async function createPayment(request: PaymentRequest): Promise<PaymentRes
     )
 
     // Save payment to database
-    const { error } = await supabase.from('payments').insert({
+    const { data: paymentData, error } = await supabase.from('payments').insert({
       id: paymentId,
       transaction_id: request.transactionId,
       amount: request.amount,
@@ -112,8 +112,12 @@ export async function createPayment(request: PaymentRequest): Promise<PaymentRes
     })
 
     if (error) {
+      console.error('❌ Payment insert error:', error)
+      console.error('❌ Error details:', JSON.stringify(error, null, 2))
       throw new Error(`Failed to create payment: ${error.message}`)
     }
+
+    console.log('✅ Payment created:', paymentData)
 
     return {
       paymentId,
