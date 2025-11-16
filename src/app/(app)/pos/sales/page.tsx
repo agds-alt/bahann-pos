@@ -316,6 +316,19 @@ export default function SalesTransactionPage() {
       // Close payment modal
       setIsPaymentModalOpen(false)
 
+      // Map payment method to backend expected values
+      const mapToBackendPaymentMethod = (method: string): 'cash' | 'card' | 'transfer' | 'ewallet' => {
+        const mapping: Record<string, 'cash' | 'card' | 'transfer' | 'ewallet'> = {
+          'cash': 'cash',
+          'qris': 'transfer',        // QRIS maps to transfer
+          'bank_transfer': 'transfer',
+          'debit': 'card',
+          'credit': 'card',
+          'ewallet': 'ewallet'
+        }
+        return mapping[method] || 'cash'
+      }
+
       // Create transaction with payment ID
       const result = await createTransactionMutation.mutateAsync({
         outletId: selectedOutletId,
@@ -326,7 +339,7 @@ export default function SalesTransactionPage() {
           quantity: item.quantity,
           unitPrice: item.unitPrice,
         })),
-        paymentMethod: paymentMethod as 'cash' | 'card' | 'transfer' | 'ewallet',
+        paymentMethod: mapToBackendPaymentMethod(paymentMethod),
         amountPaid: cartTotal,
         discountAmount: discountAmount,
         notes: appliedPromo
