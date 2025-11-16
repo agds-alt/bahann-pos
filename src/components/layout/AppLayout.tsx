@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react'
 import { Sidebar } from './Sidebar'
+import { OfflineIndicator } from '@/components/OfflineIndicator'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -19,6 +20,9 @@ export function AppLayout({ children }: AppLayoutProps) {
           {children}
         </div>
       </main>
+
+      {/* Offline Indicator - shows network status and pending syncs */}
+      <OfflineIndicator />
     </div>
   )
 }
