@@ -279,8 +279,8 @@ export class SyncManager {
       //   }
       // }
     } catch (error) {
-      console.error('❌ Failed to pull products:', error)
-      // Non-critical, don't throw
+      // Silently ignore - endpoint not implemented yet
+      // console.error('❌ Failed to pull products:', error)
     }
   }
 
