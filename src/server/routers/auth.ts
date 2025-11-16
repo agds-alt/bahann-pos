@@ -7,6 +7,8 @@ import { SupabaseUserRepository } from '@/infra/repositories/SupabaseUserReposit
 import { setAuthCookie, deleteAuthCookie, setRefreshCookie, deleteRefreshCookie, getRefreshCookie } from '@/lib/cookies'
 import { createAuditLog } from '@/lib/audit'
 import { createRefreshToken, rotateRefreshToken, revokeRefreshToken, revokeAllUserTokens } from '@/lib/refreshToken'
+import { sendPasswordResetEmail, generateResetToken } from '@/lib/email'
+import bcrypt from 'bcryptjs'
 
 const userRepository = new SupabaseUserRepository()
 
@@ -245,6 +247,207 @@ export const authRouter = router({
           total: count || 0,
           totalPages: Math.ceil((count || 0) / limit),
         },
+      }
+    }),
+
+  /**
+   * Request password reset - sends email with reset token
+   */
+  requestPasswordReset: publicProcedure
+    .input(
+      z.object({
+        email: z.string().email(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { supabase } = await import('@/infra/supabase/client')
+
+      // Check if user exists
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('id, email, name')
+        .eq('email', input.email)
+        .single()
+
+      // Security: Always return success even if user doesn't exist
+      // to prevent email enumeration attacks
+      if (error || !user) {
+        console.log('⚠️ Password reset requested for non-existent email:', input.email)
+        return {
+          success: true,
+          message: 'If the email exists, a reset link has been sent',
+        }
+      }
+
+      // Generate reset token
+      const resetToken = generateResetToken()
+      const expiresAt = new Date()
+      expiresAt.setHours(expiresAt.getHours() + 1) // 1 hour expiry
+
+      // Save token to database
+      const { error: insertError } = await supabase
+        .from('password_reset_tokens')
+        .insert({
+          user_id: user.id,
+          token: resetToken,
+          expires_at: expiresAt.toISOString(),
+        })
+
+      if (insertError) {
+        console.error('❌ Failed to save reset token:', insertError)
+        throw new Error('Failed to process password reset request')
+      }
+
+      // Send email
+      try {
+        await sendPasswordResetEmail({
+          to: user.email,
+          name: user.name,
+          resetToken,
+        })
+
+        // Audit log
+        await createAuditLog({
+          userId: user.id,
+          userEmail: user.email,
+          action: 'PASSWORD_RESET_REQUEST',
+          entityType: 'auth',
+          metadata: {
+            name: user.name,
+          },
+        })
+
+        console.log('✅ Password reset email sent to:', user.email)
+      } catch (emailError) {
+        console.error('❌ Failed to send reset email:', emailError)
+        // Don't throw error to user - security
+      }
+
+      return {
+        success: true,
+        message: 'If the email exists, a reset link has been sent',
+      }
+    }),
+
+  /**
+   * Verify reset token
+   */
+  verifyResetToken: publicProcedure
+    .input(
+      z.object({
+        token: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      const { supabase } = await import('@/infra/supabase/client')
+
+      const { data: tokenData, error } = await supabase
+        .from('password_reset_tokens')
+        .select('id, user_id, expires_at, used_at')
+        .eq('token', input.token)
+        .single()
+
+      if (error || !tokenData) {
+        return { valid: false, message: 'Token tidak valid' }
+      }
+
+      // Check if already used
+      if (tokenData.used_at) {
+        return { valid: false, message: 'Token sudah digunakan' }
+      }
+
+      // Check if expired
+      const now = new Date()
+      const expiresAt = new Date(tokenData.expires_at)
+      if (now > expiresAt) {
+        return { valid: false, message: 'Token sudah kadaluarsa' }
+      }
+
+      return { valid: true, userId: tokenData.user_id }
+    }),
+
+  /**
+   * Reset password using token
+   */
+  resetPassword: publicProcedure
+    .input(
+      z.object({
+        token: z.string(),
+        newPassword: z.string().min(8, 'Password minimal 8 karakter'),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { supabase } = await import('@/infra/supabase/client')
+
+      // Verify token first
+      const { data: tokenData, error } = await supabase
+        .from('password_reset_tokens')
+        .select('id, user_id, expires_at, used_at')
+        .eq('token', input.token)
+        .single()
+
+      if (error || !tokenData) {
+        throw new Error('Token tidak valid')
+      }
+
+      // Check if already used
+      if (tokenData.used_at) {
+        throw new Error('Token sudah digunakan')
+      }
+
+      // Check if expired
+      const now = new Date()
+      const expiresAt = new Date(tokenData.expires_at)
+      if (now > expiresAt) {
+        throw new Error('Token sudah kadaluarsa. Silakan request reset password lagi.')
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(input.newPassword, 10)
+
+      // Update user password
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ password_hash: hashedPassword })
+        .eq('id', tokenData.user_id)
+
+      if (updateError) {
+        console.error('❌ Failed to update password:', updateError)
+        throw new Error('Gagal mengupdate password')
+      }
+
+      // Mark token as used
+      await supabase
+        .from('password_reset_tokens')
+        .update({ used_at: new Date().toISOString() })
+        .eq('id', tokenData.id)
+
+      // Get user info for audit log
+      const { data: user } = await supabase
+        .from('users')
+        .select('email, name')
+        .eq('id', tokenData.user_id)
+        .single()
+
+      // Audit log
+      await createAuditLog({
+        userId: tokenData.user_id,
+        userEmail: user?.email || 'unknown',
+        action: 'PASSWORD_RESET_COMPLETE',
+        entityType: 'auth',
+        metadata: {
+          name: user?.name,
+        },
+      })
+
+      // Revoke all refresh tokens for security (logout from all devices)
+      await revokeAllUserTokens(tokenData.user_id)
+
+      console.log('✅ Password reset successful for user:', tokenData.user_id)
+
+      return {
+        success: true,
+        message: 'Password berhasil direset. Silakan login dengan password baru.',
       }
     }),
 })

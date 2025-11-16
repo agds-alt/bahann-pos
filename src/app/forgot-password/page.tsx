@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
+import { trpc } from '@/lib/trpc/client'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -11,18 +12,19 @@ export default function ForgotPasswordPage() {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
 
+  const requestResetMutation = trpc.auth.requestPasswordReset.useMutation()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setIsLoading(true)
 
-    // Simulate API call (you'll need to implement the actual endpoint)
     try {
-      // TODO: Implement password reset email endpoint
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      await requestResetMutation.mutateAsync({ email })
       setSuccess(true)
-    } catch (err) {
-      setError('Gagal mengirim email reset. Silakan coba lagi.')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Gagal mengirim email reset. Silakan coba lagi.'
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
