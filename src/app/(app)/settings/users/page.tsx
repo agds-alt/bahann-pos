@@ -5,11 +5,13 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { trpc } from '@/lib/trpc/client'
 
+type UserRole = 'admin' | 'manager' | 'cashier' | 'user'
+
 export default function UsersManagementPage() {
   const { data: users, refetch } = trpc.users.list.useQuery()
   const [editingUser, setEditingUser] = useState<string | null>(null)
   const [permissions, setPermissions] = useState<any>({})
-  const [selectedRole, setSelectedRole] = useState<string>('user')
+  const [selectedRole, setSelectedRole] = useState<UserRole>('user')
 
   const updateMutation = trpc.users.updatePermissions.useMutation({
     onSuccess: () => {
@@ -52,7 +54,7 @@ export default function UsersManagementPage() {
     setSelectedRole(user.role || 'user')
   }
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
     if (confirm(`Ubah role user menjadi "${newRole.toUpperCase()}"?`)) {
       try {
         await updateRoleMutation.mutateAsync({ userId, role: newRole })
@@ -123,7 +125,7 @@ export default function UsersManagementPage() {
                 </label>
                 <select
                   value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
+                  onChange={(e) => setSelectedRole(e.target.value as UserRole)}
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                 >
                   <option value="user">👤 User (Kasir)</option>

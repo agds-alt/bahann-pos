@@ -16,6 +16,8 @@ export type AuditAction =
   | 'LOGOUT'
   | 'REGISTER'
   | 'PASSWORD_CHANGE'
+  | 'PASSWORD_RESET_REQUEST'
+  | 'PASSWORD_RESET_COMPLETE'
   | 'EXPORT'
 
 export type AuditEntity =
