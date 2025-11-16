@@ -11,42 +11,40 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* Mobile-first Typography (iOS/Android standards) */
+  /* Mobile-first Typography - Optimized for POS */
   --font-size-xs: 0.6875rem;   /* 11px - labels, captions */
-  --font-size-sm: 0.8125rem;   /* 13px - body small, secondary text */
-  --font-size-base: 0.875rem;  /* 14px - body text (POS baseline) */
+  --font-size-sm: 0.75rem;     /* 12px - secondary text */
+  --font-size-base: 0.875rem;  /* 14px - body text (mobile baseline) */
   --font-size-lg: 1rem;        /* 16px - emphasized text */
-  --font-size-xl: 1.125rem;    /* 18px - card headers */
-  --font-size-2xl: 1.25rem;    /* 20px - page headers */
-  --font-size-3xl: 1.5rem;     /* 24px - hero text */
+  --font-size-xl: 1.125rem;    /* 18px - section headers */
+  --font-size-2xl: 1.25rem;    /* 20px - page titles */
+  --font-size-3xl: 1.5rem;     /* 24px - hero text (mobile only) */
+  --font-size-4xl: 1.5rem;     /* 24px - same as 3xl on mobile */
 
   /* Line heights optimized for POS readability */
   --line-height-tight: 1.3;
   --line-height-normal: 1.4;
   --line-height-relaxed: 1.6;
 
-  /* Compact spacing for tablet POS */
+  /* Mobile spacing */
   --space-xs: 0.25rem;    /* 4px */
-  --space-sm: 0.375rem;   /* 6px */
-  --space-md: 0.625rem;   /* 10px */
-  --space-lg: 0.875rem;   /* 14px */
-  --space-xl: 1.25rem;    /* 20px */
-  --space-2xl: 1.5rem;    /* 24px */
+  --space-sm: 0.5rem;     /* 8px */
+  --space-md: 0.75rem;    /* 12px */
+  --space-lg: 1rem;       /* 16px */
+  --space-xl: 1.5rem;     /* 24px */
+  --space-2xl: 2rem;      /* 32px */
 
-  /* Container sizes for mobile-first */
+  /* Container sizes */
   --container-mobile: 100%;
   --container-tablet: 768px;
   --container-desktop: 1024px;
 
-  /* Card/Component sizing */
-  --card-padding-mobile: var(--space-lg);
-  --card-padding-tablet: var(--space-xl);
-  --card-radius: 0.5rem;          /* 8px - compact rounded corners */
-  --input-height-mobile: 2.5rem;  /* 40px - compact touch target for tablets */
-  --button-height-mobile: 2.5rem; /* 40px - compact touch target for tablets */
-
-  /* Touch targets (40px minimum for tablet POS) */
-  --touch-target-min: 2.5rem;
+  /* Component sizing - Mobile */
+  --card-padding: 1rem;           /* 16px */
+  --card-radius: 0.75rem;         /* 12px - modern rounded */
+  --input-height: 2.75rem;        /* 44px - iOS touch standard */
+  --button-height: 2.75rem;       /* 44px - iOS touch standard */
+  --touch-target-min: 2.75rem;    /* 44px minimum */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -86,64 +84,167 @@ body {
   font-size: var(--font-size-base);
 }
 
-/* Tablet 8" responsive adjustments (typical resolution 800x1280 or 1024x768) */
+/* ============================================
+   TABLET 7-8" OPTIMIZED (768px - 1024px)
+   Critical for POS usability on tablets
+   ============================================ */
 @media (min-width: 768px) and (max-width: 1024px) {
   :root {
-    /* Optimized for 8" tablet POS */
-    --font-size-base: 0.875rem;  /* 14px - perfect for 8" screens */
-    --font-size-lg: 1rem;        /* 16px */
-    --font-size-xl: 1.125rem;    /* 18px */
-    --font-size-2xl: 1.25rem;    /* 20px */
-    --font-size-3xl: 1.375rem;   /* 22px */
+    /* Tablet Typography - COMPACT BUT READABLE */
+    --font-size-xs: 0.625rem;    /* 10px - minimal labels */
+    --font-size-sm: 0.6875rem;   /* 11px - secondary text */
+    --font-size-base: 0.8125rem; /* 13px - SWEET SPOT for tablet body */
+    --font-size-lg: 0.875rem;    /* 14px - emphasis */
+    --font-size-xl: 1rem;        /* 16px - section headers */
+    --font-size-2xl: 1.125rem;   /* 18px - page titles */
+    --font-size-3xl: 1.25rem;    /* 20px - MAX hero text */
+    --font-size-4xl: 1.25rem;    /* 20px - NEVER larger on tablet */
 
-    /* Compact spacing for tablets */
-    --space-lg: 0.75rem;   /* 12px */
-    --space-xl: 1rem;      /* 16px */
-    --space-2xl: 1.25rem;  /* 20px */
+    /* Tablet Spacing - TIGHT */
+    --space-xs: 0.25rem;    /* 4px */
+    --space-sm: 0.375rem;   /* 6px */
+    --space-md: 0.625rem;   /* 10px */
+    --space-lg: 0.75rem;    /* 12px - primary spacing */
+    --space-xl: 1rem;       /* 16px - section spacing */
+    --space-2xl: 1.25rem;   /* 20px - page sections */
+
+    /* Tablet Component Sizing */
+    --card-padding: 0.75rem;     /* 12px - tight cards */
+    --card-radius: 0.5rem;       /* 8px - compact corners */
+    --input-height: 2.25rem;     /* 36px - compact inputs */
+    --button-height: 2.25rem;    /* 36px - compact buttons */
+    --touch-target-min: 2.25rem; /* 36px touch targets */
   }
 
   body {
-    font-size: 0.875rem; /* 14px base for tablet */
+    font-size: 0.8125rem; /* 13px base for tablet */
   }
 
+  /* ====== TYPOGRAPHY OVERRIDES ====== */
+  h1 { font-size: 1.25rem !important; line-height: 1.3 !important; }  /* 20px MAX */
+  h2 { font-size: 1.125rem !important; line-height: 1.3 !important; } /* 18px */
+  h3 { font-size: 1rem !important; line-height: 1.3 !important; }     /* 16px */
+  h4 { font-size: 0.875rem !important; line-height: 1.3 !important; } /* 14px */
+  h5 { font-size: 0.8125rem !important; line-height: 1.3 !important; }/* 13px */
+  h6 { font-size: 0.75rem !important; line-height: 1.3 !important; }  /* 12px */
+
+  /* ====== TAILWIND TEXT SIZE OVERRIDES (CRITICAL!) ====== */
+  .text-4xl { font-size: 1.25rem !important; }   /* 20px - MAX on tablet */
+  .text-3xl { font-size: 1.25rem !important; }   /* 20px - same as 4xl */
+  .text-2xl { font-size: 1.125rem !important; }  /* 18px */
+  .text-xl { font-size: 1rem !important; }       /* 16px */
+  .text-lg { font-size: 0.875rem !important; }   /* 14px */
+  .text-base { font-size: 0.8125rem !important; }/* 13px - body text */
+  .text-sm { font-size: 0.6875rem !important; }  /* 11px */
+  .text-xs { font-size: 0.625rem !important; }   /* 10px */
+
+  /* ====== PADDING OVERRIDES (CRITICAL!) ====== */
+  .p-8 { padding: 1rem !important; }      /* 16px instead of 32px */
+  .p-6 { padding: 0.75rem !important; }   /* 12px instead of 24px */
+  .p-4 { padding: 0.625rem !important; }  /* 10px instead of 16px */
+  .p-3 { padding: 0.5rem !important; }    /* 8px instead of 12px */
+  .p-2 { padding: 0.375rem !important; }  /* 6px instead of 8px */
+
+  .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
+  .px-6 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+  .px-4 { padding-left: 0.625rem !important; padding-right: 0.625rem !important; }
+
+  .py-8 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+  .py-6 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+  .py-4 { padding-top: 0.625rem !important; padding-bottom: 0.625rem !important; }
+
+  /* ====== MARGIN OVERRIDES ====== */
+  .m-8 { margin: 1rem !important; }
+  .m-6 { margin: 0.75rem !important; }
+  .m-4 { margin: 0.625rem !important; }
+
+  .space-y-8 > * + * { margin-top: 1rem !important; }     /* 16px instead of 32px */
+  .space-y-6 > * + * { margin-top: 0.75rem !important; }  /* 12px instead of 24px */
+  .space-y-4 > * + * { margin-top: 0.625rem !important; } /* 10px instead of 16px */
+  .space-y-3 > * + * { margin-top: 0.5rem !important; }   /* 8px instead of 12px */
+  .space-y-2 > * + * { margin-top: 0.375rem !important; } /* 6px instead of 8px */
+
+  .space-x-8 > * + * { margin-left: 1rem !important; }
+  .space-x-6 > * + * { margin-left: 0.75rem !important; }
+  .space-x-4 > * + * { margin-left: 0.625rem !important; }
+
+  /* ====== GAP OVERRIDES ====== */
+  .gap-8 { gap: 1rem !important; }      /* 16px instead of 32px */
+  .gap-6 { gap: 0.75rem !important; }   /* 12px instead of 24px */
+  .gap-4 { gap: 0.625rem !important; }  /* 10px instead of 16px */
+  .gap-3 { gap: 0.5rem !important; }    /* 8px instead of 12px */
+  .gap-2 { gap: 0.375rem !important; }  /* 6px instead of 8px */
+
+  /* ====== HEIGHT/WIDTH OVERRIDES ====== */
+  .h-12 { height: 2.5rem !important; }  /* 40px instead of 48px */
+  .h-10 { height: 2.25rem !important; } /* 36px instead of 40px */
+  .h-8 { height: 2rem !important; }     /* 32px instead of 32px (same) */
+
+  .w-64 { width: 12.5rem !important; }  /* 200px instead of 256px (sidebar) */
+  .w-56 { width: 12rem !important; }    /* 192px instead of 224px */
+
+  /* ====== ROUNDED CORNERS ====== */
+  .rounded-2xl { border-radius: 0.75rem !important; } /* 12px instead of 16px */
+  .rounded-xl { border-radius: 0.625rem !important; } /* 10px instead of 12px */
+  .rounded-lg { border-radius: 0.5rem !important; }   /* 8px instead of 8px */
+
+  /* ====== COMPONENT SPECIFIC ====== */
   .card-mobile {
-    padding: var(--space-lg);
+    padding: 0.75rem !important; /* 12px */
   }
 
-  /* Compact headings for tablet */
-  h1 { font-size: 1.5rem !important; }   /* 24px instead of 30-36px */
-  h2 { font-size: 1.25rem !important; }  /* 20px instead of 24px */
-  h3 { font-size: 1.125rem !important; } /* 18px instead of 20px */
-  h4 { font-size: 1rem !important; }     /* 16px instead of 18px */
+  /* Button compact on tablet */
+  button, .btn {
+    min-height: 2.25rem; /* 36px */
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
 
-  /* Override Tailwind defaults for tablet */
-  .text-4xl { font-size: 1.5rem !important; }   /* 24px */
-  .text-3xl { font-size: 1.375rem !important; } /* 22px */
-  .text-2xl { font-size: 1.25rem !important; }  /* 20px */
-  .text-xl { font-size: 1.125rem !important; }  /* 18px */
-  .text-lg { font-size: 1rem !important; }      /* 16px */
-  .text-base { font-size: 0.875rem !important; }/* 14px */
-  .text-sm { font-size: 0.8125rem !important; } /* 13px */
-  .text-xs { font-size: 0.75rem !important; }   /* 12px */
+  /* Input compact on tablet */
+  input, select, textarea {
+    min-height: 2.25rem; /* 36px */
+  }
 
-  /* Compact padding/margins */
-  .p-8 { padding: 1.25rem !important; }  /* 20px instead of 32px */
-  .p-6 { padding: 1rem !important; }     /* 16px instead of 24px */
-  .p-4 { padding: 0.75rem !important; }  /* 12px instead of 16px */
-
-  .space-y-8 > * + * { margin-top: 1.25rem !important; } /* 20px instead of 32px */
-  .space-y-6 > * + * { margin-top: 1rem !important; }    /* 16px instead of 24px */
-  .space-y-4 > * + * { margin-top: 0.75rem !important; } /* 12px instead of 16px */
-
-  .gap-8 { gap: 1.25rem !important; }  /* 20px instead of 32px */
-  .gap-6 { gap: 1rem !important; }     /* 16px instead of 24px */
-  .gap-4 { gap: 0.75rem !important; }  /* 12px instead of 16px */
+  /* Table compact on tablet */
+  table th, table td {
+    padding: 0.5rem !important; /* 8px instead of 12-16px */
+  }
 }
 
-/* Desktop (larger than tablet) */
+/* ============================================
+   DESKTOP (> 1024px)
+   Normal sizing, more spacious
+   ============================================ */
 @media (min-width: 1025px) {
-  .card-mobile {
-    padding: var(--card-padding-tablet);
+  :root {
+    /* Desktop Typography - SPACIOUS */
+    --font-size-xs: 0.75rem;     /* 12px */
+    --font-size-sm: 0.875rem;    /* 14px */
+    --font-size-base: 1rem;      /* 16px - standard */
+    --font-size-lg: 1.125rem;    /* 18px */
+    --font-size-xl: 1.25rem;     /* 20px */
+    --font-size-2xl: 1.5rem;     /* 24px */
+    --font-size-3xl: 1.875rem;   /* 30px */
+    --font-size-4xl: 2.25rem;    /* 36px */
+
+    /* Desktop Spacing - GENEROUS */
+    --space-xs: 0.25rem;    /* 4px */
+    --space-sm: 0.5rem;     /* 8px */
+    --space-md: 1rem;       /* 16px */
+    --space-lg: 1.5rem;     /* 24px */
+    --space-xl: 2rem;       /* 32px */
+    --space-2xl: 3rem;      /* 48px */
+
+    /* Desktop Component Sizing */
+    --card-padding: 1.5rem;      /* 24px */
+    --card-radius: 0.75rem;      /* 12px */
+    --input-height: 2.5rem;      /* 40px */
+    --button-height: 2.5rem;     /* 40px */
+    --touch-target-min: 2.5rem;  /* 40px */
+  }
+
+  body {
+    font-size: 1rem; /* 16px base for desktop */
   }
 }
 
