@@ -600,14 +600,14 @@ export default function SalesTransactionPage() {
                   <label className="block text-sm font-semibold text-gray-700">
                     Jumlah Cepat
                   </label>
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="grid grid-cols-5 gap-2">
                     {[1, 2, 3, 5, 10].map(qty => (
                       <Button
                         key={qty}
                         variant={quantity === qty ? 'primary' : 'outline'}
                         size="sm"
                         onClick={() => handleQuickQuantity(qty)}
-                        className="min-w-[50px]"
+                        className="w-full"
                       >
                         {qty}
                       </Button>
@@ -748,7 +748,7 @@ export default function SalesTransactionPage() {
             <CardBody>
               <div className="space-y-4">
                 {/* Promo Code Section - Collapsible */}
-                <div className="border-t pt-4">
+                <div>
                   <button
                     onClick={() => setIsPromoExpanded(!isPromoExpanded)}
                     className="flex items-center justify-between w-full text-left"
@@ -781,19 +781,20 @@ export default function SalesTransactionPage() {
                   )}
 
                   {appliedPromo && (
-                    <div className="p-3 bg-green-50 border-2 border-green-200 rounded-xl mt-2">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-green-600 font-semibold">Diterapkan</p>
-                          <p className="text-sm font-bold text-green-900">{appliedPromo.promoName}</p>
-                          <p className="text-xs text-green-700">
-                            Diskon: -{formatCurrency(appliedPromo.discountAmount)}
+                    <div className="p-4 bg-green-50 border-2 border-green-200 rounded-xl mt-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <p className="text-xs text-green-600 font-semibold mb-1">✓ Promo Diterapkan</p>
+                          <p className="text-sm font-bold text-green-900 mb-1">{appliedPromo.promoName}</p>
+                          <p className="text-sm text-green-700 font-semibold">
+                            Hemat: {formatCurrency(appliedPromo.discountAmount)}
                           </p>
                         </div>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={handleRemovePromo}
+                          className="shrink-0"
                         >
                           Hapus
                         </Button>
@@ -804,20 +805,20 @@ export default function SalesTransactionPage() {
 
                 {/* Cart Summary */}
                 {cart.length > 0 && (
-                  <div className="p-3 bg-gray-50 rounded-xl space-y-1">
+                  <div className="p-4 bg-gray-50 rounded-xl border-2 border-gray-200 space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal:</span>
-                      <span className="font-semibold">{formatCurrency(cartSubtotal)}</span>
+                      <span className="font-semibold text-gray-900">{formatCurrency(cartSubtotal)}</span>
                     </div>
                     {discountAmount > 0 && (
-                      <div className="flex justify-between text-sm text-green-600">
-                        <span>Diskon:</span>
-                        <span className="font-semibold">-{formatCurrency(discountAmount)}</span>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-green-600">Diskon:</span>
+                        <span className="font-semibold text-green-600">-{formatCurrency(discountAmount)}</span>
                       </div>
                     )}
-                    <div className="flex justify-between text-base font-bold pt-2 border-t">
-                      <span>Total:</span>
-                      <span>{formatCurrency(cartTotal)}</span>
+                    <div className="flex justify-between text-lg font-bold pt-2 border-t-2 border-gray-300">
+                      <span className="text-gray-900">Total:</span>
+                      <span className="text-blue-600">{formatCurrency(cartTotal)}</span>
                     </div>
                   </div>
                 )}
