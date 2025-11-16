@@ -12,6 +12,20 @@ import { v4 as uuidv4 } from 'uuid'
 export type PaymentMethod = 'cash' | 'qris' | 'bank_transfer' | 'debit' | 'credit'
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'expired'
 
+/**
+ * Map PaymentMethod to database code
+ */
+function mapMethodToCode(method: PaymentMethod): string {
+  const mapping: Record<PaymentMethod, string> = {
+    'cash': 'cash',
+    'qris': 'qris_static',
+    'bank_transfer': 'bank_transfer',
+    'debit': 'debit_card',
+    'credit': 'credit_card'
+  }
+  return mapping[method]
+}
+
 export interface PaymentRequest {
   transactionId: string
   amount: number
@@ -53,7 +67,7 @@ export async function createPayment(request: PaymentRequest): Promise<PaymentRes
     const { data: qrisConfig } = await supabase
       .from('payment_methods')
       .select('*')
-      .eq('type', 'qris')
+      .eq('code', 'qris_static')
       .eq('is_active', true)
       .single()
 
@@ -118,7 +132,7 @@ export async function createPayment(request: PaymentRequest): Promise<PaymentRes
     const { data: bankAccount } = await supabase
       .from('payment_methods')
       .select('*')
-      .eq('type', 'bank_transfer')
+      .eq('code', 'bank_transfer')
       .eq('is_active', true)
       .single()
 
@@ -155,10 +169,11 @@ export async function createPayment(request: PaymentRequest): Promise<PaymentRes
 
   // For Cash/Debit/Credit (instant payment)
   // Get payment method
+  const methodCode = mapMethodToCode(request.method)
   const { data: paymentMethod } = await supabase
     .from('payment_methods')
     .select('*')
-    .eq('type', request.method)
+    .eq('code', methodCode)
     .eq('is_active', true)
     .single()
 
@@ -308,7 +323,6 @@ export async function getBankAccount(bankAccountId: string) {
     .from('payment_methods')
     .select('*')
     .eq('id', bankAccountId)
-    .eq('type', 'bank_transfer')
     .single()
 
   if (error) {
