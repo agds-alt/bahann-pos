@@ -239,6 +239,12 @@ export function Sidebar() {
             isCollapsed={isCollapsed}
           />
           <SidebarItem
+            href="/payments"
+            icon="💳"
+            label="Payments"
+            isCollapsed={isCollapsed}
+          />
+          <SidebarItem
             href="/promotions"
             icon="🎫"
             label="Promotions"
