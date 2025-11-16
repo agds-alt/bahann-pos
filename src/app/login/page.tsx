@@ -17,6 +17,7 @@ function LoginContent() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [showRegisteredMessage, setShowRegisteredMessage] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     // Check if redirected from registration
@@ -102,15 +103,37 @@ function LoginContent() {
                 required
               />
 
-              <Input
-                type="password"
-                label={t('login.password')}
-                placeholder={t('login.password')}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                fullWidth
-                required
-              />
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                  {t('login.password')}
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Masukkan password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end">
+                <a
+                  href="/forgot-password"
+                  className="text-sm text-blue-600 hover:text-blue-700 font-semibold hover:underline"
+                >
+                  Lupa password?
+                </a>
+              </div>
 
               <Button
                 type="submit"

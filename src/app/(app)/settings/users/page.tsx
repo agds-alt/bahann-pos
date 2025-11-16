@@ -9,6 +9,7 @@ export default function UsersManagementPage() {
   const { data: users, refetch } = trpc.users.list.useQuery()
   const [editingUser, setEditingUser] = useState<string | null>(null)
   const [permissions, setPermissions] = useState<any>({})
+  const [selectedRole, setSelectedRole] = useState<string>('user')
 
   const updateMutation = trpc.users.updatePermissions.useMutation({
     onSuccess: () => {
@@ -17,18 +18,56 @@ export default function UsersManagementPage() {
     },
   })
 
+  const updateRoleMutation = trpc.users.updateRole.useMutation({
+    onSuccess: () => {
+      refetch()
+      alert('Role updated successfully!')
+    },
+  })
+
   const handleSave = async (userId: string) => {
     try {
+      // Get current user to check if role changed
+      const currentUser = users?.find(u => u.id === userId)
+      const roleChanged = currentUser && currentUser.role !== selectedRole
+
+      // Update permissions
       await updateMutation.mutateAsync({ userId, permissions })
-      alert('Permissions updated successfully')
+
+      // Update role if changed
+      if (roleChanged) {
+        await updateRoleMutation.mutateAsync({ userId, role: selectedRole })
+      }
+
+      alert('User updated successfully!')
+      setEditingUser(null)
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to update permissions')
+      alert(error instanceof Error ? error.message : 'Failed to update user')
     }
   }
 
   const handleEdit = (user: any) => {
     setEditingUser(user.id)
     setPermissions(user.permissions || {})
+    setSelectedRole(user.role || 'user')
+  }
+
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    if (confirm(`Ubah role user menjadi "${newRole.toUpperCase()}"?`)) {
+      try {
+        await updateRoleMutation.mutateAsync({ userId, role: newRole })
+      } catch (error) {
+        alert(error instanceof Error ? error.message : 'Failed to update role')
+      }
+    }
+  }
+
+  const getRoleBadgeColor = (role: string) => {
+    switch(role) {
+      case 'admin': return 'bg-red-100 text-red-800 border border-red-300'
+      case 'manager': return 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+      default: return 'bg-green-100 text-green-800 border border-green-300'
+    }
   }
 
   return (
@@ -56,7 +95,7 @@ export default function UsersManagementPage() {
                   <td className="px-4 py-3">{user.name}</td>
                   <td className="px-4 py-3">{user.email}</td>
                   <td className="px-4 py-3">
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                    <span className={`px-2 py-1 text-xs rounded font-semibold ${getRoleBadgeColor(user.role || 'user')}`}>
                       {user.role?.toUpperCase()}
                     </span>
                   </td>
@@ -75,8 +114,31 @@ export default function UsersManagementPage() {
       {editingUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <Card variant="elevated" padding="lg" className="max-w-2xl w-full max-h-screen overflow-y-auto">
-            <CardHeader><CardTitle>Edit Permissions</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Edit User & Permissions</CardTitle></CardHeader>
             <CardBody>
+              {/* Role Selector */}
+              <div className="mb-6 pb-6 border-b-2 border-gray-200">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  User Role
+                </label>
+                <select
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                >
+                  <option value="user">👤 User (Kasir)</option>
+                  <option value="manager">👔 Manager</option>
+                  <option value="admin">👑 Admin</option>
+                </select>
+                <p className="mt-2 text-xs text-gray-500">
+                  💡 Admin memiliki akses penuh, Manager dapat melihat laporan, User hanya bisa transaksi sesuai permission
+                </p>
+              </div>
+
+              {/* Permissions */}
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Custom Permissions</h3>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 {[
                   { key: 'canVoidTransactions', label: 'Void Transactions' },

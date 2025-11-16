@@ -17,13 +17,16 @@ export default function RegisterPage() {
     confirmPassword: '',
     name: '',
     outletId: '',
-    role: 'user',
+    role: 'user', // Default role, will be set by admin later
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const registerMutation = trpc.auth.register.useMutation()
+  const { data: outletsResponse } = trpc.outlets.getAll.useQuery()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -133,48 +136,69 @@ export default function RegisterPage() {
                   required
                 />
 
-                <Input
-                  type="password"
-                  name="password"
-                  label={t('register.password')}
-                  placeholder={t('register.password')}
-                  value={formData.password}
-                  onChange={handleChange}
-                  fullWidth
-                  required
-                />
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    {t('register.password')} *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      placeholder="Minimal 8 karakter"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showPassword ? '🙈' : '👁️'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Gunakan kombinasi huruf, angka, dan simbol
+                  </p>
+                </div>
 
-                <Input
-                  type="password"
-                  name="confirmPassword"
-                  label={t('register.confirmPassword')}
-                  placeholder={t('register.confirmPassword')}
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  fullWidth
-                  required
-                />
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    {t('register.confirmPassword')} *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      name="confirmPassword"
+                      placeholder="Konfirmasi password"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showConfirmPassword ? '🙈' : '👁️'}
+                    </button>
+                  </div>
+                </div>
 
                 <Select
-                  name="role"
-                  label={t('profile.role')}
-                  value={formData.role}
-                  onChange={handleChange}
-                  options={[
-                    { value: 'user', label: t('role.user') },
-                    { value: 'manager', label: t('role.manager') },
-                    { value: 'admin', label: t('role.admin') },
-                  ]}
-                  fullWidth
-                />
-
-                <Input
-                  type="text"
                   name="outletId"
-                  label="Outlet ID (Optional)"
-                  placeholder="Enter outlet UUID (leave empty if none)"
+                  label="Outlet (Opsional)"
                   value={formData.outletId}
                   onChange={handleChange}
+                  options={[
+                    { value: '', label: 'Pilih outlet (opsional)' },
+                    ...(outletsResponse?.outlets?.map(outlet => ({
+                      value: outlet.id,
+                      label: outlet.name,
+                    })) || []),
+                  ]}
                   fullWidth
                 />
 
@@ -214,12 +238,13 @@ export default function RegisterPage() {
 
         {/* Info Box */}
         <div className="mt-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
-          <p className="text-sm text-blue-900 font-semibold mb-2">ℹ️ Test Account Info:</p>
+          <p className="text-sm text-blue-900 font-semibold mb-2">ℹ️ Informasi Pendaftaran:</p>
           <ul className="text-xs text-blue-800 space-y-1">
-            <li>• Password must be at least 8 characters</li>
-            <li>• Email must be unique (not already registered)</li>
-            <li>• Outlet ID is optional (can leave empty)</li>
-            <li>• Choose role based on access level needed</li>
+            <li>• Password minimal 8 karakter</li>
+            <li>• Email harus unik (belum terdaftar)</li>
+            <li>• Outlet bersifat opsional</li>
+            <li>• Role default adalah "User" (bisa diubah admin nanti)</li>
+            <li>• Setelah daftar, hubungi admin untuk aktivasi akun</li>
           </ul>
         </div>
       </div>
