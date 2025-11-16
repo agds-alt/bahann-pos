@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
@@ -41,6 +41,12 @@ export default function SalesTransactionPage() {
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
   const [error, setError] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
+  const [isPromoExpanded, setIsPromoExpanded] = useState(false)
+
+  // Refs for keyboard navigation
+  const productSelectRef = useRef<HTMLSelectElement>(null)
+  const quantityInputRef = useRef<HTMLInputElement>(null)
+  const paymentInputRef = useRef<HTMLInputElement>(null)
 
   // Fetch products and outlets for dropdowns
   const { data: productsResponse, isLoading: productsLoading } = trpc.products.getAll.useQuery()
@@ -114,10 +120,66 @@ export default function SalesTransactionPage() {
       setCart([...cart, newItem])
     }
 
-    // Reset selection
+    // Reset selection and focus back to product dropdown
     setSelectedProductId('')
     setQuantity(1)
     setError('')
+
+    // Auto-focus back to product select for quick next entry
+    setTimeout(() => {
+      productSelectRef.current?.focus()
+    }, 100)
+  }
+
+  // Quick quantity buttons
+  const handleQuickQuantity = (qty: number) => {
+    setQuantity(qty)
+  }
+
+  // Quick payment amount buttons
+  const handleQuickPayment = (amount: number | 'exact') => {
+    if (amount === 'exact') {
+      setPaymentData({ ...paymentData, amountPaid: cartTotal })
+    } else {
+      setPaymentData({ ...paymentData, amountPaid: amount })
+    }
+  }
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // F2: Focus product dropdown
+      if (e.key === 'F2') {
+        e.preventDefault()
+        productSelectRef.current?.focus()
+      }
+      // F8: Complete sale (if cart has items and valid payment)
+      if (e.key === 'F8') {
+        e.preventDefault()
+        if (cart.length > 0 && selectedOutletId && change >= 0) {
+          handleCompleteSale()
+        }
+      }
+      // Escape: Clear error
+      if (e.key === 'Escape') {
+        setError('')
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [cart, selectedOutletId, change])
+
+  // Auto-add to cart when product is selected (optional, can be toggled)
+  const handleProductChange = (productId: string) => {
+    setSelectedProductId(productId)
+    // Auto-focus quantity input when product selected
+    if (productId) {
+      setTimeout(() => {
+        quantityInputRef.current?.focus()
+        quantityInputRef.current?.select()
+      }, 100)
+    }
   }
 
   // Remove item from cart
@@ -376,8 +438,9 @@ export default function SalesTransactionPage() {
                     Pilih Produk
                   </label>
                   <select
+                    ref={productSelectRef}
                     value={selectedProductId}
-                    onChange={(e) => setSelectedProductId(e.target.value)}
+                    onChange={(e) => handleProductChange(e.target.value)}
                     disabled={!selectedOutletId}
                     className="input-mobile w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
@@ -430,26 +493,63 @@ export default function SalesTransactionPage() {
                   </div>
                 )}
 
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <Input
-                      type="number"
-                      label="Jumlah"
-                      min="1"
-                      value={quantity}
-                      onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                      fullWidth
-                    />
+                {/* Quick Quantity Buttons */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Jumlah Cepat
+                  </label>
+                  <div className="flex gap-2 flex-wrap">
+                    {[1, 2, 3, 5, 10].map(qty => (
+                      <Button
+                        key={qty}
+                        variant={quantity === qty ? 'primary' : 'outline'}
+                        size="sm"
+                        onClick={() => handleQuickQuantity(qty)}
+                        className="min-w-[50px]"
+                      >
+                        {qty}
+                      </Button>
+                    ))}
                   </div>
-                  <div className="flex items-end">
-                    <Button
-                      variant="primary"
-                      onClick={handleAddToCart}
-                      disabled={!selectedProduct || productsLoading || (!!selectedOutletId && availableStock === 0)}
-                    >
-                      ➕ Tambah ke Keranjang
-                    </Button>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Atau Masukkan Manual
+                  </label>
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <input
+                        ref={quantityInputRef}
+                        type="number"
+                        min="1"
+                        value={quantity}
+                        onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            handleAddToCart()
+                          }
+                        }}
+                        onFocus={(e) => e.target.select()}
+                        className="input-mobile w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        placeholder="Qty"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button
+                        variant="primary"
+                        size="lg"
+                        onClick={handleAddToCart}
+                        disabled={!selectedProduct || productsLoading || (!!selectedOutletId && availableStock === 0)}
+                      >
+                        ➕ Tambah
+                      </Button>
+                    </div>
                   </div>
+                  <p className="text-xs text-gray-500">
+                    💡 Tekan <kbd className="px-2 py-1 bg-gray-100 rounded">Enter</kbd> untuk tambah ke keranjang
+                  </p>
                 </div>
               </div>
             </CardBody>
@@ -558,13 +658,22 @@ export default function SalesTransactionPage() {
                   fullWidth
                 />
 
-                {/* Promo Code Section */}
+                {/* Promo Code Section - Collapsible */}
                 <div className="border-t pt-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Kode Promo (Opsional)
-                  </label>
-                  {!appliedPromo ? (
-                    <div className="flex gap-2">
+                  <button
+                    onClick={() => setIsPromoExpanded(!isPromoExpanded)}
+                    className="flex items-center justify-between w-full text-left"
+                  >
+                    <label className="block text-sm font-semibold text-gray-700 cursor-pointer">
+                      🎫 Kode Promo (Opsional)
+                    </label>
+                    <span className="text-gray-400">
+                      {isPromoExpanded ? '▲' : '▼'}
+                    </span>
+                  </button>
+
+                  {isPromoExpanded && !appliedPromo && (
+                    <div className="flex gap-2 mt-2">
                       <Input
                         type="text"
                         placeholder="Masukkan kode promo"
@@ -580,8 +689,10 @@ export default function SalesTransactionPage() {
                         {validatePromoMutation.isPending ? 'Memeriksa...' : 'Terapkan'}
                       </Button>
                     </div>
-                  ) : (
-                    <div className="p-3 bg-green-50 border-2 border-green-200 rounded-xl">
+                  )}
+
+                  {appliedPromo && (
+                    <div className="p-3 bg-green-50 border-2 border-green-200 rounded-xl mt-2">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-xs text-green-600 font-semibold">Diterapkan</p>
@@ -622,22 +733,78 @@ export default function SalesTransactionPage() {
                   </div>
                 )}
 
-                <Input
-                  type="number"
-                  label="Jumlah Dibayar"
-                  min="0"
-                  step="1000"
-                  value={paymentData.amountPaid}
-                  onChange={(e) => setPaymentData({ ...paymentData, amountPaid: parseFloat(e.target.value) || 0 })}
-                  fullWidth
-                  required
-                />
+                {/* Quick Payment Buttons */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Nominal Cepat
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    <Button
+                      variant={paymentData.amountPaid === cartTotal ? 'primary' : 'outline'}
+                      size="sm"
+                      onClick={() => handleQuickPayment('exact')}
+                      disabled={cart.length === 0}
+                      className="text-xs"
+                    >
+                      Pas
+                    </Button>
+                    <Button
+                      variant={paymentData.amountPaid === 50000 ? 'primary' : 'outline'}
+                      size="sm"
+                      onClick={() => handleQuickPayment(50000)}
+                      className="text-xs"
+                    >
+                      50rb
+                    </Button>
+                    <Button
+                      variant={paymentData.amountPaid === 100000 ? 'primary' : 'outline'}
+                      size="sm"
+                      onClick={() => handleQuickPayment(100000)}
+                      className="text-xs"
+                    >
+                      100rb
+                    </Button>
+                    <Button
+                      variant={paymentData.amountPaid === 200000 ? 'primary' : 'outline'}
+                      size="sm"
+                      onClick={() => handleQuickPayment(200000)}
+                      className="text-xs"
+                    >
+                      200rb
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Atau Masukkan Manual
+                  </label>
+                  <input
+                    ref={paymentInputRef}
+                    type="number"
+                    min="0"
+                    step="1000"
+                    value={paymentData.amountPaid || ''}
+                    onChange={(e) => setPaymentData({ ...paymentData, amountPaid: parseFloat(e.target.value) || 0 })}
+                    onFocus={(e) => e.target.select()}
+                    className="input-mobile w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                    placeholder="Rp 0"
+                  />
+                </div>
 
                 {change >= 0 && paymentData.amountPaid > 0 && (
                   <div className="p-4 bg-green-50 rounded-xl border-2 border-green-200">
                     <p className="text-sm text-green-700 font-semibold">Kembalian</p>
-                    <p className="text-2xl font-bold text-green-900">
+                    <p className="text-3xl font-bold text-green-900">
                       {formatCurrency(change)}
+                    </p>
+                  </div>
+                )}
+
+                {change < 0 && paymentData.amountPaid > 0 && (
+                  <div className="p-3 bg-red-50 rounded-xl border-2 border-red-200">
+                    <p className="text-xs text-red-700 font-semibold">
+                      ⚠️ Pembayaran kurang {formatCurrency(Math.abs(change))}
                     </p>
                   </div>
                 )}
@@ -651,6 +818,25 @@ export default function SalesTransactionPage() {
                 >
                   {recordSaleMutation.isPending ? 'Memproses...' : '✅ Selesaikan & Cetak Struk'}
                 </Button>
+
+                {/* Keyboard Shortcuts Helper */}
+                <div className="p-3 bg-blue-50 rounded-xl border-2 border-blue-200">
+                  <p className="text-xs text-blue-900 font-semibold mb-2">⌨️ Shortcut Keyboard:</p>
+                  <div className="space-y-1 text-xs text-blue-700">
+                    <div className="flex items-center gap-2">
+                      <kbd className="px-2 py-1 bg-white rounded border border-blue-200">F2</kbd>
+                      <span>Fokus ke pilihan produk</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <kbd className="px-2 py-1 bg-white rounded border border-blue-200">Enter</kbd>
+                      <span>Tambah ke keranjang</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <kbd className="px-2 py-1 bg-white rounded border border-blue-200">F8</kbd>
+                      <span>Selesaikan transaksi</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardBody>
           </Card>
