@@ -145,31 +145,6 @@ export default function SalesTransactionPage() {
     }
   }
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      // F2: Focus product dropdown
-      if (e.key === 'F2') {
-        e.preventDefault()
-        productSelectRef.current?.focus()
-      }
-      // F8: Complete sale (if cart has items and valid payment)
-      if (e.key === 'F8') {
-        e.preventDefault()
-        if (cart.length > 0 && selectedOutletId && change >= 0) {
-          handleCompleteSale()
-        }
-      }
-      // Escape: Clear error
-      if (e.key === 'Escape') {
-        setError('')
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyPress)
-    return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [cart, selectedOutletId, change])
-
   // Auto-add to cart when product is selected (optional, can be toggled)
   const handleProductChange = (productId: string) => {
     setSelectedProductId(productId)
@@ -209,6 +184,31 @@ export default function SalesTransactionPage() {
   const discountAmount = appliedPromo?.discountAmount || 0
   const cartTotal = cartSubtotal - discountAmount // Apply discount
   const change = paymentData.amountPaid - cartTotal
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // F2: Focus product dropdown
+      if (e.key === 'F2') {
+        e.preventDefault()
+        productSelectRef.current?.focus()
+      }
+      // F8: Complete sale (if cart has items and valid payment)
+      if (e.key === 'F8') {
+        e.preventDefault()
+        if (cart.length > 0 && selectedOutletId && change >= 0) {
+          handleCompleteSale()
+        }
+      }
+      // Escape: Clear error
+      if (e.key === 'Escape') {
+        setError('')
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [cart, selectedOutletId, change])
 
   // Handle apply promo code
   const handleApplyPromo = async () => {
