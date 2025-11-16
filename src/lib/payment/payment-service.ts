@@ -242,14 +242,18 @@ export async function confirmPayment(confirmation: PaymentConfirmation): Promise
     }
 
     // Update payment status
+    // Only set confirmed_by if it's a valid UUID (not 'anonymous')
+    const isValidUUID = confirmation.confirmedBy &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(confirmation.confirmedBy)
+
     const { error: updateError } = await supabase
       .from('payments')
       .update({
         status: 'paid',
         confirmed_at: new Date().toISOString(),
-        confirmed_by: confirmation.confirmedBy,
-        payment_proof_url: confirmation.proofImage,
-        confirmation_notes: confirmation.notes
+        confirmed_by: isValidUUID ? confirmation.confirmedBy : null,
+        payment_proof_url: confirmation.proofImage || null,
+        confirmation_notes: confirmation.notes || null
       })
       .eq('id', confirmation.paymentId)
 
@@ -260,9 +264,9 @@ export async function confirmPayment(confirmation: PaymentConfirmation): Promise
     // Create confirmation record
     const { error: confirmError } = await supabase.from('payment_confirmations').insert({
       payment_id: confirmation.paymentId,
-      performed_by: confirmation.confirmedBy,
+      performed_by: isValidUUID ? confirmation.confirmedBy : null,
       action: 'confirmed',
-      reason: confirmation.notes,
+      reason: confirmation.notes || null,
       metadata: confirmation.proofImage ? { proof_url: confirmation.proofImage } : null
     })
 
