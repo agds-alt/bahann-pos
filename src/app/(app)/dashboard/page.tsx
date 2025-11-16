@@ -69,13 +69,13 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* Header with Filters */}
       <div>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 mb-3 md:mb-4">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">{t('dashboard.title')}</h1>
-            <p className="text-gray-600">{t('dashboard.overview')}</p>
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-1 md:mb-2">{t('dashboard.title')}</h1>
+            <p className="text-sm md:text-base text-gray-600">{t('dashboard.overview')}</p>
           </div>
 
           {/* Filters */}
@@ -105,28 +105,28 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card variant="default" padding="lg">
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-500">{t('dashboard.totalProducts')}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <Card variant="default" padding="md">
+          <div className="space-y-1 md:space-y-2">
+            <p className="text-xs md:text-sm font-semibold text-gray-500">{t('dashboard.totalProducts')}</p>
             {statsLoading ? (
-              <div className="h-9 bg-gray-200 rounded animate-pulse" />
+              <div className="h-8 md:h-9 bg-gray-200 rounded animate-pulse" />
             ) : (
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
                 {stats?.totalProducts.toLocaleString() || 0}
               </p>
             )}
-            <p className="text-sm text-gray-600">In inventory</p>
+            <p className="text-xs md:text-sm text-gray-600">In inventory</p>
           </div>
         </Card>
 
-        <Card variant="default" padding="lg">
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-500">{t('dashboard.totalRevenue')}</p>
+        <Card variant="default" padding="md">
+          <div className="space-y-1 md:space-y-2">
+            <p className="text-xs md:text-sm font-semibold text-gray-500">{t('dashboard.totalRevenue')}</p>
             {statsLoading ? (
-              <div className="h-9 bg-gray-200 rounded animate-pulse" />
+              <div className="h-8 md:h-9 bg-gray-200 rounded animate-pulse" />
             ) : (
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
                 {formatCurrency(stats?.totalRevenue || 0)}
               </p>
             )}
@@ -134,45 +134,45 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        <Card variant="default" padding="lg">
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-500">{t('dashboard.lowStock')}</p>
+        <Card variant="default" padding="md">
+          <div className="space-y-1 md:space-y-2">
+            <p className="text-xs md:text-sm font-semibold text-gray-500">{t('dashboard.lowStock')}</p>
             {statsLoading ? (
-              <div className="h-9 bg-gray-200 rounded animate-pulse" />
+              <div className="h-8 md:h-9 bg-gray-200 rounded animate-pulse" />
             ) : (
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
                 {stats?.lowStockCount || 0}
               </p>
             )}
-            <p className={`text-sm ${(stats?.lowStockCount || 0) > 0 ? 'text-red-600' : 'text-green-600'}`}>
+            <p className={`text-xs md:text-sm ${(stats?.lowStockCount || 0) > 0 ? 'text-red-600' : 'text-green-600'}`}>
               {(stats?.lowStockCount || 0) > 0 ? t('warehouse.stock.lowStockAlert') : t('warehouse.stock.noLowStock')}
             </p>
           </div>
         </Card>
 
-        <Card variant="default" padding="lg">
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-500">{t('dashboard.totalOutlets')}</p>
+        <Card variant="default" padding="md">
+          <div className="space-y-1 md:space-y-2">
+            <p className="text-xs md:text-sm font-semibold text-gray-500">{t('dashboard.totalOutlets')}</p>
             {statsLoading ? (
-              <div className="h-9 bg-gray-200 rounded animate-pulse" />
+              <div className="h-8 md:h-9 bg-gray-200 rounded animate-pulse" />
             ) : (
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
                 {stats?.totalOutlets || 0}
               </p>
             )}
-            <p className="text-sm text-gray-600">Active locations</p>
+            <p className="text-xs md:text-sm text-gray-600">Active locations</p>
           </div>
         </Card>
       </div>
 
       {/* Sales Trend Chart */}
-      <Card variant="elevated" padding="lg">
+      <Card variant="elevated" padding="md">
         <CardHeader>
           <CardTitle>Sales Trend (Last {dateRange} Days)</CardTitle>
         </CardHeader>
         <CardBody>
           {trendLoading ? (
-            <div className="h-64 bg-gray-100 rounded animate-pulse" />
+            <div className="h-48 md:h-64 bg-gray-100 rounded animate-pulse" />
           ) : (
             <RevenueLineChart
               data={salesTrend || []}
@@ -184,12 +184,12 @@ export default function DashboardPage() {
       </Card>
 
       {/* Quick Actions */}
-      <Card variant="elevated" padding="lg">
+      <Card variant="elevated" padding="md">
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
         <CardBody>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             <Button
               variant="primary"
               size="lg"
