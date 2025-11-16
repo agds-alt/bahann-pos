@@ -298,6 +298,12 @@ export function Sidebar() {
             isCollapsed={isCollapsed}
           />
           <SidebarItem
+            href="/help"
+            icon="📖"
+            label="Bantuan"
+            isCollapsed={isCollapsed}
+          />
+          <SidebarItem
             href="/about"
             icon="ℹ️"
             label={t('sidebar.about')}
