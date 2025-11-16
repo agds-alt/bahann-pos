@@ -98,18 +98,26 @@ export async function createPayment(request: PaymentRequest): Promise<PaymentRes
     )
 
     // Save payment to database
-    const { data: paymentData, error } = await supabase.from('payments').insert({
+    const insertData = {
       id: paymentId,
       transaction_id: request.transactionId,
       amount: request.amount,
       payment_method_id: qrisConfig.id,
       status: 'pending',
-      customer_name: request.customerName,
-      customer_phone: request.customerPhone,
+      customer_name: request.customerName || null,
+      customer_phone: request.customerPhone || null,
       qris_content: qrisString,
-      confirmation_notes: request.notes,
-      expired_at: expiresAt.toISOString()
-    })
+      confirmation_notes: request.notes || null,
+      expired_at: expiresAt.toISOString(),
+      created_at: new Date().toISOString()
+    }
+
+    console.log('📝 Inserting payment data:', insertData)
+
+    const { data: paymentData, error } = await supabase
+      .from('payments')
+      .insert(insertData)
+      .select()
 
     if (error) {
       console.error('❌ Payment insert error:', error)
@@ -151,13 +159,15 @@ export async function createPayment(request: PaymentRequest): Promise<PaymentRes
       amount: request.amount,
       payment_method_id: bankAccount.id,
       status: 'pending',
-      customer_name: request.customerName,
-      customer_phone: request.customerPhone,
-      confirmation_notes: request.notes,
-      expired_at: expiresAt.toISOString()
-    })
+      customer_name: request.customerName || null,
+      customer_phone: request.customerPhone || null,
+      confirmation_notes: request.notes || null,
+      expired_at: expiresAt.toISOString(),
+      created_at: new Date().toISOString()
+    }).select()
 
     if (error) {
+      console.error('❌ Bank transfer payment insert error:', error)
       throw new Error(`Failed to create payment: ${error.message}`)
     }
 
@@ -185,15 +195,18 @@ export async function createPayment(request: PaymentRequest): Promise<PaymentRes
     id: paymentId,
     transaction_id: request.transactionId,
     amount: request.amount,
-    payment_method_id: paymentMethod?.id,
+    payment_method_id: paymentMethod?.id || null,
     status: 'paid', // Instant payment
-    customer_name: request.customerName,
-    customer_phone: request.customerPhone,
-    confirmation_notes: request.notes,
-    confirmed_at: new Date().toISOString()
-  })
+    customer_name: request.customerName || null,
+    customer_phone: request.customerPhone || null,
+    confirmation_notes: request.notes || null,
+    confirmed_at: new Date().toISOString(),
+    created_at: new Date().toISOString()
+  }).select()
 
   if (error) {
+    console.error('❌ Instant payment insert error:', error)
+    console.error('❌ Error details:', JSON.stringify(error, null, 2))
     throw new Error(`Failed to create payment: ${error.message}`)
   }
 
