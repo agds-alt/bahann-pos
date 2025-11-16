@@ -100,14 +100,15 @@ export async function createPayment(request: PaymentRequest): Promise<PaymentRes
     // Save payment to database
     const insertData = {
       id: paymentId,
-      transaction_id: request.transactionId,
+      // Don't set transaction_id or reference_number (they're UUID types in DB)
+      // We'll link via payment_id when creating the sales transaction
       amount: request.amount,
       payment_method_id: qrisConfig.id,
       status: 'pending',
       customer_name: request.customerName || null,
       customer_phone: request.customerPhone || null,
       qris_content: qrisString,
-      confirmation_notes: request.notes || null,
+      confirmation_notes: `TRX: ${request.transactionId}${request.notes ? ' | ' + request.notes : ''}`,
       expired_at: expiresAt.toISOString(),
       created_at: new Date().toISOString()
     }
@@ -155,13 +156,12 @@ export async function createPayment(request: PaymentRequest): Promise<PaymentRes
     // Save payment to database
     const { error } = await supabase.from('payments').insert({
       id: paymentId,
-      transaction_id: request.transactionId,
       amount: request.amount,
       payment_method_id: bankAccount.id,
       status: 'pending',
       customer_name: request.customerName || null,
       customer_phone: request.customerPhone || null,
-      confirmation_notes: request.notes || null,
+      confirmation_notes: `TRX: ${request.transactionId}${request.notes ? ' | ' + request.notes : ''}`,
       expired_at: expiresAt.toISOString(),
       created_at: new Date().toISOString()
     }).select()
@@ -193,13 +193,12 @@ export async function createPayment(request: PaymentRequest): Promise<PaymentRes
 
   const { error } = await supabase.from('payments').insert({
     id: paymentId,
-    transaction_id: request.transactionId,
     amount: request.amount,
     payment_method_id: paymentMethod?.id || null,
     status: 'paid', // Instant payment
     customer_name: request.customerName || null,
     customer_phone: request.customerPhone || null,
-    confirmation_notes: request.notes || null,
+    confirmation_notes: `TRX: ${request.transactionId}${request.notes ? ' | ' + request.notes : ''}`,
     confirmed_at: new Date().toISOString(),
     created_at: new Date().toISOString()
   }).select()
