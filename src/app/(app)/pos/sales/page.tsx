@@ -7,6 +7,7 @@ import { Input, Select } from '@/components/ui/Input'
 import { trpc } from '@/lib/trpc/client'
 import { PrintPreviewModal } from '@/components/print/PrintPreviewModal'
 import { ReceiptData } from '@/components/print/PrintReceipt'
+import { BarcodeScanner } from '@/components/barcode/BarcodeScanner'
 import { formatCurrency, formatDateTime, generateTransactionId } from '@/lib/utils'
 
 interface CartItem {
@@ -42,11 +43,14 @@ export default function SalesTransactionPage() {
   const [error, setError] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
   const [isPromoExpanded, setIsPromoExpanded] = useState(false)
+  const [isScannerOpen, setIsScannerOpen] = useState(false)
+  const [barcodeInput, setBarcodeInput] = useState('')
 
   // Refs for keyboard navigation
   const productSelectRef = useRef<HTMLSelectElement>(null)
   const quantityInputRef = useRef<HTMLInputElement>(null)
   const paymentInputRef = useRef<HTMLInputElement>(null)
+  const barcodeInputRef = useRef<HTMLInputElement>(null)
 
   // Fetch products and outlets for dropdowns
   const { data: productsResponse, isLoading: productsLoading } = trpc.products.getAll.useQuery()
@@ -142,6 +146,61 @@ export default function SalesTransactionPage() {
       setPaymentData({ ...paymentData, amountPaid: cartTotal })
     } else {
       setPaymentData({ ...paymentData, amountPaid: amount })
+    }
+  }
+
+  // Barcode scan handler (for camera scanner)
+  const handleBarcodeScan = (barcode: string) => {
+    // Find product by SKU
+    const product = products?.find(p => p.sku === barcode.toUpperCase())
+
+    if (product) {
+      setSelectedProductId(product.id)
+      setQuantity(1)
+
+      // Auto-add to cart
+      setTimeout(() => {
+        const unitPrice = product.price || 0
+        const newItem: CartItem = {
+          productId: product.id,
+          productName: product.name,
+          productSku: product.sku,
+          quantity: 1,
+          unitPrice,
+          total: unitPrice,
+        }
+
+        // Check if product already in cart
+        const existingIndex = cart.findIndex(item => item.productId === product.id)
+        if (existingIndex !== -1) {
+          const newCart = [...cart]
+          newCart[existingIndex].quantity += 1
+          newCart[existingIndex].total = newCart[existingIndex].quantity * unitPrice
+          setCart(newCart)
+        } else {
+          setCart([...cart, newItem])
+        }
+
+        setShowSuccess(true)
+        setTimeout(() => setShowSuccess(false), 2000)
+      }, 100)
+    } else {
+      setError(`Produk dengan barcode ${barcode} tidak ditemukan`)
+      setTimeout(() => setError(''), 3000)
+    }
+
+    setIsScannerOpen(false)
+  }
+
+  // Barcode manual input handler (for USB scanner)
+  const handleBarcodeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBarcodeInput(e.target.value.toUpperCase())
+  }
+
+  const handleBarcodeInputSubmit = () => {
+    if (barcodeInput.trim()) {
+      handleBarcodeScan(barcodeInput.trim())
+      setBarcodeInput('')
     }
   }
 
@@ -459,6 +518,62 @@ export default function SalesTransactionPage() {
                       )
                     })}
                   </select>
+                </div>
+
+                {/* Barcode Scanner Section */}
+                <div className="space-y-3 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">📷</span>
+                    <p className="text-sm font-semibold text-gray-800">Scan Barcode</p>
+                  </div>
+
+                  {/* Barcode Manual Input (USB Scanner) */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-semibold text-gray-700">
+                      📟 Input Barcode Manual / USB Scanner
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        ref={barcodeInputRef}
+                        type="text"
+                        value={barcodeInput}
+                        onChange={handleBarcodeInputChange}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            handleBarcodeInputSubmit()
+                          }
+                        }}
+                        placeholder="Scan atau ketik SKU produk..."
+                        className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all uppercase"
+                        disabled={!selectedOutletId}
+                      />
+                      <Button
+                        variant="primary"
+                        onClick={handleBarcodeInputSubmit}
+                        disabled={!selectedOutletId || !barcodeInput.trim()}
+                        className="min-w-[80px]"
+                      >
+                        ✓ OK
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      💡 Tekan <kbd className="px-2 py-1 bg-gray-100 rounded">Enter</kbd> setelah scan
+                    </p>
+                  </div>
+
+                  {/* Camera Scanner Button */}
+                  <div className="pt-2 border-t border-purple-200">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setIsScannerOpen(true)}
+                      disabled={!selectedOutletId}
+                      fullWidth
+                      className="bg-white hover:bg-purple-50"
+                    >
+                      📷 Buka Kamera Scanner
+                    </Button>
+                  </div>
                 </div>
 
                 {selectedProduct && (
@@ -908,6 +1023,14 @@ export default function SalesTransactionPage() {
           isOpen={isPrintModalOpen}
           onClose={() => setIsPrintModalOpen(false)}
           receiptData={receiptData}
+        />
+      )}
+
+      {/* Barcode Scanner Modal */}
+      {isScannerOpen && (
+        <BarcodeScanner
+          onScan={handleBarcodeScan}
+          onClose={() => setIsScannerOpen(false)}
         />
       )}
     </div>
