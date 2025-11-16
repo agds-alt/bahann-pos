@@ -244,6 +244,18 @@ export function Sidebar() {
             label="Promotions"
             isCollapsed={isCollapsed}
           />
+          <SidebarItem
+            href="/eod"
+            icon="💼"
+            label="End of Day"
+            isCollapsed={isCollapsed}
+          />
+          <SidebarItem
+            href="/alerts"
+            icon="📢"
+            label="Stock Alerts"
+            isCollapsed={isCollapsed}
+          />
         </SidebarSection>
 
         <SidebarSection title="Master Data" isCollapsed={isCollapsed}>
@@ -263,6 +275,12 @@ export function Sidebar() {
 
         {userRole === 'admin' && (
           <SidebarSection title="Settings" isCollapsed={isCollapsed}>
+            <SidebarItem
+              href="/settings/users"
+              icon="👥"
+              label="User Management"
+              isCollapsed={isCollapsed}
+            />
             <SidebarItem
               href="/settings/audit-logs"
               icon="📋"
