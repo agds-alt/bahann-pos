@@ -501,8 +501,7 @@ export default function SalesTransactionPage() {
                     value={selectedProductId}
                     onChange={(e) => handleProductChange(e.target.value)}
                     disabled={!selectedOutletId}
-                    className="input-mobile w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed font-mono text-sm"
-                    style={{ fontFamily: 'monospace' }}
+                    className="input-mobile w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
                     <option value="">
                       {selectedOutletId ? 'Pilih produk...' : 'Pilih outlet terlebih dahulu...'}
@@ -512,14 +511,9 @@ export default function SalesTransactionPage() {
                       const stock = stockInfo?.currentStock || 0
                       const stockStatus = stock === 0 ? '❌ Habis' : stock <= 10 ? '⚠️ Sedikit' : '✅'
 
-                      // Format: [Nama Produk (max 35 chars)]  [Harga (rata kanan)]  [Stock (rata kanan)]
-                      const productName = product.name.length > 35 ? product.name.substring(0, 32) + '...' : product.name
-                      const price = formatCurrency(product.price || 0).padStart(12)
-                      const stockText = `${stockStatus} ${stock} pcs`.padStart(15)
-
                       return (
                         <option key={product.id} value={product.id}>
-                          {productName.padEnd(38)} {price}  {stockText}
+                          {product.name} - {formatCurrency(product.price || 0)} - {stockStatus} {stock} pcs
                         </option>
                       )
                     })}
