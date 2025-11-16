@@ -231,6 +231,21 @@ export function Sidebar() {
           />
         </SidebarSection>
 
+        <SidebarSection title="Management" isCollapsed={isCollapsed}>
+          <SidebarItem
+            href="/transactions"
+            icon="🔄"
+            label="Transactions"
+            isCollapsed={isCollapsed}
+          />
+          <SidebarItem
+            href="/promotions"
+            icon="🎫"
+            label="Promotions"
+            isCollapsed={isCollapsed}
+          />
+        </SidebarSection>
+
         <SidebarSection title="Master Data" isCollapsed={isCollapsed}>
           <SidebarItem
             href="/products"

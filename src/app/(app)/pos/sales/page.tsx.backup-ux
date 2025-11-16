@@ -1,0 +1,747 @@
+'use client'
+
+import { useState } from 'react'
+import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Input, Select } from '@/components/ui/Input'
+import { trpc } from '@/lib/trpc/client'
+import { PrintPreviewModal } from '@/components/print/PrintPreviewModal'
+import { ReceiptData } from '@/components/print/PrintReceipt'
+import { formatCurrency, formatDateTime, generateTransactionId } from '@/lib/utils'
+
+interface CartItem {
+  productId: string
+  productName: string
+  productSku: string
+  quantity: number
+  unitPrice: number
+  total: number
+}
+
+export default function SalesTransactionPage() {
+  const [selectedProductId, setSelectedProductId] = useState('')
+  const [selectedOutletId, setSelectedOutletId] = useState('')
+  const [quantity, setQuantity] = useState(1)
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [saleDate] = useState(new Date().toISOString().split('T')[0])
+
+  const [paymentData, setPaymentData] = useState({
+    method: 'cash',
+    amountPaid: 0,
+  })
+
+  const [promoCode, setPromoCode] = useState('')
+  const [appliedPromo, setAppliedPromo] = useState<{
+    discountAmount: number
+    promoName: string
+    promoId: string
+  } | null>(null)
+
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false)
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
+  const [error, setError] = useState('')
+  const [showSuccess, setShowSuccess] = useState(false)
+
+  // Fetch products and outlets for dropdowns
+  const { data: productsResponse, isLoading: productsLoading } = trpc.products.getAll.useQuery()
+  const { data: outletsResponse, isLoading: outletsLoading } = trpc.outlets.getAll.useQuery()
+
+  const products = productsResponse?.products || []
+  const outlets = outletsResponse?.outlets || []
+
+  // Fetch inventory with stock (filtered by selected outlet)
+  const { data: inventoryList } = trpc.stock.getInventoryList.useQuery({
+    outletId: selectedOutletId || undefined,
+  }, {
+    enabled: !!selectedOutletId, // Only fetch when outlet is selected
+  })
+
+  // Fetch real dashboard data
+  const { data: recentTransactions, refetch: refetchTransactions } = trpc.dashboard.getRecentTransactions.useQuery({ limit: 5 })
+
+  const recordSaleMutation = trpc.sales.record.useMutation()
+  const createTransactionMutation = trpc.transactions.create.useMutation()
+  const validatePromoMutation = trpc.promotions.validate.useMutation()
+  const recordPromoUsageMutation = trpc.promotions.recordUsage.useMutation()
+
+  const selectedProduct = products?.find(p => p.id === selectedProductId)
+  const selectedOutlet = outlets?.find(o => o.id === selectedOutletId)
+
+  // Get stock info for selected product
+  const selectedProductStock = inventoryList?.find(p => p.id === selectedProductId)
+  const availableStock = selectedProductStock?.currentStock || 0
+
+  // Add item to cart
+  const handleAddToCart = () => {
+    if (!selectedProduct) {
+      setError('Silakan pilih produk')
+      return
+    }
+
+    if (quantity <= 0) {
+      setError('Jumlah harus lebih dari 0')
+      return
+    }
+
+    // Check stock availability
+    if (selectedOutletId && availableStock < quantity) {
+      setError(`Stok tidak cukup! Hanya ${availableStock} unit tersedia`)
+      return
+    }
+
+    const unitPrice = selectedProduct.price || 0
+    const total = quantity * unitPrice
+
+    // Check if product already in cart
+    const existingItemIndex = cart.findIndex(item => item.productId === selectedProduct.id)
+
+    if (existingItemIndex >= 0) {
+      // Update existing item
+      const updatedCart = [...cart]
+      updatedCart[existingItemIndex].quantity += quantity
+      updatedCart[existingItemIndex].total = updatedCart[existingItemIndex].quantity * unitPrice
+      setCart(updatedCart)
+    } else {
+      // Add new item
+      const newItem: CartItem = {
+        productId: selectedProduct.id,
+        productName: selectedProduct.name,
+        productSku: selectedProduct.sku,
+        quantity,
+        unitPrice,
+        total,
+      }
+      setCart([...cart, newItem])
+    }
+
+    // Reset selection
+    setSelectedProductId('')
+    setQuantity(1)
+    setError('')
+  }
+
+  // Remove item from cart
+  const handleRemoveFromCart = (productId: string) => {
+    setCart(cart.filter(item => item.productId !== productId))
+  }
+
+  // Update cart item quantity
+  const handleUpdateQuantity = (productId: string, newQuantity: number) => {
+    if (newQuantity <= 0) return
+
+    const updatedCart = cart.map(item => {
+      if (item.productId === productId) {
+        return {
+          ...item,
+          quantity: newQuantity,
+          total: newQuantity * item.unitPrice,
+        }
+      }
+      return item
+    })
+    setCart(updatedCart)
+  }
+
+  // Calculate cart totals
+  const cartSubtotal = cart.reduce((sum, item) => sum + item.total, 0)
+  const discountAmount = appliedPromo?.discountAmount || 0
+  const cartTotal = cartSubtotal - discountAmount // Apply discount
+  const change = paymentData.amountPaid - cartTotal
+
+  // Handle apply promo code
+  const handleApplyPromo = async () => {
+    if (!promoCode) {
+      setError('Please enter a promo code')
+      return
+    }
+
+    try {
+      const result = await validatePromoMutation.mutateAsync({
+        code: promoCode,
+        cartTotal: cartSubtotal,
+        items: cart.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
+      })
+
+      setAppliedPromo(result)
+      setError('')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Invalid promo code'
+      setError(errorMessage)
+      setAppliedPromo(null)
+    }
+  }
+
+  // Remove promo
+  const handleRemovePromo = () => {
+    setAppliedPromo(null)
+    setPromoCode('')
+  }
+
+  // Complete sale
+  const handleCompleteSale = async () => {
+    setError('')
+    setShowSuccess(false)
+
+    if (cart.length === 0) {
+      setError('Keranjang kosong. Silakan tambahkan item ke keranjang.')
+      return
+    }
+
+    if (!selectedOutletId) {
+      setError('Silakan pilih outlet')
+      return
+    }
+
+    if (paymentData.amountPaid < cartTotal) {
+      setError('Jumlah pembayaran tidak cukup')
+      return
+    }
+
+    try {
+      // Create transaction using new system
+      const result = await createTransactionMutation.mutateAsync({
+        outletId: selectedOutletId,
+        items: cart.map(item => ({
+          productId: item.productId,
+          productName: item.productName,
+          productSku: item.productSku,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
+        paymentMethod: paymentData.method as 'cash' | 'card' | 'transfer' | 'ewallet',
+        amountPaid: paymentData.amountPaid,
+        discountAmount: discountAmount,
+        notes: appliedPromo ? `Promo applied: ${appliedPromo.promoName}` : undefined,
+      })
+
+      // Record promotion usage if applied
+      if (appliedPromo && result.transaction) {
+        await recordPromoUsageMutation.mutateAsync({
+          promotionId: appliedPromo.promoId,
+          transactionId: result.transaction.id,
+          discountApplied: discountAmount,
+        })
+      }
+
+      // Generate receipt data
+      const now = new Date()
+
+      const receipt: ReceiptData = {
+        transactionId: result.transactionId,
+        date: now.toLocaleDateString('id-ID', {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+        }),
+        time: now.toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        }),
+        cashier: getUserName(),
+        outlet: {
+          name: selectedOutlet?.name || 'AGDS Corp POS',
+          address: selectedOutlet?.address || 'Indonesia',
+          phone: '+62 878-7441-5491',
+          email: 'agdscid@gmail.com',
+        },
+        items: cart.map(item => ({
+          name: item.productName,
+          sku: item.productSku,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          total: item.total,
+        })),
+        subtotal: cartSubtotal,
+        tax: 0,
+        discount: discountAmount,
+        total: cartTotal,
+        payment: {
+          method: paymentData.method,
+          amount: paymentData.amountPaid,
+          change: change > 0 ? change : 0,
+        },
+        notes: appliedPromo
+          ? `Promo: ${appliedPromo.promoName} • Terima kasih!`
+          : 'Terima kasih telah berbelanja di AGDS Corp POS',
+      }
+
+      setReceiptData(receipt)
+      setIsPrintModalOpen(true)
+      setShowSuccess(true)
+
+      // Debug log
+      console.log('Receipt data:', receipt)
+      console.log('Print modal opened:', true)
+
+      // Refetch transactions
+      refetchTransactions()
+
+      // Reset form
+      setCart([])
+      setPaymentData({
+        method: 'cash',
+        amountPaid: 0,
+      })
+      setSelectedOutletId('')
+      setPromoCode('')
+      setAppliedPromo(null)
+
+      setTimeout(() => setShowSuccess(false), 3000)
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Gagal mencatat penjualan'
+      setError(errorMessage)
+    }
+  }
+
+  // Using centralized utility functions for formatting
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">Point of Sale</h1>
+        <p className="text-gray-600">Proses transaksi penjualan dengan keranjang multi-item</p>
+      </div>
+
+      {/* Success Message */}
+      {showSuccess && (
+        <div className="p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+          <p className="text-sm font-semibold text-green-600">
+            ✅ Penjualan berhasil dicatat!
+          </p>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+          <p className="text-sm font-semibold text-red-600">
+            ❌ {error}
+          </p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Product Selection + Cart */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Outlet Selection */}
+          <Card variant="elevated" padding="lg">
+            <CardHeader>
+              <CardTitle>Pilih Outlet</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <Select
+                value={selectedOutletId}
+                onChange={(e) => setSelectedOutletId(e.target.value)}
+                options={[
+                  { value: '', label: 'Pilih outlet...' },
+                  ...(outlets?.map(outlet => ({
+                    value: outlet.id,
+                    label: outlet.address ? `${outlet.name} - ${outlet.address}` : outlet.name,
+                  })) || []),
+                ]}
+                fullWidth
+                required
+              />
+              {selectedOutlet && (
+                <div className="mt-3 p-3 bg-purple-50 border-2 border-purple-200 rounded-xl">
+                  <p className="text-xs text-purple-600 font-semibold">Outlet Terpilih:</p>
+                  <p className="text-sm font-semibold text-purple-900">{selectedOutlet.name}</p>
+                  <p className="text-xs text-purple-700">{selectedOutlet.address}</p>
+                </div>
+              )}
+            </CardBody>
+          </Card>
+
+          {/* Add Product to Cart */}
+          <Card variant="elevated" padding="lg">
+            <CardHeader>
+              <CardTitle>Tambah Item ke Keranjang</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <div className="space-y-4">
+                {!selectedOutletId && (
+                  <div className="p-3 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
+                    <p className="text-xs text-yellow-800 font-semibold">
+                      ⚠️ Silakan pilih outlet terlebih dahulu untuk melihat stok produk
+                    </p>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Pilih Produk
+                  </label>
+                  <select
+                    value={selectedProductId}
+                    onChange={(e) => setSelectedProductId(e.target.value)}
+                    disabled={!selectedOutletId}
+                    className="input-mobile w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="">
+                      {selectedOutletId ? 'Pilih produk...' : 'Pilih outlet terlebih dahulu...'}
+                    </option>
+                    {products?.map(product => {
+                      const stockInfo = inventoryList?.find(p => p.id === product.id)
+                      const stock = stockInfo?.currentStock || 0
+                      const stockStatus = stock === 0 ? '❌ Habis' : stock <= 10 ? '⚠️ Sedikit' : '✅'
+
+                      return (
+                        <option key={product.id} value={product.id}>
+                          {product.name} • {formatCurrency(product.price || 0)} • {stockStatus} {stock} pcs
+                        </option>
+                      )
+                    })}
+                  </select>
+                </div>
+
+                {selectedProduct && (
+                  <div className="p-3 bg-blue-50 border-2 border-blue-200 rounded-xl">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <p className="text-xs text-blue-600 font-semibold">Produk Terpilih:</p>
+                        <p className="text-sm font-semibold text-blue-900">{selectedProduct.name}</p>
+                        <p className="text-xs text-blue-700">
+                          SKU: {selectedProduct.sku} • {selectedProduct.category || 'N/A'}
+                        </p>
+                        {selectedOutletId && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className={`text-xs font-bold ${
+                              availableStock === 0 ? 'text-red-600' :
+                              availableStock <= 10 ? 'text-yellow-600' :
+                              'text-green-600'
+                            }`}>
+                              {availableStock === 0 ? '❌ Stok habis' :
+                               availableStock <= 10 ? `⚠️ Stok sedikit: ${availableStock} unit` :
+                               `✅ Tersedia: ${availableStock} unit`}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-blue-900">
+                          {formatCurrency(selectedProduct.price || 0)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <Input
+                      type="number"
+                      label="Jumlah"
+                      min="1"
+                      value={quantity}
+                      onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                      fullWidth
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button
+                      variant="primary"
+                      onClick={handleAddToCart}
+                      disabled={!selectedProduct || productsLoading || (!!selectedOutletId && availableStock === 0)}
+                    >
+                      ➕ Tambah ke Keranjang
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+
+          {/* Shopping Cart */}
+          <Card variant="default" padding="lg">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>🛒 Keranjang Belanja</CardTitle>
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">
+                  {cart.length} item
+                </span>
+              </div>
+            </CardHeader>
+            <CardBody>
+              {cart.length === 0 ? (
+                <div className="py-12 text-center text-gray-500">
+                  <div className="text-6xl mb-4">🛒</div>
+                  <p className="font-semibold">Keranjang kosong</p>
+                  <p className="text-sm">Tambahkan produk untuk memulai transaksi</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {cart.map((item) => (
+                    <div
+                      key={item.productId}
+                      className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-4 bg-gray-50 rounded-xl border-2 border-gray-200"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 truncate">{item.productName}</p>
+                        <p className="text-xs sm:text-sm text-gray-600 truncate">SKU: {item.productSku}</p>
+                        <p className="text-xs sm:text-sm text-gray-700 font-semibold">
+                          {formatCurrency(item.unitPrice)} × {item.quantity}
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleUpdateQuantity(item.productId, item.quantity - 1)}
+                            className="min-w-[36px] sm:min-w-[40px] px-2"
+                          >
+                            -
+                          </Button>
+                          <span className="w-8 sm:w-12 text-center font-bold text-sm">{item.quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleUpdateQuantity(item.productId, item.quantity + 1)}
+                            className="min-w-[36px] sm:min-w-[40px] px-2"
+                          >
+                            +
+                          </Button>
+                        </div>
+                        <div className="min-w-[80px] sm:min-w-[120px] text-right">
+                          <p className="text-base sm:text-lg font-bold text-gray-900">
+                            {formatCurrency(item.total)}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRemoveFromCart(item.productId)}
+                          className="min-w-[36px] sm:min-w-[40px] px-2"
+                        >
+                          🗑️
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Cart Total */}
+                  <div className="p-4 bg-gray-900 rounded-xl border-2 border-gray-700">
+                    <p className="text-sm text-gray-400 mb-1">Total Keranjang</p>
+                    <p className="text-3xl font-bold text-white">
+                      {formatCurrency(cartTotal)}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        </div>
+
+        {/* Right Column: Payment & Summary */}
+        <div className="space-y-6">
+          {/* Payment Section */}
+          <Card variant="elevated" padding="lg">
+            <CardHeader>
+              <CardTitle>Pembayaran</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <div className="space-y-4">
+                <Select
+                  label="Metode Pembayaran"
+                  value={paymentData.method}
+                  onChange={(e) => setPaymentData({ ...paymentData, method: e.target.value })}
+                  options={[
+                    { value: 'cash', label: '💵 Tunai' },
+                    { value: 'card', label: '💳 Kartu' },
+                    { value: 'transfer', label: '🏦 Transfer' },
+                    { value: 'ewallet', label: '📱 E-Wallet' },
+                  ]}
+                  fullWidth
+                />
+
+                {/* Promo Code Section */}
+                <div className="border-t pt-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Kode Promo (Opsional)
+                  </label>
+                  {!appliedPromo ? (
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Masukkan kode promo"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                        fullWidth
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={handleApplyPromo}
+                        disabled={!promoCode || validatePromoMutation.isPending}
+                      >
+                        {validatePromoMutation.isPending ? 'Memeriksa...' : 'Terapkan'}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-green-50 border-2 border-green-200 rounded-xl">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs text-green-600 font-semibold">Diterapkan</p>
+                          <p className="text-sm font-bold text-green-900">{appliedPromo.promoName}</p>
+                          <p className="text-xs text-green-700">
+                            Diskon: -{formatCurrency(appliedPromo.discountAmount)}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRemovePromo}
+                        >
+                          Hapus
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cart Summary */}
+                {cart.length > 0 && (
+                  <div className="p-3 bg-gray-50 rounded-xl space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Subtotal:</span>
+                      <span className="font-semibold">{formatCurrency(cartSubtotal)}</span>
+                    </div>
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>Diskon:</span>
+                        <span className="font-semibold">-{formatCurrency(discountAmount)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-base font-bold pt-2 border-t">
+                      <span>Total:</span>
+                      <span>{formatCurrency(cartTotal)}</span>
+                    </div>
+                  </div>
+                )}
+
+                <Input
+                  type="number"
+                  label="Jumlah Dibayar"
+                  min="0"
+                  step="1000"
+                  value={paymentData.amountPaid}
+                  onChange={(e) => setPaymentData({ ...paymentData, amountPaid: parseFloat(e.target.value) || 0 })}
+                  fullWidth
+                  required
+                />
+
+                {change >= 0 && paymentData.amountPaid > 0 && (
+                  <div className="p-4 bg-green-50 rounded-xl border-2 border-green-200">
+                    <p className="text-sm text-green-700 font-semibold">Kembalian</p>
+                    <p className="text-2xl font-bold text-green-900">
+                      {formatCurrency(change)}
+                    </p>
+                  </div>
+                )}
+
+                <Button
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  onClick={handleCompleteSale}
+                  disabled={recordSaleMutation.isPending || cart.length === 0 || !selectedOutletId || change < 0}
+                >
+                  {recordSaleMutation.isPending ? 'Memproses...' : '✅ Selesaikan & Cetak Struk'}
+                </Button>
+              </div>
+            </CardBody>
+          </Card>
+
+          {/* Quick Stats */}
+          <Card variant="default" padding="lg">
+            <CardHeader>
+              <CardTitle>Statistik Sesi</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <div className="space-y-3">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-600">Item di Keranjang</p>
+                  <p className="text-xl font-bold text-gray-900">{cart.length}</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-600">Total Unit</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                  </p>
+                </div>
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <p className="text-xs text-green-700">Nilai Keranjang</p>
+                  <p className="text-xl font-bold text-green-900">{formatCurrency(cartTotal)}</p>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      </div>
+
+      {/* Recent Transactions */}
+      <Card variant="default" padding="lg">
+        <CardHeader>
+          <CardTitle>📊 Transaksi Terbaru</CardTitle>
+        </CardHeader>
+        <CardBody>
+          {!recentTransactions || recentTransactions.length === 0 ? (
+            <div className="py-8 text-center text-gray-500">
+              Tidak ada transaksi terbaru
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentTransactions.map((transaction) => (
+                <div
+                  key={transaction.id}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                >
+                  <div>
+                    <p className="font-semibold text-gray-900">{transaction.productName}</p>
+                    <p className="text-sm text-gray-500">
+                      {transaction.outletName} • {formatDateTime(transaction.date)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-gray-900">{formatCurrency(transaction.revenue)}</p>
+                    <p className="text-xs text-gray-500">{transaction.quantity} units</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardBody>
+      </Card>
+
+      {/* Print Preview Modal */}
+      {receiptData && (
+        <PrintPreviewModal
+          isOpen={isPrintModalOpen}
+          onClose={() => setIsPrintModalOpen(false)}
+          receiptData={receiptData}
+        />
+      )}
+    </div>
+  )
+}
+
+/**
+ * Get current user name from session/localStorage
+ */
+function getUserName(): string {
+  if (typeof window !== 'undefined') {
+    const user = localStorage.getItem('user')
+    if (user) {
+      try {
+        const userData = JSON.parse(user)
+        return userData.name || 'Cashier'
+      } catch {
+        return 'Cashier'
+      }
+    }
+  }
+  return 'Cashier'
+}
