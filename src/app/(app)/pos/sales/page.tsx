@@ -8,6 +8,7 @@ import { trpc } from '@/lib/trpc/client'
 import { PrintPreviewModal } from '@/components/print/PrintPreviewModal'
 import { ReceiptData } from '@/components/print/PrintReceipt'
 import { BarcodeScanner } from '@/components/barcode/BarcodeScanner'
+import { PaymentModal } from '@/components/payment'
 import { formatCurrency, formatDateTime, generateTransactionId } from '@/lib/utils'
 
 interface CartItem {
@@ -45,6 +46,8 @@ export default function SalesTransactionPage() {
   const [isPromoExpanded, setIsPromoExpanded] = useState(false)
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [barcodeInput, setBarcodeInput] = useState('')
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [pendingTransactionId, setPendingTransactionId] = useState<string>('')
 
   // Refs for keyboard navigation
   const productSelectRef = useRef<HTMLSelectElement>(null)
@@ -317,6 +320,20 @@ export default function SalesTransactionPage() {
       return
     }
 
+    // Check if payment method requires PaymentModal (QRIS, Bank Transfer)
+    const requiresPaymentModal = ['qris', 'bank_transfer', 'transfer'].includes(paymentData.method)
+
+    if (requiresPaymentModal) {
+      // Generate transaction ID for payment
+      const transactionId = generateTransactionId()
+      setPendingTransactionId(transactionId)
+
+      // Open PaymentModal
+      setIsPaymentModalOpen(true)
+      return
+    }
+
+    // For Cash/Card - instant payment flow
     if (paymentData.amountPaid < cartTotal) {
       setError('Jumlah pembayaran tidak cukup')
       return
@@ -411,6 +428,106 @@ export default function SalesTransactionPage() {
       setSelectedOutletId('')
       setPromoCode('')
       setAppliedPromo(null)
+
+      setTimeout(() => setShowSuccess(false), 3000)
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Gagal mencatat penjualan'
+      setError(errorMessage)
+    }
+  }
+
+  // Handle payment success from PaymentModal
+  const handlePaymentSuccess = async (paymentId: string) => {
+    try {
+      // Close payment modal
+      setIsPaymentModalOpen(false)
+
+      // Create transaction with payment ID
+      const result = await createTransactionMutation.mutateAsync({
+        outletId: selectedOutletId,
+        items: cart.map(item => ({
+          productId: item.productId,
+          productName: item.productName,
+          productSku: item.productSku,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
+        paymentMethod: paymentData.method as 'cash' | 'card' | 'transfer' | 'ewallet',
+        amountPaid: cartTotal,
+        discountAmount: discountAmount,
+        notes: appliedPromo
+          ? `Promo applied: ${appliedPromo.promoName} | Payment ID: ${paymentId}`
+          : `Payment ID: ${paymentId}`,
+      })
+
+      // Record promotion usage if applied
+      if (appliedPromo && result.transaction) {
+        await recordPromoUsageMutation.mutateAsync({
+          promotionId: appliedPromo.promoId,
+          transactionId: result.transaction.id,
+          discountApplied: discountAmount,
+        })
+      }
+
+      // Generate receipt
+      const now = new Date()
+      const receipt: ReceiptData = {
+        transactionId: result.transactionId,
+        date: now.toLocaleDateString('id-ID', {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+        }),
+        time: now.toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        }),
+        cashier: getUserName(),
+        outlet: {
+          name: selectedOutlet?.name || 'AGDS Corp POS',
+          address: selectedOutlet?.address || 'Indonesia',
+          phone: '+62 878-7441-5491',
+          email: 'agdscid@gmail.com',
+        },
+        items: cart.map(item => ({
+          name: item.productName,
+          sku: item.productSku,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          total: item.total,
+        })),
+        subtotal: cartSubtotal,
+        tax: 0,
+        discount: discountAmount,
+        total: cartTotal,
+        payment: {
+          method: paymentData.method,
+          amount: cartTotal,
+          change: 0,
+        },
+        notes: appliedPromo
+          ? `Promo: ${appliedPromo.promoName} • Terima kasih!`
+          : 'Terima kasih telah berbelanja di AGDS Corp POS',
+      }
+
+      setReceiptData(receipt)
+      setIsPrintModalOpen(true)
+      setShowSuccess(true)
+
+      // Refetch transactions
+      refetchTransactions()
+
+      // Reset form
+      setCart([])
+      setPaymentData({
+        method: 'cash',
+        amountPaid: 0,
+      })
+      setSelectedOutletId('')
+      setPromoCode('')
+      setAppliedPromo(null)
+      setPendingTransactionId('')
 
       setTimeout(() => setShowSuccess(false), 3000)
     } catch (err: unknown) {
@@ -1033,6 +1150,24 @@ export default function SalesTransactionPage() {
           onClose={() => setIsScannerOpen(false)}
         />
       )}
+
+      {/* Payment Modal for QRIS/Bank Transfer */}
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => {
+          setIsPaymentModalOpen(false)
+          setPendingTransactionId('')
+        }}
+        transactionId={pendingTransactionId}
+        amount={cartTotal}
+        customerName={selectedOutlet?.name}
+        userId={getUserId()}
+        onSuccess={handlePaymentSuccess}
+        onError={(error) => {
+          setError(error)
+          setIsPaymentModalOpen(false)
+        }}
+      />
     </div>
   )
 }
@@ -1053,4 +1188,22 @@ function getUserName(): string {
     }
   }
   return 'Cashier'
+}
+
+/**
+ * Get current user ID from session/localStorage
+ */
+function getUserId(): string {
+  if (typeof window !== 'undefined') {
+    const user = localStorage.getItem('user')
+    if (user) {
+      try {
+        const userData = JSON.parse(user)
+        return userData.id || 'anonymous'
+      } catch {
+        return 'anonymous'
+      }
+    }
+  }
+  return 'anonymous'
 }
