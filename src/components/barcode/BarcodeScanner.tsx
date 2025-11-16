@@ -15,33 +15,74 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const [cameras, setCameras] = useState<Array<{ id: string; label: string }>>([])
   const [selectedCamera, setSelectedCamera] = useState<string>('')
+  const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null)
 
   useEffect(() => {
-    // Get available cameras
-    Html5Qrcode.getCameras()
-      .then((devices) => {
-        if (devices && devices.length > 0) {
-          const cameraList = devices.map((device) => ({
-            id: device.id,
-            label: device.label || `Camera ${device.id}`,
-          }))
-          setCameras(cameraList)
-          // Prefer back camera for mobile
-          const backCamera = devices.find((d) => d.label.toLowerCase().includes('back'))
-          setSelectedCamera(backCamera?.id || devices[0].id)
-        } else {
-          setError('No cameras found')
-        }
-      })
-      .catch((err) => {
-        console.error('Error getting cameras:', err)
-        setError('Failed to access cameras')
-      })
+    // Request camera permission first
+    requestCameraPermission()
 
     return () => {
       stopScanning()
     }
   }, [])
+
+  const requestCameraPermission = async () => {
+    try {
+      // Check if navigator.mediaDevices is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setError('Camera API not supported in this browser')
+        setPermissionGranted(false)
+        return
+      }
+
+      // Request camera permission
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' } // Prefer back camera
+      })
+
+      // Permission granted! Stop the stream (we just needed permission)
+      stream.getTracks().forEach(track => track.stop())
+      setPermissionGranted(true)
+      setError(null)
+
+      // Now get available cameras
+      await getCameraList()
+    } catch (err: any) {
+      console.error('Camera permission error:', err)
+      setPermissionGranted(false)
+
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setError('📷 Akses kamera ditolak. Silakan izinkan akses kamera di pengaturan browser/sistem.')
+      } else if (err.name === 'NotFoundError') {
+        setError('📷 Kamera tidak ditemukan pada perangkat ini.')
+      } else if (err.name === 'NotReadableError') {
+        setError('📷 Kamera sedang digunakan aplikasi lain. Tutup aplikasi tersebut dan coba lagi.')
+      } else {
+        setError(`📷 Gagal mengakses kamera: ${err.message || 'Unknown error'}`)
+      }
+    }
+  }
+
+  const getCameraList = async () => {
+    try {
+      const devices = await Html5Qrcode.getCameras()
+      if (devices && devices.length > 0) {
+        const cameraList = devices.map((device) => ({
+          id: device.id,
+          label: device.label || `Camera ${device.id}`,
+        }))
+        setCameras(cameraList)
+        // Prefer back camera for mobile
+        const backCamera = devices.find((d) => d.label.toLowerCase().includes('back'))
+        setSelectedCamera(backCamera?.id || devices[0].id)
+      } else {
+        setError('Tidak ada kamera yang ditemukan')
+      }
+    } catch (err) {
+      console.error('Error getting cameras:', err)
+      setError('Gagal mendapatkan daftar kamera')
+    }
+  }
 
   const startScanning = async () => {
     if (!selectedCamera) {
@@ -109,13 +150,38 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
           </button>
         </div>
 
-        {error && (
-          <div className="p-3 bg-red-50 border-2 border-red-200 rounded-xl">
-            <p className="text-sm font-semibold text-red-600">❌ {error}</p>
+        {/* Permission Status */}
+        {permissionGranted === null && (
+          <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
+            <p className="text-sm font-semibold text-blue-900">📷 Meminta izin akses kamera...</p>
+            <p className="text-xs text-blue-700 mt-1">Silakan izinkan akses kamera saat diminta browser.</p>
           </div>
         )}
 
-        {cameras.length > 0 && (
+        {permissionGranted === false && (
+          <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl space-y-3">
+            <div>
+              <p className="text-sm font-semibold text-red-900">❌ {error}</p>
+              <p className="text-xs text-red-700 mt-2">Untuk menggunakan scanner barcode, Anda perlu:</p>
+              <ul className="text-xs text-red-700 mt-1 ml-4 list-disc space-y-1">
+                <li>Izinkan akses kamera di browser</li>
+                <li>Periksa pengaturan kamera perangkat</li>
+                <li>Pastikan tidak ada aplikasi lain yang menggunakan kamera</li>
+              </ul>
+            </div>
+            <Button variant="primary" onClick={requestCameraPermission} fullWidth>
+              🔄 Coba Lagi
+            </Button>
+          </div>
+        )}
+
+        {permissionGranted === true && error && (
+          <div className="p-3 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
+            <p className="text-sm font-semibold text-yellow-900">⚠️ {error}</p>
+          </div>
+        )}
+
+        {permissionGranted === true && cameras.length > 0 && (
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-700">
               Select Camera
@@ -141,25 +207,35 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
           style={{ minHeight: '300px' }}
         />
 
-        <div className="flex gap-3">
-          {!isScanning ? (
-            <Button
-              variant="primary"
-              onClick={startScanning}
-              disabled={!selectedCamera}
-              fullWidth
-            >
-              📷 Start Scanning
+        {permissionGranted === true && (
+          <div className="flex gap-3">
+            {!isScanning ? (
+              <Button
+                variant="primary"
+                onClick={startScanning}
+                disabled={!selectedCamera}
+                fullWidth
+              >
+                📷 Start Scanning
+              </Button>
+            ) : (
+              <Button variant="secondary" onClick={stopScanning} fullWidth>
+                ⏸️ Stop Scanning
+              </Button>
+            )}
+            <Button variant="outline" onClick={handleClose} fullWidth>
+              Close
             </Button>
-          ) : (
-            <Button variant="secondary" onClick={stopScanning} fullWidth>
-              ⏸️ Stop Scanning
+          </div>
+        )}
+
+        {permissionGranted !== true && (
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={handleClose} fullWidth>
+              Close
             </Button>
-          )}
-          <Button variant="outline" onClick={handleClose} fullWidth>
-            Close
-          </Button>
-        </div>
+          </div>
+        )}
 
         <div className="p-3 bg-blue-50 border-2 border-blue-200 rounded-xl">
           <p className="text-xs text-blue-900 font-semibold">💡 Tips:</p>
