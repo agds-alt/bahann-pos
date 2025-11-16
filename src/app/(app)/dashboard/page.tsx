@@ -106,8 +106,8 @@ export default function DashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <Card variant="default" padding="md">
-          <div className="space-y-1 md:space-y-2">
+        <Card variant="default" padding="lg">
+          <div className="space-y-2">
             <p className="text-xs md:text-sm font-semibold text-gray-500">{t('dashboard.totalProducts')}</p>
             {statsLoading ? (
               <div className="h-8 md:h-9 bg-gray-200 rounded animate-pulse" />
@@ -120,8 +120,8 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        <Card variant="default" padding="md">
-          <div className="space-y-1 md:space-y-2">
+        <Card variant="default" padding="lg">
+          <div className="space-y-2">
             <p className="text-xs md:text-sm font-semibold text-gray-500">{t('dashboard.totalRevenue')}</p>
             {statsLoading ? (
               <div className="h-8 md:h-9 bg-gray-200 rounded animate-pulse" />
@@ -134,8 +134,8 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        <Card variant="default" padding="md">
-          <div className="space-y-1 md:space-y-2">
+        <Card variant="default" padding="lg">
+          <div className="space-y-2">
             <p className="text-xs md:text-sm font-semibold text-gray-500">{t('dashboard.lowStock')}</p>
             {statsLoading ? (
               <div className="h-8 md:h-9 bg-gray-200 rounded animate-pulse" />
@@ -150,8 +150,8 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        <Card variant="default" padding="md">
-          <div className="space-y-1 md:space-y-2">
+        <Card variant="default" padding="lg">
+          <div className="space-y-2">
             <p className="text-xs md:text-sm font-semibold text-gray-500">{t('dashboard.totalOutlets')}</p>
             {statsLoading ? (
               <div className="h-8 md:h-9 bg-gray-200 rounded animate-pulse" />

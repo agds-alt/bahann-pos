@@ -234,6 +234,7 @@ export class SyncManager {
 
   /**
    * Pull latest product data
+   * TODO: Implement tRPC endpoint /api/trpc/products.getAllForOffline
    */
   private async pullProducts() {
     try {
@@ -251,31 +252,32 @@ export class SyncManager {
         }
       }
 
-      console.log('📥 Pulling latest products...')
-      const response = await fetch('/api/trpc/products.getAllForOffline')
-
-      if (response.ok) {
-        const data = await response.json()
-        const products = data.result?.data?.products || []
-
-        if (products.length > 0) {
-          // Update local database
-          await offlineDb.products.bulkPut(
-            products.map((p: any) => ({
-              id: p.id,
-              name: p.name,
-              sku: p.sku,
-              price: p.price,
-              category: p.category,
-              barcode: p.barcode,
-              stock: p.stock || 0,
-              outletId: p.outletId,
-              lastSync: Date.now()
-            }))
-          )
-          console.log(`✅ Pulled ${products.length} products`)
-        }
-      }
+      // DISABLED: Endpoint not implemented yet
+      // console.log('📥 Pulling latest products...')
+      // const response = await fetch('/api/trpc/products.getAllForOffline')
+      //
+      // if (response.ok) {
+      //   const data = await response.json()
+      //   const products = data.result?.data?.products || []
+      //
+      //   if (products.length > 0) {
+      //     // Update local database
+      //     await offlineDb.products.bulkPut(
+      //       products.map((p: any) => ({
+      //         id: p.id,
+      //         name: p.name,
+      //         sku: p.sku,
+      //         price: p.price,
+      //         category: p.category,
+      //         barcode: p.barcode,
+      //         stock: p.stock || 0,
+      //         outletId: p.outletId,
+      //         lastSync: Date.now()
+      //       }))
+      //     )
+      //     console.log(`✅ Pulled ${products.length} products`)
+      //   }
+      // }
     } catch (error) {
       console.error('❌ Failed to pull products:', error)
       // Non-critical, don't throw
