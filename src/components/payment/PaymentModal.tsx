@@ -25,7 +25,7 @@ interface PaymentModalProps {
   userId: string
   isOpen: boolean
   onClose: () => void
-  onSuccess: (paymentId: string) => void
+  onSuccess: (paymentId: string, paymentMethod: PaymentMethod) => void
   onError?: (error: string) => void
 }
 
@@ -77,7 +77,7 @@ export function PaymentModal({
 
       // Auto-close and trigger success after 1 second
       setTimeout(() => {
-        onSuccess(result.paymentId)
+        onSuccess(result.paymentId, method)
         onClose()
       }, 1000)
     } catch (err: any) {
@@ -152,7 +152,7 @@ export function PaymentModal({
       setStep('completed')
 
       setTimeout(() => {
-        onSuccess(paymentResult.paymentId)
+        onSuccess(paymentResult.paymentId, selectedMethod)
         onClose()
       }, 1500)
     } catch (err: any) {

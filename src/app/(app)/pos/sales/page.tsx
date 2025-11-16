@@ -27,11 +27,6 @@ export default function SalesTransactionPage() {
   const [cart, setCart] = useState<CartItem[]>([])
   const [saleDate] = useState(new Date().toISOString().split('T')[0])
 
-  const [paymentData, setPaymentData] = useState({
-    method: 'cash',
-    amountPaid: 0,
-  })
-
   const [promoCode, setPromoCode] = useState('')
   const [appliedPromo, setAppliedPromo] = useState<{
     discountAmount: number
@@ -52,7 +47,6 @@ export default function SalesTransactionPage() {
   // Refs for keyboard navigation
   const productSelectRef = useRef<HTMLSelectElement>(null)
   const quantityInputRef = useRef<HTMLInputElement>(null)
-  const paymentInputRef = useRef<HTMLInputElement>(null)
   const barcodeInputRef = useRef<HTMLInputElement>(null)
 
   // Fetch products and outlets for dropdowns
@@ -141,15 +135,6 @@ export default function SalesTransactionPage() {
   // Quick quantity buttons
   const handleQuickQuantity = (qty: number) => {
     setQuantity(qty)
-  }
-
-  // Quick payment amount buttons
-  const handleQuickPayment = (amount: number | 'exact') => {
-    if (amount === 'exact') {
-      setPaymentData({ ...paymentData, amountPaid: cartTotal })
-    } else {
-      setPaymentData({ ...paymentData, amountPaid: amount })
-    }
   }
 
   // Barcode scan handler (for camera scanner)
@@ -245,7 +230,6 @@ export default function SalesTransactionPage() {
   const cartSubtotal = cart.reduce((sum, item) => sum + item.total, 0)
   const discountAmount = appliedPromo?.discountAmount || 0
   const cartTotal = cartSubtotal - discountAmount // Apply discount
-  const change = paymentData.amountPaid - cartTotal
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -258,7 +242,7 @@ export default function SalesTransactionPage() {
       // F8: Complete sale (if cart has items and valid payment)
       if (e.key === 'F8') {
         e.preventDefault()
-        if (cart.length > 0 && selectedOutletId && change >= 0) {
+        if (cart.length > 0 && selectedOutletId) {
           handleCompleteSale()
         }
       }
@@ -270,7 +254,7 @@ export default function SalesTransactionPage() {
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [cart, selectedOutletId, change])
+  }, [cart, selectedOutletId])
 
   // Handle apply promo code
   const handleApplyPromo = async () => {
@@ -305,7 +289,7 @@ export default function SalesTransactionPage() {
     setPromoCode('')
   }
 
-  // Complete sale
+  // Complete sale - Always use PaymentModal
   const handleCompleteSale = async () => {
     setError('')
     setShowSuccess(false)
@@ -320,124 +304,14 @@ export default function SalesTransactionPage() {
       return
     }
 
-    // Check if payment method requires PaymentModal (QRIS, Bank Transfer)
-    const requiresPaymentModal = ['qris', 'bank_transfer', 'transfer'].includes(paymentData.method)
-
-    if (requiresPaymentModal) {
-      // Generate transaction ID for payment
-      const transactionId = generateTransactionId()
-      setPendingTransactionId(transactionId)
-
-      // Open PaymentModal
-      setIsPaymentModalOpen(true)
-      return
-    }
-
-    // For Cash/Card - instant payment flow
-    if (paymentData.amountPaid < cartTotal) {
-      setError('Jumlah pembayaran tidak cukup')
-      return
-    }
-
-    try {
-      // Create transaction using new system
-      const result = await createTransactionMutation.mutateAsync({
-        outletId: selectedOutletId,
-        items: cart.map(item => ({
-          productId: item.productId,
-          productName: item.productName,
-          productSku: item.productSku,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-        })),
-        paymentMethod: paymentData.method as 'cash' | 'card' | 'transfer' | 'ewallet',
-        amountPaid: paymentData.amountPaid,
-        discountAmount: discountAmount,
-        notes: appliedPromo ? `Promo applied: ${appliedPromo.promoName}` : undefined,
-      })
-
-      // Record promotion usage if applied
-      if (appliedPromo && result.transaction) {
-        await recordPromoUsageMutation.mutateAsync({
-          promotionId: appliedPromo.promoId,
-          transactionId: result.transaction.id,
-          discountApplied: discountAmount,
-        })
-      }
-
-      // Generate receipt data
-      const now = new Date()
-
-      const receipt: ReceiptData = {
-        transactionId: result.transactionId,
-        date: now.toLocaleDateString('id-ID', {
-          day: '2-digit',
-          month: 'long',
-          year: 'numeric',
-        }),
-        time: now.toLocaleTimeString('id-ID', {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        }),
-        cashier: getUserName(),
-        outlet: {
-          name: selectedOutlet?.name || 'AGDS Corp POS',
-          address: selectedOutlet?.address || 'Indonesia',
-          phone: '+62 878-7441-5491',
-          email: 'agdscid@gmail.com',
-        },
-        items: cart.map(item => ({
-          name: item.productName,
-          sku: item.productSku,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          total: item.total,
-        })),
-        subtotal: cartSubtotal,
-        tax: 0,
-        discount: discountAmount,
-        total: cartTotal,
-        payment: {
-          method: paymentData.method,
-          amount: paymentData.amountPaid,
-          change: change > 0 ? change : 0,
-        },
-        notes: appliedPromo
-          ? `Promo: ${appliedPromo.promoName} • Terima kasih!`
-          : 'Terima kasih telah berbelanja di AGDS Corp POS',
-      }
-
-      setReceiptData(receipt)
-      setIsPrintModalOpen(true)
-      setShowSuccess(true)
-
-      // Debug log
-      console.log('Receipt data:', receipt)
-      console.log('Print modal opened:', true)
-
-      // Refetch transactions
-      refetchTransactions()
-
-      // Reset form
-      setCart([])
-      setPaymentData({
-        method: 'cash',
-        amountPaid: 0,
-      })
-      setSelectedOutletId('')
-      setPromoCode('')
-      setAppliedPromo(null)
-
-      setTimeout(() => setShowSuccess(false), 3000)
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Gagal mencatat penjualan'
-      setError(errorMessage)
-    }
+    // Generate transaction ID and open PaymentModal
+    const transactionId = generateTransactionId()
+    setPendingTransactionId(transactionId)
+    setIsPaymentModalOpen(true)
   }
 
   // Handle payment success from PaymentModal
-  const handlePaymentSuccess = async (paymentId: string) => {
+  const handlePaymentSuccess = async (paymentId: string, paymentMethod: string) => {
     try {
       // Close payment modal
       setIsPaymentModalOpen(false)
@@ -452,7 +326,7 @@ export default function SalesTransactionPage() {
           quantity: item.quantity,
           unitPrice: item.unitPrice,
         })),
-        paymentMethod: paymentData.method as 'cash' | 'card' | 'transfer' | 'ewallet',
+        paymentMethod: paymentMethod as 'cash' | 'card' | 'transfer' | 'ewallet',
         amountPaid: cartTotal,
         discountAmount: discountAmount,
         notes: appliedPromo
@@ -502,7 +376,7 @@ export default function SalesTransactionPage() {
         discount: discountAmount,
         total: cartTotal,
         payment: {
-          method: paymentData.method,
+          method: paymentMethod,
           amount: cartTotal,
           change: 0,
         },
@@ -520,10 +394,6 @@ export default function SalesTransactionPage() {
 
       // Reset form
       setCart([])
-      setPaymentData({
-        method: 'cash',
-        amountPaid: 0,
-      })
       setSelectedOutletId('')
       setPromoCode('')
       setAppliedPromo(null)
@@ -877,21 +747,6 @@ export default function SalesTransactionPage() {
             </CardHeader>
             <CardBody>
               <div className="space-y-4">
-                <Select
-                  label="Metode Pembayaran"
-                  value={paymentData.method}
-                  onChange={(e) => setPaymentData({ ...paymentData, method: e.target.value })}
-                  options={[
-                    { value: 'cash', label: '💵 Cash / Tunai' },
-                    { value: 'qris', label: '📱 QRIS' },
-                    { value: 'bank_transfer', label: '🏦 Bank Transfer' },
-                    { value: 'debit', label: '💳 Debit Card' },
-                    { value: 'credit', label: '💳 Credit Card' },
-                    { value: 'ewallet', label: '📲 E-Wallet (Manual)' },
-                  ]}
-                  fullWidth
-                />
-
                 {/* Promo Code Section - Collapsible */}
                 <div className="border-t pt-4">
                   <button
@@ -967,90 +822,14 @@ export default function SalesTransactionPage() {
                   </div>
                 )}
 
-                {/* Quick Payment Buttons */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Nominal Cepat
-                  </label>
-                  <div className="grid grid-cols-4 gap-2">
-                    <Button
-                      variant={paymentData.amountPaid === cartTotal ? 'primary' : 'outline'}
-                      size="sm"
-                      onClick={() => handleQuickPayment('exact')}
-                      disabled={cart.length === 0}
-                      className="text-xs"
-                    >
-                      Pas
-                    </Button>
-                    <Button
-                      variant={paymentData.amountPaid === 50000 ? 'primary' : 'outline'}
-                      size="sm"
-                      onClick={() => handleQuickPayment(50000)}
-                      className="text-xs"
-                    >
-                      50rb
-                    </Button>
-                    <Button
-                      variant={paymentData.amountPaid === 100000 ? 'primary' : 'outline'}
-                      size="sm"
-                      onClick={() => handleQuickPayment(100000)}
-                      className="text-xs"
-                    >
-                      100rb
-                    </Button>
-                    <Button
-                      variant={paymentData.amountPaid === 200000 ? 'primary' : 'outline'}
-                      size="sm"
-                      onClick={() => handleQuickPayment(200000)}
-                      className="text-xs"
-                    >
-                      200rb
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Atau Masukkan Manual
-                  </label>
-                  <input
-                    ref={paymentInputRef}
-                    type="number"
-                    min="0"
-                    step="1000"
-                    value={paymentData.amountPaid || ''}
-                    onChange={(e) => setPaymentData({ ...paymentData, amountPaid: parseFloat(e.target.value) || 0 })}
-                    onFocus={(e) => e.target.select()}
-                    className="input-mobile w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-                    placeholder="Rp 0"
-                  />
-                </div>
-
-                {change >= 0 && paymentData.amountPaid > 0 && (
-                  <div className="p-4 bg-green-50 rounded-xl border-2 border-green-200">
-                    <p className="text-sm text-green-700 font-semibold">Kembalian</p>
-                    <p className="text-3xl font-bold text-green-900">
-                      {formatCurrency(change)}
-                    </p>
-                  </div>
-                )}
-
-                {change < 0 && paymentData.amountPaid > 0 && (
-                  <div className="p-3 bg-red-50 rounded-xl border-2 border-red-200">
-                    <p className="text-xs text-red-700 font-semibold">
-                      ⚠️ Pembayaran kurang {formatCurrency(Math.abs(change))}
-                    </p>
-                  </div>
-                )}
-
                 <Button
                   variant="primary"
                   size="lg"
                   fullWidth
                   onClick={handleCompleteSale}
-                  disabled={recordSaleMutation.isPending || cart.length === 0 || !selectedOutletId || change < 0}
+                  disabled={recordSaleMutation.isPending || cart.length === 0 || !selectedOutletId}
                 >
-                  {recordSaleMutation.isPending ? 'Memproses...' : '✅ Selesaikan & Cetak Struk'}
+                  {recordSaleMutation.isPending ? 'Memproses...' : '💳 Lanjut ke Pembayaran'}
                 </Button>
 
                 {/* Keyboard Shortcuts Helper */}
