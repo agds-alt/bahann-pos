@@ -192,8 +192,8 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
               disabled={isScanning}
               className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all disabled:bg-gray-100"
             >
-              {cameras.map((camera) => (
-                <option key={camera.id} value={camera.id}>
+              {cameras.map((camera, index) => (
+                <option key={`${camera.id}-${index}`} value={camera.id}>
                   {camera.label}
                 </option>
               ))}
