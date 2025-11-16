@@ -44,18 +44,24 @@ export function PaymentMethodSelector({
       const data = await getActivePaymentMethods()
 
       // Map database records to UI options
-      const methodOptions: PaymentMethodOption[] = data.map((method: any) => ({
-        id: method.id,
-        type: method.type as PaymentMethod,
-        name: method.name,
-        icon: getMethodIcon(method.type),
-        description: method.description,
-        isActive: method.is_active
-      }))
+      const methodOptions: PaymentMethodOption[] = data.map((method: any) => {
+        // Map database code to PaymentMethod type
+        const mappedType = mapDatabaseCodeToType(method.code)
 
+        return {
+          id: method.id,
+          type: mappedType,
+          name: method.name,
+          icon: getMethodIcon(mappedType),
+          description: method.description,
+          isActive: method.is_active
+        }
+      })
+
+      console.log('✅ Payment methods loaded:', methodOptions)
       setMethods(methodOptions)
     } catch (error) {
-      console.error('Failed to load payment methods:', error)
+      console.error('❌ Failed to load payment methods:', error)
       // Fallback to default methods
       setMethods([
         { id: '1', type: 'cash', name: 'Cash', icon: '💵', isActive: true },
@@ -67,6 +73,19 @@ export function PaymentMethodSelector({
     } finally {
       setLoading(false)
     }
+  }
+
+  function mapDatabaseCodeToType(code: string): PaymentMethod {
+    // Map database payment method codes to PaymentMethod types
+    const mapping: Record<string, PaymentMethod> = {
+      'cash': 'cash',
+      'qris_static': 'qris',
+      'bank_transfer': 'bank_transfer',
+      'debit_card': 'debit',
+      'credit_card': 'credit',
+      'ewallet_manual': 'bank_transfer' // E-wallet manual uses bank transfer flow
+    }
+    return mapping[code] || 'cash'
   }
 
   function getMethodIcon(type: string): string {

@@ -51,6 +51,7 @@ export function PaymentModal({
   if (!isOpen) return null
 
   const handleMethodSelect = async (method: PaymentMethod) => {
+    console.log('🔵 Payment method selected:', method)
     setSelectedMethod(method)
 
     // For cash/debit/credit - instant payment
@@ -212,6 +213,11 @@ export function PaymentModal({
                 amount={amount}
                 disabled={loading}
               />
+
+              {/* Debug info */}
+              <div className="text-xs text-gray-500 p-2 bg-gray-50 rounded">
+                Step: {step} | Selected: {selectedMethod} | Loading: {loading.toString()}
+              </div>
 
               {selectedMethod === 'qris' && (
                 <button
