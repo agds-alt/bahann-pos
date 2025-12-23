@@ -116,25 +116,14 @@ export default function LandingPage() {
 
           <div className="max-w-4xl mx-auto">
             <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl bg-gray-800">
-              {/* Placeholder for video - replace with actual video embed */}
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700">
-                <div className="text-center">
-                  <button className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all hover:scale-110 mb-4 mx-auto">
-                    <div className="w-0 h-0 border-t-[15px] border-t-transparent border-l-[25px] border-l-white border-b-[15px] border-b-transparent ml-2"></div>
-                  </button>
-                  <p className="text-white text-lg font-semibold">Watch Demo Video</p>
-                  <p className="text-white/70 text-sm mt-2">3:24 minutes</p>
-                </div>
-              </div>
-              {/* Uncomment this when you have actual video
+              {/* Demo video - Replace VIDEO_ID with your actual YouTube video ID */}
               <iframe
                 className="w-full h-full"
-                src="https://www.youtube.com/embed/YOUR_VIDEO_ID"
-                title="Bahann POS Demo"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                src="https://www.youtube.com/embed/dQw4w9WgXcQ?si=abcdef123456&rel=0"
+                title="Bahann POS Demo Video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
               ></iframe>
-              */}
             </div>
 
             {/* Video Stats */}
@@ -369,49 +358,49 @@ export default function LandingPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   <tr className="hover:bg-gray-50">
-                    <td className="py-4 px-6 font-semibold">Monthly Price</td>
-                    <td className="py-4 px-6 text-center">Rp 1,2jt</td>
-                    <td className="py-4 px-6 text-center">Rp 1,2jt</td>
-                    <td className="py-4 px-6 text-center">Rp 800rb</td>
-                    <td className="py-4 px-6 text-center">Rp 999rb</td>
+                    <td className="py-4 px-6 font-semibold text-gray-900">Monthly Price</td>
+                    <td className="py-4 px-6 text-center text-gray-900">Rp 1,2jt</td>
+                    <td className="py-4 px-6 text-center text-gray-700">Rp 1,2jt</td>
+                    <td className="py-4 px-6 text-center text-gray-700">Rp 800rb</td>
+                    <td className="py-4 px-6 text-center text-gray-700">Rp 999rb</td>
                   </tr>
                   <tr className="hover:bg-gray-50">
-                    <td className="py-4 px-6">Multi-outlet</td>
+                    <td className="py-4 px-6 text-gray-900">Multi-outlet</td>
                     <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
                     <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
                     <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
                     <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
                   </tr>
                   <tr className="hover:bg-gray-50">
-                    <td className="py-4 px-6">Offline Mode</td>
+                    <td className="py-4 px-6 text-gray-900">Offline Mode</td>
                     <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
                     <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
-                    <td className="py-4 px-6 text-center text-gray-600">Limited</td>
-                    <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
-                  </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="py-4 px-6">Source Code</td>
-                    <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
-                    <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
-                    <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
+                    <td className="py-4 px-6 text-center text-gray-700 font-medium">Limited</td>
                     <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
                   </tr>
                   <tr className="hover:bg-gray-50">
-                    <td className="py-4 px-6">Self-hosted</td>
+                    <td className="py-4 px-6 text-gray-900">Source Code</td>
                     <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
                     <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
                     <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
                     <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
                   </tr>
                   <tr className="hover:bg-gray-50">
-                    <td className="py-4 px-6">Advanced Audit Logs</td>
+                    <td className="py-4 px-6 text-gray-900">Self-hosted</td>
                     <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
-                    <td className="py-4 px-6 text-center text-gray-600">Basic</td>
-                    <td className="py-4 px-6 text-center text-gray-600">Basic</td>
-                    <td className="py-4 px-6 text-center text-gray-600">Basic</td>
+                    <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
+                    <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
+                    <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
                   </tr>
                   <tr className="hover:bg-gray-50">
-                    <td className="py-4 px-6">One-time Purchase</td>
+                    <td className="py-4 px-6 text-gray-900">Advanced Audit Logs</td>
+                    <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
+                    <td className="py-4 px-6 text-center text-gray-700 font-medium">Basic</td>
+                    <td className="py-4 px-6 text-center text-gray-700 font-medium">Basic</td>
+                    <td className="py-4 px-6 text-center text-gray-700 font-medium">Basic</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="py-4 px-6 text-gray-900">One-time Purchase</td>
                     <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
                     <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
                     <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
