@@ -20,7 +20,7 @@ export default function LandingPage() {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center gap-2">
               <span className="text-3xl">🏷️</span>
-              <span className="text-2xl font-bold text-blue-600">Bahann POS</span>
+              <span className="text-2xl font-bold text-blue-600">AGDS POS</span>
             </div>
             <nav className="hidden md:flex gap-8">
               <a href="#features" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Features</a>
@@ -107,7 +107,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Lihat Bahann POS Beraksi
+              Lihat AGDS POS Beraksi
             </h2>
             <p className="text-xl text-gray-300">
               Demo lengkap sistem POS kami dalam 3 menit
@@ -120,7 +120,7 @@ export default function LandingPage() {
               <iframe
                 className="w-full h-full"
                 src="https://www.youtube.com/embed/dQw4w9WgXcQ?si=abcdef123456&rel=0"
-                title="Bahann POS Demo Video"
+                title="AGDS POS Demo Video"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
               ></iframe>
@@ -350,7 +350,7 @@ export default function LandingPage() {
                 <thead>
                   <tr className="bg-gradient-to-r from-blue-600 to-purple-700 text-white">
                     <th className="py-4 px-6 text-left font-semibold">Feature</th>
-                    <th className="py-4 px-6 text-center font-semibold">Bahann POS</th>
+                    <th className="py-4 px-6 text-center font-semibold">AGDS POS</th>
                     <th className="py-4 px-6 text-center font-semibold">Moka POS</th>
                     <th className="py-4 px-6 text-center font-semibold">iReap POS</th>
                     <th className="py-4 px-6 text-center font-semibold">Pawoon</th>
@@ -421,7 +421,7 @@ export default function LandingPage() {
               Dipercaya oleh Ratusan Bisnis
             </h2>
             <p className="text-xl text-gray-600">
-              Lihat apa kata mereka tentang Bahann POS
+              Lihat apa kata mereka tentang AGDS POS
             </p>
           </div>
 
@@ -548,7 +548,7 @@ export default function LandingPage() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-2xl">🏷️</span>
-                <span className="text-xl font-bold">Bahann POS</span>
+                <span className="text-xl font-bold">AGDS POS</span>
               </div>
               <p className="text-gray-400">
                 Enterprise POS dengan Harga SME. Built with modern technology for Indonesian businesses.
@@ -580,7 +580,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 Bahann POS by AGDS Corp. All rights reserved.</p>
+            <p>&copy; 2025 AGDS POS by AGDS Corp. All rights reserved.</p>
           </div>
         </div>
       </footer>
@@ -593,7 +593,7 @@ export default function LandingPage() {
             {/* Chat Header */}
             <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-4 flex justify-between items-center">
               <div>
-                <h3 className="font-bold">Bahann POS Support</h3>
+                <h3 className="font-bold">AGDS POS Support</h3>
                 <p className="text-xs opacity-90">We typically reply within minutes</p>
               </div>
               <button
@@ -613,7 +613,7 @@ export default function LandingPage() {
                 </div>
                 <div className="bg-white rounded-2xl rounded-tl-none p-4 shadow-sm max-w-[80%]">
                   <p className="text-sm text-gray-800">
-                    👋 Halo! Selamat datang di Bahann POS. Ada yang bisa kami bantu?
+                    👋 Halo! Selamat datang di AGDS POS. Ada yang bisa kami bantu?
                   </p>
                 </div>
               </div>
@@ -837,7 +837,7 @@ const testimonials = [
     name: 'Budi Santoso',
     role: 'Owner',
     company: 'Toko Sejahtera (Minimart Chain)',
-    text: 'Sejak pakai Bahann POS, operasional 5 outlet saya jadi jauh lebih efisien. Audit trail-nya sangat membantu untuk tracking semua aktivitas. Recommended!',
+    text: 'Sejak pakai AGDS POS, operasional 5 outlet saya jadi jauh lebih efisien. Audit trail-nya sangat membantu untuk tracking semua aktivitas. Recommended!',
     stats: {
       outlets: '5',
       transactions: '500+',
