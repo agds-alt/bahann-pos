@@ -284,4 +284,51 @@ export const productsRouter = router({
 
       return { success: true, count: productIds.length }
     }),
+
+  /**
+   * Batch delete products - ADMIN ONLY
+   */
+  batchDelete: adminProcedure
+    .input(
+      z.object({
+        productIds: z.array(z.string().uuid()).min(1),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { productIds } = input
+
+      // Get product data before deletion for audit trail
+      const { data: productsData } = await supabase
+        .from('products')
+        .select('*')
+        .in('id', productIds)
+
+      // Delete all selected products
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .in('id', productIds)
+
+      if (error) {
+        throw new Error(`Failed to batch delete: ${error.message}`)
+      }
+
+      // Audit log
+      await createAuditLog({
+        userId: ctx.userId,
+        userEmail: ctx.session?.email || 'unknown',
+        action: 'DELETE',
+        entityType: 'product',
+        entityId: 'batch',
+        changes: {
+          deleted: productsData,
+        },
+        metadata: {
+          count: productIds.length,
+          productNames: productsData?.map(p => p.name).join(', '),
+        },
+      })
+
+      return { success: true, count: productIds.length }
+    }),
 })

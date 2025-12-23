@@ -15,6 +15,7 @@ export default function ProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set())
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false)
+  const [isBatchDeleteModalOpen, setIsBatchDeleteModalOpen] = useState(false)
   const { showToast } = useToast()
 
   const { data: productsResponse, isLoading, refetch } = trpc.products.getAll.useQuery({
@@ -85,6 +86,14 @@ export default function ProductsPage() {
     setSelectedProducts(new Set())
   }
 
+  const handleBatchDelete = () => {
+    if (selectedProducts.size === 0) {
+      showToast('Please select at least one product', 'error')
+      return
+    }
+    setIsBatchDeleteModalOpen(true)
+  }
+
   const formatCurrency = (amount: number | null) => {
     if (!amount) return 'N/A'
     return new Intl.NumberFormat('id-ID', {
@@ -153,6 +162,9 @@ export default function ProductsPage() {
             <div className="flex gap-2">
               <Button variant="primary" size="sm" onClick={handleBatchUpdateCategory}>
                 🏷️ Update Category
+              </Button>
+              <Button variant="danger" size="sm" onClick={handleBatchDelete}>
+                🗑️ Delete Selected
               </Button>
               <Button variant="outline" size="sm" onClick={handleClearSelection}>
                 ✕ Clear
@@ -332,6 +344,21 @@ export default function ProductsPage() {
           }}
           productIds={Array.from(selectedProducts)}
           categories={categories || []}
+        />
+      )}
+
+      {/* Batch Delete Modal */}
+      {isBatchDeleteModalOpen && (
+        <BatchDeleteModal
+          selectedCount={selectedProducts.size}
+          onClose={() => setIsBatchDeleteModalOpen(false)}
+          onSuccess={() => {
+            refetch()
+            setIsBatchDeleteModalOpen(false)
+            setSelectedProducts(new Set())
+          }}
+          productIds={Array.from(selectedProducts)}
+          products={products.filter(p => selectedProducts.has(p.id))}
         />
       )}
     </div>
@@ -594,6 +621,103 @@ function BatchUpdateCategoryModal({
               </Button>
             </div>
           </form>
+        </CardBody>
+      </Card>
+    </div>
+  )
+}
+
+/**
+ * Batch Delete Modal
+ */
+interface BatchDeleteModalProps {
+  selectedCount: number
+  onClose: () => void
+  onSuccess: () => void
+  productIds: string[]
+  products: Product[]
+}
+
+function BatchDeleteModal({
+  selectedCount,
+  onClose,
+  onSuccess,
+  productIds,
+  products,
+}: BatchDeleteModalProps) {
+  const { showToast } = useToast()
+
+  const batchDelete = trpc.products.batchDelete.useMutation()
+
+  const handleConfirm = async () => {
+    try {
+      const result = await batchDelete.mutateAsync({
+        productIds,
+      })
+      showToast(`✅ ${result.count} products deleted successfully!`, 'success')
+      onSuccess()
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete products'
+      showToast(errorMessage, 'error')
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <Card variant="elevated" padding="lg" className="w-full max-w-md">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-red-600">⚠️ Confirm Bulk Delete</CardTitle>
+            <button
+              onClick={onClose}
+              className="text-2xl text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+          </div>
+        </CardHeader>
+
+        <CardBody>
+          <div className="mb-4 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+            <p className="text-sm text-red-900 font-semibold mb-2">
+              You are about to delete {selectedCount} product{selectedCount > 1 ? 's' : ''}
+            </p>
+            <p className="text-xs text-red-700 mb-3">
+              This action cannot be undone!
+            </p>
+
+            {/* Show product list */}
+            <div className="max-h-48 overflow-y-auto space-y-1">
+              {products.map((product) => (
+                <div key={product.id} className="flex items-center gap-2 text-xs text-red-800 bg-red-100 px-2 py-1 rounded">
+                  <span className="font-mono">{product.sku}</span>
+                  <span>-</span>
+                  <span className="font-semibold">{product.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={onClose}
+              fullWidth
+              disabled={batchDelete.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              onClick={handleConfirm}
+              fullWidth
+              disabled={batchDelete.isPending}
+            >
+              {batchDelete.isPending ? 'Deleting...' : `Delete ${selectedCount} Product${selectedCount > 1 ? 's' : ''}`}
+            </Button>
+          </div>
         </CardBody>
       </Card>
     </div>
