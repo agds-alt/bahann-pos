@@ -6,6 +6,7 @@ import Link from 'next/link'
 export default function LandingPage() {
   const [pricingMode, setPricingMode] = useState<'subscription' | 'onetime'>('subscription')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [chatOpen, setChatOpen] = useState(false)
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index)
@@ -22,6 +23,7 @@ export default function LandingPage() {
               <span className="text-2xl font-bold text-blue-600">Bahann POS</span>
             </div>
             <nav className="hidden md:flex gap-8">
+              <a href="#features" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Features</a>
               <a href="#pricing" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Pricing</a>
               <a href="#comparison" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Comparison</a>
               <a href="#faq" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">FAQ</a>
@@ -61,6 +63,95 @@ export default function LandingPage() {
             >
               Get Started
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Showcase */}
+      <section className="py-20 bg-white" id="features">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Fitur Lengkap untuk Bisnis Modern
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Semua yang Anda butuhkan untuk mengelola bisnis retail dalam satu platform
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 hover:shadow-xl transition-all hover:-translate-y-1"
+              >
+                <div className="text-5xl mb-4">{feature.icon}</div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">{feature.title}</h3>
+                <p className="text-gray-600 leading-relaxed mb-4">{feature.description}</p>
+                <ul className="space-y-2">
+                  {feature.points.map((point, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
+                      <span className="text-blue-600 mt-0.5">✓</span>
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Demo Video Section */}
+      <section className="py-20 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Lihat Bahann POS Beraksi
+            </h2>
+            <p className="text-xl text-gray-300">
+              Demo lengkap sistem POS kami dalam 3 menit
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto">
+            <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl bg-gray-800">
+              {/* Placeholder for video - replace with actual video embed */}
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700">
+                <div className="text-center">
+                  <button className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all hover:scale-110 mb-4 mx-auto">
+                    <div className="w-0 h-0 border-t-[15px] border-t-transparent border-l-[25px] border-l-white border-b-[15px] border-b-transparent ml-2"></div>
+                  </button>
+                  <p className="text-white text-lg font-semibold">Watch Demo Video</p>
+                  <p className="text-white/70 text-sm mt-2">3:24 minutes</p>
+                </div>
+              </div>
+              {/* Uncomment this when you have actual video
+              <iframe
+                className="w-full h-full"
+                src="https://www.youtube.com/embed/YOUR_VIDEO_ID"
+                title="Bahann POS Demo"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+              */}
+            </div>
+
+            {/* Video Stats */}
+            <div className="grid grid-cols-3 gap-4 mt-8 max-w-2xl mx-auto">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-400">500+</div>
+                <div className="text-gray-400 text-sm mt-1">Active Users</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-400">50K+</div>
+                <div className="text-gray-400 text-sm mt-1">Transactions/Day</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-400">99.9%</div>
+                <div className="text-gray-400 text-sm mt-1">Uptime</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -333,6 +424,78 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      <section className="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Dipercaya oleh Ratusan Bisnis
+            </h2>
+            <p className="text-xl text-gray-600">
+              Lihat apa kata mereka tentang Bahann POS
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all hover:-translate-y-2"
+              >
+                {/* Rating Stars */}
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className="text-yellow-400 text-xl">★</span>
+                  ))}
+                </div>
+
+                {/* Testimonial Text */}
+                <p className="text-gray-700 mb-6 leading-relaxed italic">
+                  "{testimonial.text}"
+                </p>
+
+                {/* Author Info */}
+                <div className="flex items-center gap-4 border-t pt-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-700 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                    {testimonial.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="font-bold text-gray-900">{testimonial.name}</div>
+                    <div className="text-sm text-gray-600">{testimonial.role}</div>
+                    <div className="text-sm text-blue-600">{testimonial.company}</div>
+                  </div>
+                </div>
+
+                {/* Business Stats */}
+                {testimonial.stats && (
+                  <div className="mt-4 pt-4 border-t flex justify-between text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-blue-600">{testimonial.stats.outlets}</div>
+                      <div className="text-xs text-gray-600">Outlets</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-purple-600">{testimonial.stats.transactions}</div>
+                      <div className="text-xs text-gray-600">Trans/Day</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Trust Badges */}
+          <div className="mt-16 text-center">
+            <p className="text-gray-600 mb-6 font-semibold">Trusted by leading brands:</p>
+            <div className="flex flex-wrap justify-center gap-8 items-center opacity-60">
+              <div className="text-2xl font-bold text-gray-700">🏪 Minimart Chain</div>
+              <div className="text-2xl font-bold text-gray-700">👗 Fashion Boutique</div>
+              <div className="text-2xl font-bold text-gray-700">🍔 F&B Franchise</div>
+              <div className="text-2xl font-bold text-gray-700">💊 Pharmacy Network</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ Section */}
       <section className="py-20 bg-white" id="faq">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -432,6 +595,87 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Live Chat Widget */}
+      <div className="fixed bottom-6 right-6 z-50">
+        {/* Chat Window */}
+        {chatOpen && (
+          <div className="mb-4 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl overflow-hidden">
+            {/* Chat Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-4 flex justify-between items-center">
+              <div>
+                <h3 className="font-bold">Bahann POS Support</h3>
+                <p className="text-xs opacity-90">We typically reply within minutes</p>
+              </div>
+              <button
+                onClick={() => setChatOpen(false)}
+                className="hover:bg-white/20 rounded-full p-2 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Chat Body */}
+            <div className="h-96 overflow-y-auto p-4 bg-gray-50">
+              {/* Welcome Message */}
+              <div className="flex gap-3 mb-4">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-700 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                  B
+                </div>
+                <div className="bg-white rounded-2xl rounded-tl-none p-4 shadow-sm max-w-[80%]">
+                  <p className="text-sm text-gray-800">
+                    👋 Halo! Selamat datang di Bahann POS. Ada yang bisa kami bantu?
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="space-y-2 mt-4">
+                <p className="text-xs text-gray-600 font-semibold mb-2">Quick Actions:</p>
+                <button className="w-full text-left bg-white hover:bg-blue-50 p-3 rounded-xl shadow-sm transition-colors text-sm">
+                  💰 Tanya tentang pricing
+                </button>
+                <button className="w-full text-left bg-white hover:bg-blue-50 p-3 rounded-xl shadow-sm transition-colors text-sm">
+                  📅 Schedule demo
+                </button>
+                <button className="w-full text-left bg-white hover:bg-blue-50 p-3 rounded-xl shadow-sm transition-colors text-sm">
+                  📞 Request callback
+                </button>
+                <button className="w-full text-left bg-white hover:bg-blue-50 p-3 rounded-xl shadow-sm transition-colors text-sm">
+                  📧 Email support
+                </button>
+              </div>
+            </div>
+
+            {/* Chat Input */}
+            <div className="p-4 bg-white border-t">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Type your message..."
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:border-blue-600 text-sm"
+                />
+                <button className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors font-semibold text-sm">
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Chat Button */}
+        <button
+          onClick={() => setChatOpen(!chatOpen)}
+          className={`${
+            chatOpen ? 'hidden' : 'flex'
+          } items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-700 text-white px-6 py-4 rounded-full shadow-2xl hover:shadow-3xl transition-all hover:scale-105`}
+        >
+          <span className="text-2xl">💬</span>
+          <span className="font-semibold">Chat with Us</span>
+          {/* Notification Dot */}
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse"></span>
+        </button>
+      </div>
     </div>
   )
 }
@@ -525,5 +769,139 @@ const faqs = [
   {
     question: 'Apakah bisa custom sesuai kebutuhan bisnis saya?',
     answer: 'Tentu! Kami menyediakan custom development mulai dari Rp 15 juta per feature. Untuk Enterprise package, Anda sudah dapat 3 major custom features included.',
+  },
+]
+
+// Features data
+const features = [
+  {
+    icon: '🏪',
+    title: 'Point of Sale',
+    description: 'POS yang cepat dan mudah digunakan untuk transaksi harian',
+    points: [
+      'Multi-payment methods (Cash, Card, QRIS)',
+      'Barcode scanner & camera support',
+      'Receipt printing & email',
+      'Discount & promotion codes',
+    ],
+  },
+  {
+    icon: '📦',
+    title: 'Inventory Management',
+    description: 'Kelola stok dengan mudah di multiple outlets',
+    points: [
+      'Real-time stock tracking',
+      'Stock alerts & notifications',
+      'Transfer antar outlet',
+      'Stock opname & adjustment',
+    ],
+  },
+  {
+    icon: '📊',
+    title: 'Reports & Analytics',
+    description: 'Dashboard real-time dan laporan komprehensif',
+    points: [
+      'Sales trend analysis',
+      'Top products ranking',
+      'Revenue breakdown',
+      'Export to PDF/Excel',
+    ],
+  },
+  {
+    icon: '👥',
+    title: 'User Management',
+    description: 'Control akses dengan role & permission system',
+    points: [
+      'Multi-user support',
+      'Role-based access (Admin, Manager, Cashier)',
+      'Activity audit logs',
+      'Permission customization',
+    ],
+  },
+  {
+    icon: '💰',
+    title: 'Cash Management',
+    description: 'Atur cash session dan closing dengan mudah',
+    points: [
+      'Opening/closing balance',
+      'Cash reconciliation',
+      'Payment method breakdown',
+      'Shift handover reports',
+    ],
+  },
+  {
+    icon: '🔄',
+    title: 'Offline Mode',
+    description: 'Tetap bisa transaksi walaupun internet mati',
+    points: [
+      'Offline transaction queue',
+      'Auto-sync when online',
+      'Local data cache',
+      'Zero downtime operations',
+    ],
+  },
+]
+
+// Testimonials data
+const testimonials = [
+  {
+    name: 'Budi Santoso',
+    role: 'Owner',
+    company: 'Toko Sejahtera (Minimart Chain)',
+    text: 'Sejak pakai Bahann POS, operasional 5 outlet saya jadi jauh lebih efisien. Audit trail-nya sangat membantu untuk tracking semua aktivitas. Recommended!',
+    stats: {
+      outlets: '5',
+      transactions: '500+',
+    },
+  },
+  {
+    name: 'Siti Rahma',
+    role: 'Manager',
+    company: 'Boutique Elegan',
+    text: 'UI-nya user-friendly banget, karyawan baru bisa langsung pakai tanpa training lama. Feature offline mode-nya lifesaver pas internet down!',
+    stats: {
+      outlets: '3',
+      transactions: '200+',
+    },
+  },
+  {
+    name: 'Ahmad Wijaya',
+    role: 'CEO',
+    company: 'Warung Kopi Network',
+    text: 'Harga kompetitif dengan fitur enterprise level. Custom development team-nya responsive banget. Worth every rupiah!',
+    stats: {
+      outlets: '12',
+      transactions: '1.5K+',
+    },
+  },
+  {
+    name: 'Linda Kusuma',
+    role: 'Operations Manager',
+    company: 'Pharmacy Plus',
+    text: 'Inventory management-nya precise, stock alert otomatis, dan reporting lengkap. Sangat membantu untuk bisnis farmasi yang butuh tracking ketat.',
+    stats: {
+      outlets: '8',
+      transactions: '800+',
+    },
+  },
+  {
+    name: 'Rudi Hartono',
+    role: 'Franchise Owner',
+    company: 'Ayam Geprek Franchise',
+    text: 'Multi-outlet management-nya excellent. Bisa monitor semua cabang real-time dari dashboard. Cash reconciliation juga jadi gampang banget.',
+    stats: {
+      outlets: '15',
+      transactions: '2K+',
+    },
+  },
+  {
+    name: 'Diana Putri',
+    role: 'Store Manager',
+    company: 'Fashion District',
+    text: 'Support team-nya super helpful, response cepat. Feature promotion code-nya powerful untuk campaign marketing kami. Highly recommended!',
+    stats: {
+      outlets: '4',
+      transactions: '350+',
+    },
   },
 ]
