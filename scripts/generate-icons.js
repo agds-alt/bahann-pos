@@ -1,69 +1,74 @@
-#!/usr/bin/env node
-
-/**
- * Simple PWA Icon Generator
- * Generates placeholder PNG icons from a text-based design
- * No dependencies required - uses Node.js built-in canvas
- */
-
+const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
-// Icon sizes needed for PWA
 const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+const inputIcon = path.join(__dirname, '..', 'icon.png');
+const publicDir = path.join(__dirname, '..', 'public');
 
-// Try to use canvas if available, otherwise show instructions
-try {
-  const { createCanvas } = require('canvas');
+async function generateIcons() {
+  try {
+    // Check if input icon exists
+    if (!fs.existsSync(inputIcon)) {
+      console.error('❌ Error: icon.png not found in root directory');
+      console.log('📝 Please place your icon.png file in the root project folder');
+      process.exit(1);
+    }
 
-  console.log('📱 Generating PWA icons...\n');
+    console.log('📸 Reading source icon...');
+    const iconBuffer = fs.readFileSync(inputIcon);
 
-  sizes.forEach(size => {
-    const canvas = createCanvas(size, size);
-    const ctx = canvas.getContext('2d');
+    // Get original dimensions
+    const metadata = await sharp(iconBuffer).metadata();
+    console.log(`✅ Source icon: ${metadata.width}x${metadata.height}`);
 
-    // Background
-    ctx.fillStyle = '#1f2937';
-    ctx.fillRect(0, 0, size, size);
+    if (metadata.width < 512 || metadata.height < 512) {
+      console.warn('⚠️  Warning: Source icon is smaller than 512x512px. Quality may be reduced.');
+      console.warn('   Recommended: Use at least 512x512px or higher');
+    }
 
-    // Text "AGDS"
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${size * 0.25}px Arial`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('AGDS', size / 2, size * 0.4);
+    console.log('\n🔄 Generating icon sizes...\n');
 
-    // Text "POS"
-    ctx.fillStyle = '#60a5fa';
-    ctx.font = `bold ${size * 0.16}px Arial`;
-    ctx.fillText('POS', size / 2, size * 0.62);
+    // Generate all sizes
+    for (const size of sizes) {
+      const outputPath = path.join(publicDir, `icon-${size}x${size}.png`);
 
-    // Decorative line
-    ctx.strokeStyle = '#60a5fa';
-    ctx.lineWidth = size * 0.01;
-    ctx.beginPath();
-    ctx.moveTo(size * 0.25, size * 0.8);
-    ctx.lineTo(size * 0.75, size * 0.8);
-    ctx.stroke();
+      await sharp(iconBuffer)
+        .resize(size, size, {
+          fit: 'contain',
+          background: { r: 255, g: 255, b: 255, alpha: 0 }
+        })
+        .png()
+        .toFile(outputPath);
 
-    // Save PNG
-    const buffer = canvas.toBuffer('image/png');
-    const filename = `icon-${size}x${size}.png`;
-    const filepath = path.join(__dirname, '..', 'public', filename);
-    fs.writeFileSync(filepath, buffer);
+      console.log(`✅ Generated: icon-${size}x${size}.png`);
+    }
 
-    console.log(`✅ Generated: ${filename}`);
-  });
+    // Generate favicon
+    await sharp(iconBuffer)
+      .resize(32, 32)
+      .png()
+      .toFile(path.join(publicDir, 'favicon.png'));
+    console.log('✅ Generated: favicon.png');
 
-  console.log('\n✨ All icons generated successfully!');
-  console.log('📍 Icons saved to: /public/icon-*.png\n');
+    // Generate apple-touch-icon
+    await sharp(iconBuffer)
+      .resize(180, 180)
+      .png()
+      .toFile(path.join(publicDir, 'apple-touch-icon.png'));
+    console.log('✅ Generated: apple-touch-icon.png');
 
-} catch (error) {
-  console.log('⚠️  Canvas module not found. Installing it...\n');
-  console.log('Run this command to install canvas:');
-  console.log('  npm install canvas\n');
-  console.log('Or use alternative icon generation methods:');
-  console.log('  1. Online: https://realfavicongenerator.net/');
-  console.log('  2. ImageMagick: See /public/ICONS_README.md');
-  console.log('  3. Any image editor (Photoshop, Figma, etc.)\n');
+    // Copy original
+    fs.copyFileSync(inputIcon, path.join(publicDir, 'icon.png'));
+    console.log('✅ Copied: icon.png to public/');
+
+    console.log('\n🎉 All icons generated successfully!');
+    console.log('\n📱 Your PWA is ready with the new logo!');
+
+  } catch (error) {
+    console.error('❌ Error:', error.message);
+    process.exit(1);
+  }
 }
+
+generateIcons();
