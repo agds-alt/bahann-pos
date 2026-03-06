@@ -34,7 +34,7 @@
     "html5-qrcode": "^2.3.8",
     "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.2",
-    "next": "16.0.7",
+    "next": "16.0.10",
     "pnpm": "^10.20.0",
     "qrcode": "^1.5.4",
     "react": "19.2.0",
