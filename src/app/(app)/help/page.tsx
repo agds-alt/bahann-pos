@@ -32,7 +32,7 @@ const sections: Section[] = [
     title: 'Ringkasan Sistem',
     icon: '🎯',
     content: {
-      description: 'AGDS Corp POS adalah sistem Point of Sale dan warehouse management yang dirancang untuk memudahkan pengelolaan bisnis retail Anda. Sistem ini dilengkapi dengan fitur-fitur modern seperti barcode scanning, forgot password, manajemen multi-outlet, tracking stok real-time, dan laporan penjualan yang komprehensif.',
+      description: 'LakuPOS adalah sistem Point of Sale dan warehouse management yang dirancang untuk memudahkan pengelolaan bisnis retail Anda. Sistem ini dilengkapi dengan fitur-fitur modern seperti barcode scanning, forgot password, manajemen multi-outlet, tracking stok real-time, dan laporan penjualan yang komprehensif.',
       items: [
         'Multi-outlet management dengan kontrol stok per cabang',
         'Real-time inventory tracking',
@@ -467,7 +467,7 @@ export default function HelpPage() {
             📖 Pusat Bantuan
           </h1>
           <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 mb-4 md:mb-6">
-            Dokumentasi lengkap sistem POS AGDS Corp
+            Dokumentasi lengkap sistem POS LakuPOS
           </p>
 
           {/* Search Bar */}

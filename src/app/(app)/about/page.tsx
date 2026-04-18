@@ -136,7 +136,7 @@ export default function AboutPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-5xl font-bold text-gray-900 mb-3">AGDS Corp POS</h1>
+        <h1 className="text-5xl font-bold text-gray-900 mb-3">LakuPOS</h1>
         <p className="text-xl text-gray-600 mb-2">Warehouse & Point of Sale Management System</p>
         <div className="flex items-center justify-center gap-3 text-sm text-gray-500">
           <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full font-semibold">
@@ -158,7 +158,7 @@ export default function AboutPage() {
         </CardHeader>
         <CardBody>
           <p className="text-gray-600 mb-6">
-            AGDS Corp POS adalah sistem manajemen warehouse dan point of sale yang dibangun dengan teknologi modern.
+            LakuPOS adalah sistem manajemen warehouse dan point of sale yang dibangun dengan teknologi modern.
             Dirancang untuk memudahkan pengelolaan inventory, penjualan, dan analytics untuk bisnis retail.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -239,7 +239,7 @@ export default function AboutPage() {
 
             {/* Info */}
             <div className="flex-1 text-center md:text-left">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">AGDS Corp</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">LakuPOS</h3>
               <p className="text-gray-600 mb-4">Full-Stack Developer & System Architect</p>
 
               <div className="space-y-3">
@@ -307,7 +307,7 @@ export default function AboutPage() {
               </p>
               <div className="p-3 bg-blue-50 rounded-lg">
                 <p className="text-xs text-blue-900 font-mono">
-                  Copyright © {new Date().getFullYear()} AGDS Corp. All rights reserved.
+                  Copyright © {new Date().getFullYear()} LakuPOS. All rights reserved.
                 </p>
               </div>
             </div>
@@ -377,7 +377,7 @@ export default function AboutPage() {
         <CardBody>
           <div className="space-y-4">
             <p className="text-gray-700">
-              Interested in contributing to AGDS Corp POS? We welcome contributions from the community!
+              Interested in contributing to LakuPOS? We welcome contributions from the community!
             </p>
             <div className="space-y-2 text-sm text-gray-700">
               <p><strong>Ways to contribute:</strong></p>
@@ -416,7 +416,7 @@ export default function AboutPage() {
               Contact us for consultation, custom development, or enterprise solutions.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
-              <a href="https://wa.me/6287874415491?text=Hi%20AGDS,%20I'm%20interested%20in%20AGDS%20Corp%20POS" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/6287874415491?text=Halo%20LakuPOS,%20saya%20tertarik%20dengan%20LakuPOS" target="_blank" rel="noopener noreferrer">
                 <Button variant="primary" size="lg">
                   💬 WhatsApp: +62 878-7441-5491
                 </Button>
@@ -434,10 +434,10 @@ export default function AboutPage() {
       {/* Footer Note */}
       <div className="text-center py-8 border-t-2 border-gray-200">
         <p className="text-gray-600 mb-2">
-          Built with ❤️ by <strong>AGDS Corp</strong>
+          Built with ❤️ by <strong>LakuPOS</strong>
         </p>
         <p className="text-sm text-gray-500">
-          © {new Date().getFullYear()} AGDS Corp POS. All rights reserved.
+          © {new Date().getFullYear()} LakuPOS. All rights reserved.
         </p>
       </div>
     </div>

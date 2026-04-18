@@ -80,7 +80,7 @@ class OfflineDatabase extends Dexie {
   syncQueue!: Table<SyncQueueItem, number>
 
   constructor() {
-    super('AGDSOfflineDB')
+    super('LakuPOSOfflineDB')
 
     // Define schema
     this.version(1).stores({

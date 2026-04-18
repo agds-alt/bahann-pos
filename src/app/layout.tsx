@@ -19,13 +19,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AGDS Corp POS - Warehouse & Point of Sale",
-  description: "Modern warehouse and POS management system by AGDS Corp",
+  title: "LakuPOS - Warehouse & Point of Sale",
+  description: "Modern warehouse and POS management system by LakuPOS",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "AGDS POS",
+    title: "LakuPOS",
   },
   formatDetection: {
     telephone: false,

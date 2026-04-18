@@ -79,7 +79,7 @@ export async function createPayment(request: PaymentRequest): Promise<PaymentRes
 
     // Generate QRIS code
     const qrisString = generateQRISString({
-      merchantName: accountDetails.merchantName || 'AGDS Corp',
+      merchantName: accountDetails.merchantName || 'LakuPOS',
       merchantCity: accountDetails.merchantCity || 'Jakarta',
       merchantPAN: accountDetails.merchantPAN,
       amount: request.amount,
@@ -88,7 +88,7 @@ export async function createPayment(request: PaymentRequest): Promise<PaymentRes
 
     const qrisImage = await generateQRISImage(
       {
-        merchantName: accountDetails.merchantName || 'AGDS Corp',
+        merchantName: accountDetails.merchantName || 'LakuPOS',
         merchantCity: accountDetails.merchantCity || 'Jakarta',
         merchantPAN: accountDetails.merchantPAN,
         amount: request.amount,

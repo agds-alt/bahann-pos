@@ -10,10 +10,10 @@ interface ChatMessage {
 }
 
 const QUICK_ACTIONS: { label: string; waMessage: string }[] = [
-  { label: '💰 Tanya tentang harga', waMessage: 'Halo, saya ingin tanya tentang harga paket AGDS POS. Boleh info lebih lanjut?' },
-  { label: '📅 Jadwalkan demo', waMessage: 'Halo, saya ingin jadwalkan demo AGDS POS. Kapan bisa?' },
-  { label: '📞 Minta callback', waMessage: 'Halo, saya minta callback dari tim AGDS POS.' },
-  { label: '📧 Hubungi support', waMessage: 'Halo, saya butuh bantuan dari tim support AGDS POS.' },
+  { label: '💰 Tanya tentang harga', waMessage: 'Halo, saya ingin tanya tentang harga paket LakuPOS. Boleh info lebih lanjut?' },
+  { label: '📅 Jadwalkan demo', waMessage: 'Halo, saya ingin jadwalkan demo LakuPOS. Kapan bisa?' },
+  { label: '📞 Minta callback', waMessage: 'Halo, saya minta callback dari tim LakuPOS.' },
+  { label: '📧 Hubungi support', waMessage: 'Halo, saya butuh bantuan dari tim support LakuPOS.' },
 ]
 
 export default function LandingPage() {
@@ -71,7 +71,7 @@ export default function LandingPage() {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center gap-2">
               <span className="text-3xl">🏷️</span>
-              <span className="text-2xl font-bold text-blue-600">AGDS POS</span>
+              <span className="text-2xl font-bold text-blue-600">LakuPOS</span>
             </div>
             <nav className="hidden md:flex gap-8">
               <a href="#features" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">Fitur</a>
@@ -168,7 +168,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Lihat AGDS POS Beraksi
+              Lihat LakuPOS Beraksi
             </h2>
             <p className="text-xl text-gray-300">
               Demo lengkap sistem POS kami — live bersama tim kami
@@ -187,7 +187,7 @@ export default function LandingPage() {
                 </p>
               </div>
               <a
-                href={buildWaLink('Halo, saya ingin jadwalkan sesi demo langsung AGDS POS. Kapan bisa?')}
+                href={buildWaLink('Halo, saya ingin jadwalkan sesi demo langsung LakuPOS. Kapan bisa?')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
@@ -282,7 +282,7 @@ export default function LandingPage() {
                 ]}
                 buttonText="Pilih Warung"
                 buttonVariant="secondary"
-                waMessage="Halo, saya tertarik dengan paket Warung AGDS POS (Rp 99rb/bulan). Boleh info lebih lanjut dan cara berlangganannya?"
+                waMessage="Halo, saya tertarik dengan paket Warung LakuPOS (Rp 99rb/bulan). Boleh info lebih lanjut dan cara berlangganannya?"
               />
               <PricingCard
                 name="Starter"
@@ -302,7 +302,7 @@ export default function LandingPage() {
                 ]}
                 buttonText="Pilih Starter"
                 buttonVariant="secondary"
-                waMessage="Halo, saya tertarik dengan paket Starter AGDS POS (Rp 299rb/bulan). Boleh info lebih lanjut dan cara berlangganannya?"
+                waMessage="Halo, saya tertarik dengan paket Starter LakuPOS (Rp 299rb/bulan). Boleh info lebih lanjut dan cara berlangganannya?"
               />
               <PricingCard
                 name="Professional"
@@ -324,7 +324,7 @@ export default function LandingPage() {
                 buttonText="Pilih Professional"
                 buttonVariant="primary"
                 popular
-                waMessage="Halo, saya tertarik dengan paket Professional AGDS POS (Rp 1,2jt/bulan). Boleh info lebih lanjut dan cara berlangganannya?"
+                waMessage="Halo, saya tertarik dengan paket Professional LakuPOS (Rp 1,2jt/bulan). Boleh info lebih lanjut dan cara berlangganannya?"
               />
             </div>
 
@@ -335,7 +335,7 @@ export default function LandingPage() {
                 <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">Mulai dari Rp 2,8jt/bulan — multi-outlet, white-label, SLA, dan account manager khusus.</p>
               </div>
               <a
-                href={buildWaLink('Halo, saya ingin tanya tentang paket Business atau Enterprise AGDS POS. Boleh info lebih lanjut?')}
+                href={buildWaLink('Halo, saya ingin tanya tentang paket Business atau Enterprise LakuPOS. Boleh info lebih lanjut?')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="shrink-0 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
@@ -368,7 +368,7 @@ export default function LandingPage() {
                 ]}
                 buttonText="Minta Penawaran"
                 buttonVariant="secondary"
-                waMessage="Halo, saya tertarik dengan paket One-Time SME Package AGDS POS (Rp 75jt). Boleh minta penawaran dan info lebih lanjut?"
+                waMessage="Halo, saya tertarik dengan paket One-Time SME Package LakuPOS (Rp 75jt). Boleh minta penawaran dan info lebih lanjut?"
               />
               <PricingCard
                 name="Business Package"
@@ -388,7 +388,7 @@ export default function LandingPage() {
                 buttonText="Minta Penawaran"
                 buttonVariant="primary"
                 popular
-                waMessage="Halo, saya tertarik dengan paket One-Time Business Package AGDS POS (Rp 150jt). Boleh minta penawaran dan info lebih lanjut?"
+                waMessage="Halo, saya tertarik dengan paket One-Time Business Package LakuPOS (Rp 150jt). Boleh minta penawaran dan info lebih lanjut?"
               />
               <PricingCard
                 name="Enterprise Package"
@@ -408,7 +408,7 @@ export default function LandingPage() {
                 ]}
                 buttonText="Hubungi Sales"
                 buttonVariant="primary"
-                waMessage="Halo, saya ingin konsultasi mengenai paket One-Time Enterprise Package AGDS POS (Rp 300jt). Mohon dihubungi kembali."
+                waMessage="Halo, saya ingin konsultasi mengenai paket One-Time Enterprise Package LakuPOS (Rp 300jt). Mohon dihubungi kembali."
               />
             </div>
           </div>
@@ -427,7 +427,7 @@ export default function LandingPage() {
                 <thead>
                   <tr className="bg-gradient-to-r from-blue-600 to-purple-700 text-white">
                     <th className="py-4 px-6 text-left font-semibold">Fitur</th>
-                    <th className="py-4 px-6 text-center font-semibold">AGDS POS</th>
+                    <th className="py-4 px-6 text-center font-semibold">LakuPOS</th>
                     <th className="py-4 px-6 text-center font-semibold">Moka POS</th>
                     <th className="py-4 px-6 text-center font-semibold">iReap POS</th>
                     <th className="py-4 px-6 text-center font-semibold">Pawoon</th>
@@ -544,7 +544,7 @@ export default function LandingPage() {
               ))}
             </div>
             <a
-              href={buildWaLink('Halo, saya tertarik jadi pengguna awal AGDS POS. Boleh info lebih lanjut?')}
+              href={buildWaLink('Halo, saya tertarik jadi pengguna awal LakuPOS. Boleh info lebih lanjut?')}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-colors"
@@ -602,7 +602,7 @@ export default function LandingPage() {
               Mulai Sekarang
             </Link>
             <a
-              href={buildWaLink('Halo, saya ingin konsultasi dan request demo AGDS POS. Boleh dihubungi?')}
+              href={buildWaLink('Halo, saya ingin konsultasi dan request demo LakuPOS. Boleh dihubungi?')}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white/10 transition-colors"
@@ -620,7 +620,7 @@ export default function LandingPage() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-2xl">🏷️</span>
-                <span className="text-xl font-bold">AGDS POS</span>
+                <span className="text-xl font-bold">LakuPOS</span>
               </div>
               <p className="text-gray-400">
                 POS Enterprise dengan Harga UKM. Dibangun dengan teknologi modern untuk bisnis Indonesia.
@@ -652,7 +652,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 AGDS POS by AGDS Corp. Hak cipta dilindungi.</p>
+            <p>&copy; 2025 LakuPOS by LakuPOS. Hak cipta dilindungi.</p>
           </div>
         </div>
       </footer>
@@ -663,7 +663,7 @@ export default function LandingPage() {
           <div className="mb-4 w-80 sm:w-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden">
             <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-4 flex justify-between items-center">
               <div>
-                <h3 className="font-bold">AGDS POS Support</h3>
+                <h3 className="font-bold">LakuPOS Support</h3>
                 <p className="text-xs opacity-90">Biasanya membalas dalam hitungan menit</p>
               </div>
               <button
@@ -682,7 +682,7 @@ export default function LandingPage() {
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-2xl rounded-tl-none p-4 shadow-sm max-w-[80%]">
                   <p className="text-sm text-gray-800 dark:text-gray-200">
-                    👋 Halo! Selamat datang di AGDS POS. Ada yang bisa kami bantu?
+                    👋 Halo! Selamat datang di LakuPOS. Ada yang bisa kami bantu?
                   </p>
                 </div>
               </div>
