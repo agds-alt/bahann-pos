@@ -7,7 +7,7 @@ import { SupabaseUserRepository } from '@/infra/repositories/SupabaseUserReposit
 import { setAuthCookie, deleteAuthCookie, setRefreshCookie, deleteRefreshCookie, getRefreshCookie } from '@/lib/cookies'
 import { createAuditLog } from '@/lib/audit'
 import { createRefreshToken, rotateRefreshToken, revokeRefreshToken, revokeAllUserTokens } from '@/lib/refreshToken'
-import { sendPasswordResetEmail, generateResetToken, sendNewUserNotification } from '@/lib/email'
+import { sendPasswordResetEmail, generateResetToken, sendNewUserNotification, sendWelcomeEmail } from '@/lib/email'
 import bcrypt from 'bcryptjs'
 
 const userRepository = new SupabaseUserRepository()
@@ -64,6 +64,13 @@ export const authRouter = router({
           .update({ outlet_id: outlet.id })
           .eq('id', result.userId)
       }
+
+      // Welcome email to new user (non-fatal)
+      await sendWelcomeEmail({
+        to: result.email,
+        name: result.name,
+        storeName: input.storeName,
+      })
 
       // Notify admin of new registration (non-fatal)
       const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL

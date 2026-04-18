@@ -10,6 +10,7 @@ import { createAuditLog } from '@/lib/audit'
 import { TRPCError } from '@trpc/server'
 import bcrypt from 'bcryptjs'
 import { getLimits, isUnlimited } from '@/lib/plans'
+import { sendPlanUpgradeEmail } from '@/lib/email'
 
 export const usersRouter = router({
   /**
@@ -372,6 +373,16 @@ export const usersRouter = router({
         changes: { before: { plan: before?.plan }, after: { plan: input.plan } },
         metadata: { targetEmail: before?.email, targetName: before?.name },
       })
+
+      // Notify user of plan change (non-fatal)
+      if (before?.email && before?.name) {
+        await sendPlanUpgradeEmail({
+          to: before.email,
+          name: before.name,
+          oldPlan: before.plan ?? 'free',
+          newPlan: input.plan,
+        })
+      }
 
       return { success: true }
     }),
