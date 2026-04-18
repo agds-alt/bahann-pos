@@ -465,6 +465,98 @@ export async function sendPlanUpgradeEmail({ to, name, oldPlan, newPlan }: SendP
   }
 }
 
+export interface SendTrialExpiredEmailParams {
+  to: string
+  name: string
+}
+
+/**
+ * Sent when a user's 14-day trial expires and plan is downgraded to Free
+ */
+export async function sendTrialExpiredEmail({ to, name }: SendTrialExpiredEmailParams) {
+  try {
+    const resend = getResend()
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: '⏰ Trial Laku POS kamu sudah berakhir',
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background-color:#f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:white;border-radius:16px;box-shadow:0 4px 6px rgba(0,0,0,0.1);overflow:hidden;">
+
+          <tr>
+            <td style="background:linear-gradient(135deg,#16a34a 0%,#15803d 100%);padding:40px;text-align:center;">
+              <h1 style="margin:0;color:white;font-size:36px;font-weight:bold;letter-spacing:-1px;">Laku POS</h1>
+              <p style="margin:10px 0 0 0;color:rgba(255,255,255,0.9);font-size:16px;">Trial Period Berakhir</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:40px;">
+              <h2 style="margin:0 0 8px 0;color:#1a202c;font-size:24px;">Halo, ${name} 👋</h2>
+              <p style="margin:0 0 24px 0;color:#4a5568;font-size:16px;line-height:1.6;">
+                Trial 14 hari plan <strong>Starter</strong> kamu sudah berakhir. Akun kamu sekarang kembali ke plan <strong>Free</strong>.
+              </p>
+
+              <div style="background-color:#fef2f2;border:2px solid #fecaca;border-radius:12px;padding:24px;margin:0 0 28px 0;">
+                <p style="margin:0 0 12px 0;color:#991b1b;font-size:15px;font-weight:700;">⚠️ Yang berubah di plan Free:</p>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr><td style="padding:6px 0;color:#7f1d1d;font-size:14px;">🏪 Maks 1 outlet</td></tr>
+                  <tr><td style="padding:6px 0;color:#7f1d1d;font-size:14px;">🏷️ Maks 50 produk</td></tr>
+                  <tr><td style="padding:6px 0;color:#7f1d1d;font-size:14px;">👤 Maks 1 kasir</td></tr>
+                  <tr><td style="padding:6px 0;color:#7f1d1d;font-size:14px;">🔒 Export laporan tidak tersedia</td></tr>
+                </table>
+              </div>
+
+              <p style="margin:0 0 24px 0;color:#4a5568;font-size:15px;line-height:1.6;">
+                Data dan riwayat transaksimu <strong>aman dan tidak terhapus</strong>. Upgrade kapan saja untuk melanjutkan menggunakan semua fitur.
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${APP_URL}/settings/subscriptions" style="display:inline-block;background:linear-gradient(135deg,#16a34a 0%,#15803d 100%);color:white;text-decoration:none;padding:16px 48px;border-radius:12px;font-size:16px;font-weight:600;box-shadow:0 4px 6px rgba(22,163,74,0.4);">
+                      🚀 Upgrade Sekarang
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0;color:#718096;font-size:13px;line-height:1.6;">
+                Ada pertanyaan? Hubungi kami via WhatsApp atau balas email ini.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background-color:#f7fafc;padding:24px;text-align:center;border-top:2px solid #e2e8f0;">
+              <p style="margin:0;color:#a0aec0;font-size:12px;">© ${new Date().getFullYear()} Laku POS. All rights reserved.</p>
+              <p style="margin:8px 0 0 0;color:#a0aec0;font-size:12px;">Email otomatis — mohon tidak membalas email ini</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+    })
+    console.log('✅ Trial expired email sent to:', to)
+  } catch (err) {
+    console.error('❌ Failed to send trial expired email:', err)
+  }
+}
+
 /**
  * Generate secure random token for password reset
  */

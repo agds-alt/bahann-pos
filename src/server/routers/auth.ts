@@ -58,12 +58,19 @@ export const authRouter = router({
         .select('id')
         .single()
 
-      if (outlet) {
-        await supabaseAdmin
-          .from('users')
-          .update({ outlet_id: outlet.id })
-          .eq('id', result.userId)
-      }
+      // Set 14-day Starter trial for new users
+      const trialEndsAt = new Date()
+      trialEndsAt.setDate(trialEndsAt.getDate() + 14)
+
+      await supabaseAdmin
+        .from('users')
+        .update({
+          outlet_id: outlet?.id ?? null,
+          plan: 'starter',
+          is_trial: true,
+          trial_ends_at: trialEndsAt.toISOString(),
+        })
+        .eq('id', result.userId)
 
       // Welcome email to new user (non-fatal)
       await sendWelcomeEmail({
