@@ -286,6 +286,65 @@ export const usersRouter = router({
     }),
 
   /**
+   * List ALL admin users across all tenants (super admin only)
+   */
+  listAllAdmins: adminProcedure.query(async ({ ctx }) => {
+    const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || ''
+    if (!superAdminEmail || ctx.session?.email !== superAdminEmail) {
+      throw new TRPCError({ code: 'FORBIDDEN', message: 'Super admin only' })
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, email, name, role, plan, created_at, outlet_id')
+      .eq('role', 'admin')
+      .order('created_at', { ascending: false })
+
+    if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message })
+    return data || []
+  }),
+
+  /**
+   * Update a user's subscription plan (super admin only)
+   */
+  updatePlan: adminProcedure
+    .input(z.object({
+      userId: z.string().uuid(),
+      plan: z.enum(['free', 'warung', 'starter', 'professional', 'business', 'enterprise']),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || ''
+      if (!superAdminEmail || ctx.session?.email !== superAdminEmail) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Super admin only' })
+      }
+
+      const { data: before } = await supabase
+        .from('users')
+        .select('plan, email, name')
+        .eq('id', input.userId)
+        .single()
+
+      const { error } = await supabase
+        .from('users')
+        .update({ plan: input.plan })
+        .eq('id', input.userId)
+
+      if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message })
+
+      await createAuditLog({
+        userId: ctx.userId,
+        userEmail: ctx.session?.email || 'unknown',
+        action: 'UPDATE',
+        entityType: 'user',
+        entityId: input.userId,
+        changes: { before: { plan: before?.plan }, after: { plan: input.plan } },
+        metadata: { targetEmail: before?.email, targetName: before?.name },
+      })
+
+      return { success: true }
+    }),
+
+  /**
    * Check if current user has specific permission
    */
   checkPermission: protectedProcedure
