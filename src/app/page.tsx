@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useTheme } from '@/lib/theme/ThemeContext'
 
 export default function LandingPage() {
   const [pricingMode, setPricingMode] = useState<'subscription' | 'onetime'>('subscription')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [chatOpen, setChatOpen] = useState(false)
+  const { theme, toggleTheme } = useTheme()
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index)
@@ -15,7 +17,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700">
       {/* Header */}
-      <header className="bg-white/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+      <header className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center gap-2">
@@ -23,17 +25,27 @@ export default function LandingPage() {
               <span className="text-2xl font-bold text-blue-600">AGDS POS</span>
             </div>
             <nav className="hidden md:flex gap-8">
-              <a href="#features" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Features</a>
-              <a href="#pricing" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Pricing</a>
-              <a href="#comparison" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Comparison</a>
-              <a href="#faq" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">FAQ</a>
+              <a href="#features" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">Features</a>
+              <a href="#pricing" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">Pricing</a>
+              <a href="#comparison" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">Comparison</a>
+              <a href="#faq" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">FAQ</a>
             </nav>
-            <Link
-              href="/login"
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-            >
-              Login
-            </Link>
+            <div className="flex items-center gap-3">
+              {/* Dark mode toggle */}
+              <button
+                onClick={toggleTheme}
+                className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-lg"
+                aria-label="Toggle dark mode"
+              >
+                {theme === 'dark' ? '☀️' : '🌙'}
+              </button>
+              <Link
+                href="/login"
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              >
+                Login
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -68,13 +80,13 @@ export default function LandingPage() {
       </section>
 
       {/* Features Showcase */}
-      <section className="py-20 bg-white" id="features">
+      <section className="py-20 bg-white dark:bg-gray-900" id="features">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4">
               Fitur Lengkap untuk Bisnis Modern
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
               Semua yang Anda butuhkan untuk mengelola bisnis retail dalam satu platform
             </p>
           </div>
@@ -83,15 +95,15 @@ export default function LandingPage() {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 hover:shadow-xl transition-all hover:-translate-y-1"
+                className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl p-8 hover:shadow-xl transition-all hover:-translate-y-1 border border-transparent dark:border-gray-700"
               >
                 <div className="text-5xl mb-4">{feature.icon}</div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-                <p className="text-gray-600 leading-relaxed mb-4">{feature.description}</p>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">{feature.title}</h3>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">{feature.description}</p>
                 <ul className="space-y-2">
                   {feature.points.map((point, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
-                      <span className="text-blue-600 mt-0.5">✓</span>
+                    <li key={idx} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                      <span className="text-blue-600 dark:text-blue-400 mt-0.5">✓</span>
                       <span>{point}</span>
                     </li>
                   ))}
@@ -116,7 +128,6 @@ export default function LandingPage() {
 
           <div className="max-w-4xl mx-auto">
             <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl bg-gray-800">
-              {/* Demo video - Replace VIDEO_ID with your actual YouTube video ID */}
               <iframe
                 className="w-full h-full"
                 src="https://www.youtube.com/embed/dQw4w9WgXcQ?si=abcdef123456&rel=0"
@@ -126,7 +137,6 @@ export default function LandingPage() {
               ></iframe>
             </div>
 
-            {/* Video Stats */}
             <div className="grid grid-cols-3 gap-4 mt-8 max-w-2xl mx-auto">
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-400">500+</div>
@@ -146,15 +156,15 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing Toggle */}
-      <section className="py-12 bg-white" id="pricing">
+      <section className="py-12 bg-white dark:bg-gray-900" id="pricing">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex bg-gray-100 rounded-full p-1">
+          <div className="inline-flex bg-gray-100 dark:bg-gray-800 rounded-full p-1">
             <button
               onClick={() => setPricingMode('subscription')}
               className={`px-6 py-2 rounded-full font-semibold transition-all ${
                 pricingMode === 'subscription'
-                  ? 'bg-white text-blue-600 shadow-md'
-                  : 'text-gray-600'
+                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-md'
+                  : 'text-gray-600 dark:text-gray-400'
               }`}
             >
               Monthly Subscription
@@ -163,23 +173,22 @@ export default function LandingPage() {
               onClick={() => setPricingMode('onetime')}
               className={`px-6 py-2 rounded-full font-semibold transition-all ${
                 pricingMode === 'onetime'
-                  ? 'bg-white text-blue-600 shadow-md'
-                  : 'text-gray-600'
+                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-md'
+                  : 'text-gray-600 dark:text-gray-400'
               }`}
             >
               One-Time Purchase
             </button>
           </div>
-          <p className="mt-4 text-gray-600">💡 Hemat 20% dengan paket tahunan!</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">💡 Hemat 20% dengan paket tahunan!</p>
         </div>
       </section>
 
       {/* Pricing Cards - Subscription */}
       {pricingMode === 'subscription' && (
-        <section className="py-12 bg-white">
+        <section className="py-12 bg-white dark:bg-gray-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {/* Starter */}
               <PricingCard
                 name="Starter"
                 price="399rb"
@@ -198,8 +207,6 @@ export default function LandingPage() {
                 buttonText="Pilih Starter"
                 buttonVariant="secondary"
               />
-
-              {/* Professional */}
               <PricingCard
                 name="Professional"
                 price="1,2jt"
@@ -221,8 +228,6 @@ export default function LandingPage() {
                 buttonVariant="primary"
                 popular
               />
-
-              {/* Business */}
               <PricingCard
                 name="Business"
                 price="2,8jt"
@@ -242,8 +247,6 @@ export default function LandingPage() {
                 buttonText="Pilih Business"
                 buttonVariant="secondary"
               />
-
-              {/* Enterprise */}
               <PricingCard
                 name="Enterprise"
                 price="6,5jt"
@@ -270,10 +273,9 @@ export default function LandingPage() {
 
       {/* Pricing Cards - One-Time */}
       {pricingMode === 'onetime' && (
-        <section className="py-12 bg-white">
+        <section className="py-12 bg-white dark:bg-gray-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              {/* SME Package */}
               <PricingCard
                 name="SME Package"
                 price="75jt"
@@ -291,8 +293,6 @@ export default function LandingPage() {
                 buttonText="Get Quote"
                 buttonVariant="secondary"
               />
-
-              {/* Business Package */}
               <PricingCard
                 name="Business Package"
                 price="150jt"
@@ -312,8 +312,6 @@ export default function LandingPage() {
                 buttonVariant="primary"
                 popular
               />
-
-              {/* Enterprise Package */}
               <PricingCard
                 name="Enterprise Package"
                 price="300jt"
@@ -339,12 +337,12 @@ export default function LandingPage() {
       )}
 
       {/* Comparison Table */}
-      <section className="py-20 bg-gray-50" id="comparison">
+      <section className="py-20 bg-gray-50 dark:bg-gray-800" id="comparison">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-center mb-12 text-gray-900">
+          <h2 className="text-4xl font-bold text-center mb-12 text-gray-900 dark:text-gray-100">
             Compare with Competitors
           </h2>
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -356,51 +354,51 @@ export default function LandingPage() {
                     <th className="py-4 px-6 text-center font-semibold">Pawoon</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
-                  <tr className="hover:bg-gray-50">
-                    <td className="py-4 px-6 font-semibold text-gray-900">Monthly Price</td>
-                    <td className="py-4 px-6 text-center text-gray-900">Rp 1,2jt</td>
-                    <td className="py-4 px-6 text-center text-gray-700">Rp 1,2jt</td>
-                    <td className="py-4 px-6 text-center text-gray-700">Rp 800rb</td>
-                    <td className="py-4 px-6 text-center text-gray-700">Rp 999rb</td>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="py-4 px-6 font-semibold text-gray-900 dark:text-gray-100">Monthly Price</td>
+                    <td className="py-4 px-6 text-center text-gray-900 dark:text-gray-100">Rp 1,2jt</td>
+                    <td className="py-4 px-6 text-center text-gray-700 dark:text-gray-400">Rp 1,2jt</td>
+                    <td className="py-4 px-6 text-center text-gray-700 dark:text-gray-400">Rp 800rb</td>
+                    <td className="py-4 px-6 text-center text-gray-700 dark:text-gray-400">Rp 999rb</td>
                   </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="py-4 px-6 text-gray-900">Multi-outlet</td>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="py-4 px-6 text-gray-900 dark:text-gray-100">Multi-outlet</td>
                     <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
                     <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
                     <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
                     <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
                   </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="py-4 px-6 text-gray-900">Offline Mode</td>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="py-4 px-6 text-gray-900 dark:text-gray-100">Offline Mode</td>
                     <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
                     <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
-                    <td className="py-4 px-6 text-center text-gray-700 font-medium">Limited</td>
-                    <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
-                  </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="py-4 px-6 text-gray-900">Source Code</td>
-                    <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
-                    <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
-                    <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
+                    <td className="py-4 px-6 text-center text-gray-700 dark:text-gray-400 font-medium">Limited</td>
                     <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
                   </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="py-4 px-6 text-gray-900">Self-hosted</td>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="py-4 px-6 text-gray-900 dark:text-gray-100">Source Code</td>
                     <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
                     <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
                     <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
                     <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
                   </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="py-4 px-6 text-gray-900">Advanced Audit Logs</td>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="py-4 px-6 text-gray-900 dark:text-gray-100">Self-hosted</td>
                     <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
-                    <td className="py-4 px-6 text-center text-gray-700 font-medium">Basic</td>
-                    <td className="py-4 px-6 text-center text-gray-700 font-medium">Basic</td>
-                    <td className="py-4 px-6 text-center text-gray-700 font-medium">Basic</td>
+                    <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
+                    <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
+                    <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
                   </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="py-4 px-6 text-gray-900">One-time Purchase</td>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="py-4 px-6 text-gray-900 dark:text-gray-100">Advanced Audit Logs</td>
+                    <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
+                    <td className="py-4 px-6 text-center text-gray-700 dark:text-gray-400 font-medium">Basic</td>
+                    <td className="py-4 px-6 text-center text-gray-700 dark:text-gray-400 font-medium">Basic</td>
+                    <td className="py-4 px-6 text-center text-gray-700 dark:text-gray-400 font-medium">Basic</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="py-4 px-6 text-gray-900 dark:text-gray-100">One-time Purchase</td>
                     <td className="py-4 px-6 text-center text-green-600 text-2xl">✓</td>
                     <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
                     <td className="py-4 px-6 text-center text-red-600 text-2xl">✗</td>
@@ -414,13 +412,13 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
+      <section className="py-20 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4">
               Dipercaya oleh Ratusan Bisnis
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-600 dark:text-gray-400">
               Lihat apa kata mereka tentang AGDS POS
             </p>
           </div>
@@ -429,42 +427,35 @@ export default function LandingPage() {
             {testimonials.map((testimonial, index) => (
               <div
                 key={index}
-                className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all hover:-translate-y-2"
+                className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all hover:-translate-y-2"
               >
-                {/* Rating Stars */}
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
                     <span key={i} className="text-yellow-400 text-xl">★</span>
                   ))}
                 </div>
-
-                {/* Testimonial Text */}
-                <p className="text-gray-700 mb-6 leading-relaxed italic">
+                <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed italic">
                   "{testimonial.text}"
                 </p>
-
-                {/* Author Info */}
-                <div className="flex items-center gap-4 border-t pt-6">
+                <div className="flex items-center gap-4 border-t border-gray-200 dark:border-gray-700 pt-6">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-700 rounded-full flex items-center justify-center text-white font-bold text-xl">
                     {testimonial.name.charAt(0)}
                   </div>
                   <div>
-                    <div className="font-bold text-gray-900">{testimonial.name}</div>
-                    <div className="text-sm text-gray-600">{testimonial.role}</div>
-                    <div className="text-sm text-blue-600">{testimonial.company}</div>
+                    <div className="font-bold text-gray-900 dark:text-gray-100">{testimonial.name}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">{testimonial.role}</div>
+                    <div className="text-sm text-blue-600 dark:text-blue-400">{testimonial.company}</div>
                   </div>
                 </div>
-
-                {/* Business Stats */}
                 {testimonial.stats && (
-                  <div className="mt-4 pt-4 border-t flex justify-between text-center">
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between text-center">
                     <div>
-                      <div className="text-2xl font-bold text-blue-600">{testimonial.stats.outlets}</div>
-                      <div className="text-xs text-gray-600">Outlets</div>
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{testimonial.stats.outlets}</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">Outlets</div>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold text-purple-600">{testimonial.stats.transactions}</div>
-                      <div className="text-xs text-gray-600">Trans/Day</div>
+                      <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{testimonial.stats.transactions}</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">Trans/Day</div>
                     </div>
                   </div>
                 )}
@@ -472,40 +463,39 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* Trust Badges */}
           <div className="mt-16 text-center">
-            <p className="text-gray-600 mb-6 font-semibold">Trusted by leading brands:</p>
+            <p className="text-gray-600 dark:text-gray-400 mb-6 font-semibold">Trusted by leading brands:</p>
             <div className="flex flex-wrap justify-center gap-8 items-center opacity-60">
-              <div className="text-2xl font-bold text-gray-700">🏪 Minimart Chain</div>
-              <div className="text-2xl font-bold text-gray-700">👗 Fashion Boutique</div>
-              <div className="text-2xl font-bold text-gray-700">🍔 F&B Franchise</div>
-              <div className="text-2xl font-bold text-gray-700">💊 Pharmacy Network</div>
+              <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">🏪 Minimart Chain</div>
+              <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">👗 Fashion Boutique</div>
+              <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">🍔 F&B Franchise</div>
+              <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">💊 Pharmacy Network</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20 bg-white" id="faq">
+      <section className="py-20 bg-white dark:bg-gray-900" id="faq">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-center mb-12 text-gray-900">
+          <h2 className="text-4xl font-bold text-center mb-12 text-gray-900 dark:text-gray-100">
             Frequently Asked Questions
           </h2>
           <div className="space-y-4">
             {faqs.map((faq, index) => (
               <div
                 key={index}
-                className="bg-gray-50 rounded-xl overflow-hidden cursor-pointer hover:bg-gray-100 transition-colors"
+                className="bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 onClick={() => toggleFaq(index)}
               >
                 <div className="p-6 flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-900">{faq.question}</h3>
-                  <span className="text-2xl text-gray-600">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{faq.question}</h3>
+                  <span className="text-2xl text-gray-600 dark:text-gray-400">
                     {openFaq === index ? '−' : '+'}
                   </span>
                 </div>
                 {openFaq === index && (
-                  <div className="px-6 pb-6 text-gray-700 leading-relaxed">
+                  <div className="px-6 pb-6 text-gray-700 dark:text-gray-300 leading-relaxed">
                     {faq.answer}
                   </div>
                 )}
@@ -587,10 +577,8 @@ export default function LandingPage() {
 
       {/* Live Chat Widget */}
       <div className="fixed bottom-6 right-6 z-50">
-        {/* Chat Window */}
         {chatOpen && (
-          <div className="mb-4 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl overflow-hidden">
-            {/* Chat Header */}
+          <div className="mb-4 w-80 sm:w-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden">
             <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-4 flex justify-between items-center">
               <div>
                 <h3 className="font-bold">AGDS POS Support</h3>
@@ -604,45 +592,34 @@ export default function LandingPage() {
               </button>
             </div>
 
-            {/* Chat Body */}
-            <div className="h-96 overflow-y-auto p-4 bg-gray-50">
-              {/* Welcome Message */}
+            <div className="h-96 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900">
               <div className="flex gap-3 mb-4">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-700 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
                   B
                 </div>
-                <div className="bg-white rounded-2xl rounded-tl-none p-4 shadow-sm max-w-[80%]">
-                  <p className="text-sm text-gray-800">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl rounded-tl-none p-4 shadow-sm max-w-[80%]">
+                  <p className="text-sm text-gray-800 dark:text-gray-200">
                     👋 Halo! Selamat datang di AGDS POS. Ada yang bisa kami bantu?
                   </p>
                 </div>
               </div>
 
-              {/* Quick Actions */}
               <div className="space-y-2 mt-4">
-                <p className="text-xs text-gray-600 font-semibold mb-2">Quick Actions:</p>
-                <button className="w-full text-left bg-white hover:bg-blue-50 p-3 rounded-xl shadow-sm transition-colors text-sm">
-                  💰 Tanya tentang pricing
-                </button>
-                <button className="w-full text-left bg-white hover:bg-blue-50 p-3 rounded-xl shadow-sm transition-colors text-sm">
-                  📅 Schedule demo
-                </button>
-                <button className="w-full text-left bg-white hover:bg-blue-50 p-3 rounded-xl shadow-sm transition-colors text-sm">
-                  📞 Request callback
-                </button>
-                <button className="w-full text-left bg-white hover:bg-blue-50 p-3 rounded-xl shadow-sm transition-colors text-sm">
-                  📧 Email support
-                </button>
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mb-2">Quick Actions:</p>
+                {['💰 Tanya tentang pricing', '📅 Schedule demo', '📞 Request callback', '📧 Email support'].map(action => (
+                  <button key={action} className="w-full text-left bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 p-3 rounded-xl shadow-sm transition-colors text-sm text-gray-700 dark:text-gray-300">
+                    {action}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Chat Input */}
-            <div className="p-4 bg-white border-t">
+            <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
               <div className="flex gap-2">
                 <input
                   type="text"
                   placeholder="Type your message..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:border-blue-600 text-sm"
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full focus:outline-none focus:border-blue-600 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
                 <button className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors font-semibold text-sm">
                   Send
@@ -652,7 +629,6 @@ export default function LandingPage() {
           </div>
         )}
 
-        {/* Chat Button */}
         <button
           onClick={() => setChatOpen(!chatOpen)}
           className={`${
@@ -661,7 +637,6 @@ export default function LandingPage() {
         >
           <span className="text-2xl">💬</span>
           <span className="font-semibold">Chat with Us</span>
-          {/* Notification Dot */}
           <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse"></span>
         </button>
       </div>
@@ -694,8 +669,8 @@ function PricingCard({
 }: PricingCardProps) {
   return (
     <div
-      className={`relative bg-white rounded-2xl p-8 shadow-xl transition-all hover:-translate-y-2 ${
-        popular ? 'border-2 border-blue-600 scale-105' : 'border border-gray-200'
+      className={`relative bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl transition-all hover:-translate-y-2 ${
+        popular ? 'border-2 border-blue-600 scale-105' : 'border border-gray-200 dark:border-gray-700'
       }`}
     >
       {popular && (
@@ -703,20 +678,20 @@ function PricingCard({
           🔥 POPULAR
         </div>
       )}
-      <h3 className="text-2xl font-bold mb-2">{name}</h3>
+      <h3 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">{name}</h3>
       <div className="mb-4">
-        <span className="text-4xl font-bold text-blue-600">Rp {price}</span>
-        {period && <span className="text-gray-600">{period}</span>}
+        <span className="text-4xl font-bold text-blue-600 dark:text-blue-400">Rp {price}</span>
+        {period && <span className="text-gray-600 dark:text-gray-400">{period}</span>}
         <span className="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
           {discount}
         </span>
       </div>
-      <p className="text-gray-600 mb-6">{description}</p>
+      <p className="text-gray-600 dark:text-gray-400 mb-6">{description}</p>
       <ul className="space-y-3 mb-8">
         {features.map((feature, index) => (
           <li key={index} className="flex items-start gap-2">
-            <span className="text-green-600 mt-1">✓</span>
-            <span className="text-gray-700">{feature}</span>
+            <span className="text-green-600 dark:text-green-400 mt-1">✓</span>
+            <span className="text-gray-700 dark:text-gray-300">{feature}</span>
           </li>
         ))}
       </ul>
@@ -725,7 +700,7 @@ function PricingCard({
         className={`block w-full text-center py-3 rounded-lg font-semibold transition-colors ${
           buttonVariant === 'primary'
             ? 'bg-blue-600 text-white hover:bg-blue-700'
-            : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50'
+            : 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 border-2 border-blue-600 dark:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-600'
         }`}
       >
         {buttonText}
@@ -761,7 +736,6 @@ const faqs = [
   },
 ]
 
-// Features data
 const features = [
   {
     icon: '🏪',
@@ -831,66 +805,47 @@ const features = [
   },
 ]
 
-// Testimonials data
 const testimonials = [
   {
     name: 'Budi Santoso',
     role: 'Owner',
     company: 'Toko Sejahtera (Minimart Chain)',
     text: 'Sejak pakai AGDS POS, operasional 5 outlet saya jadi jauh lebih efisien. Audit trail-nya sangat membantu untuk tracking semua aktivitas. Recommended!',
-    stats: {
-      outlets: '5',
-      transactions: '500+',
-    },
+    stats: { outlets: '5', transactions: '500+' },
   },
   {
     name: 'Siti Rahma',
     role: 'Manager',
     company: 'Boutique Elegan',
     text: 'UI-nya user-friendly banget, karyawan baru bisa langsung pakai tanpa training lama. Feature offline mode-nya lifesaver pas internet down!',
-    stats: {
-      outlets: '3',
-      transactions: '200+',
-    },
+    stats: { outlets: '3', transactions: '200+' },
   },
   {
     name: 'Ahmad Wijaya',
     role: 'CEO',
     company: 'Warung Kopi Network',
     text: 'Harga kompetitif dengan fitur enterprise level. Custom development team-nya responsive banget. Worth every rupiah!',
-    stats: {
-      outlets: '12',
-      transactions: '1.5K+',
-    },
+    stats: { outlets: '12', transactions: '1.5K+' },
   },
   {
     name: 'Linda Kusuma',
     role: 'Operations Manager',
     company: 'Pharmacy Plus',
     text: 'Inventory management-nya precise, stock alert otomatis, dan reporting lengkap. Sangat membantu untuk bisnis farmasi yang butuh tracking ketat.',
-    stats: {
-      outlets: '8',
-      transactions: '800+',
-    },
+    stats: { outlets: '8', transactions: '800+' },
   },
   {
     name: 'Rudi Hartono',
     role: 'Franchise Owner',
     company: 'Ayam Geprek Franchise',
     text: 'Multi-outlet management-nya excellent. Bisa monitor semua cabang real-time dari dashboard. Cash reconciliation juga jadi gampang banget.',
-    stats: {
-      outlets: '15',
-      transactions: '2K+',
-    },
+    stats: { outlets: '15', transactions: '2K+' },
   },
   {
     name: 'Diana Putri',
     role: 'Store Manager',
     company: 'Fashion District',
     text: 'Support team-nya super helpful, response cepat. Feature promotion code-nya powerful untuk campaign marketing kami. Highly recommended!',
-    stats: {
-      outlets: '4',
-      transactions: '350+',
-    },
+    stats: { outlets: '4', transactions: '350+' },
   },
 ]
