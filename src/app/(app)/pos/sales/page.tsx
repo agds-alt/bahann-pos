@@ -391,7 +391,7 @@ export default function SalesTransactionPage() {
         }),
         cashier: getUserName(),
         outlet: {
-          name: selectedOutlet?.name || 'LakuPOS',
+          name: selectedOutlet?.name || 'Laku POS',
           address: selectedOutlet?.address || 'Indonesia',
           phone: '+62 878-7441-5491',
           email: 'agdscid@gmail.com',
@@ -414,7 +414,7 @@ export default function SalesTransactionPage() {
         },
         notes: appliedPromo
           ? `Promo: ${appliedPromo.promoName} • Terima kasih!`
-          : 'Terima kasih telah berbelanja di LakuPOS',
+          : 'Terima kasih telah berbelanja di Laku POS',
       }
 
       setReceiptData(receipt)
@@ -500,7 +500,7 @@ export default function SalesTransactionPage() {
             </p>
             <div className="flex flex-col gap-3">
               <a
-                href={`https://wa.me/6287874415491?text=${encodeURIComponent('Halo, saya ingin upgrade dari paket Gratis ke paket Warung LakuPOS (Rp 99rb/bulan). Mohon bantuannya.')}`}
+                href={`https://wa.me/6287874415491?text=${encodeURIComponent('Halo, saya ingin upgrade dari paket Gratis ke paket Warung Laku POS (Rp 99rb/bulan). Mohon bantuannya.')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold text-lg transition-colors"

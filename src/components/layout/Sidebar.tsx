@@ -193,7 +193,7 @@ export function Sidebar() {
         {!isCollapsed ? (
           <>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">LakuPOS</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Laku POS</h1>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Warehouse & Point of Sale</p>
             </div>
             <button

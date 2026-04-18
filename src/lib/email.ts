@@ -38,7 +38,7 @@ export async function sendPasswordResetEmail({
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to,
-      subject: 'Reset Password - LakuPOS',
+      subject: 'Reset Password - Laku POS',
       html: `
 <!DOCTYPE html>
 <html>
@@ -56,7 +56,7 @@ export async function sendPasswordResetEmail({
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; text-align: center;">
-              <h1 style="margin: 0; color: white; font-size: 32px; font-weight: bold;">LakuPOS</h1>
+              <h1 style="margin: 0; color: white; font-size: 32px; font-weight: bold;">Laku POS</h1>
               <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">Point of Sale System</p>
             </td>
           </tr>
@@ -115,7 +115,7 @@ export async function sendPasswordResetEmail({
           <tr>
             <td style="background-color: #f7fafc; padding: 30px; text-align: center; border-top: 2px solid #e2e8f0;">
               <p style="margin: 0; color: #a0aec0; font-size: 12px;">
-                © ${new Date().getFullYear()} LakuPOS. All rights reserved.
+                © ${new Date().getFullYear()} Laku POS. All rights reserved.
               </p>
               <p style="margin: 10px 0 0 0; color: #a0aec0; font-size: 12px;">
                 Email otomatis - mohon tidak membalas email ini
@@ -158,7 +158,7 @@ export async function sendNewUserNotification({
   newUserEmail,
   newUserWhatsapp,
 }: SendNewUserNotificationParams) {
-  const waLink = `https://wa.me/${newUserWhatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Halo ${newUserName}, akun LakuPOS Anda sudah aktif! Silakan login dan mulai gunakan aplikasinya.`)}`
+  const waLink = `https://wa.me/${newUserWhatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Halo ${newUserName}, akun Laku POS Anda sudah aktif! Silakan login dan mulai gunakan aplikasinya.`)}`
   const usersUrl = `${APP_URL}/settings/users`
 
   try {
@@ -170,7 +170,7 @@ export async function sendNewUserNotification({
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px">
           <h2 style="color:#2563eb">Ada Pendaftar Baru!</h2>
-          <p>Pengguna berikut baru saja mendaftar ke LakuPOS:</p>
+          <p>Pengguna berikut baru saja mendaftar ke Laku POS:</p>
           <table style="width:100%;border-collapse:collapse;margin:16px 0">
             <tr><td style="padding:8px;font-weight:bold;color:#374151">Nama</td><td style="padding:8px">${newUserName}</td></tr>
             <tr style="background:#f9fafb"><td style="padding:8px;font-weight:bold;color:#374151">Email</td><td style="padding:8px">${newUserEmail}</td></tr>
