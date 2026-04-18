@@ -146,16 +146,11 @@ function LoginContent() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center space-y-2">
+            <div className="mt-6 text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 {t('login.noAccount')}{' '}
                 <a href="/register" className="font-semibold text-gray-900 dark:text-gray-100 hover:underline">
                   {t('login.register')}
-                </a>
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-500">
-                <a href="/test/users" className="text-blue-600 hover:underline">
-                  🔍 View Registered Users (Test)
                 </a>
               </p>
             </div>
