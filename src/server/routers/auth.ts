@@ -7,7 +7,7 @@ import { SupabaseUserRepository } from '@/infra/repositories/SupabaseUserReposit
 import { setAuthCookie, deleteAuthCookie, setRefreshCookie, deleteRefreshCookie, getRefreshCookie } from '@/lib/cookies'
 import { createAuditLog } from '@/lib/audit'
 import { createRefreshToken, rotateRefreshToken, revokeRefreshToken, revokeAllUserTokens } from '@/lib/refreshToken'
-import { sendPasswordResetEmail, generateResetToken } from '@/lib/email'
+import { sendPasswordResetEmail, generateResetToken, sendNewUserNotification } from '@/lib/email'
 import bcrypt from 'bcryptjs'
 
 const userRepository = new SupabaseUserRepository()
@@ -24,6 +24,7 @@ export const authRouter = router({
         name: z.string().min(1),
         outletId: z.string().uuid().optional(),
         role: z.string().optional(),
+        whatsappNumber: z.string().min(9, 'Nomor WhatsApp tidak valid').regex(/^[0-9+\-\s()]+$/, 'Format nomor tidak valid'),
       })
     )
     .mutation(async ({ input }) => {
@@ -43,14 +44,23 @@ export const authRouter = router({
         userEmail: result.email,
         action: 'REGISTER',
         entityType: 'auth',
-        metadata: {
-          name: result.name,
-        },
+        metadata: { name: result.name, whatsappNumber: input.whatsappNumber },
       })
+
+      // Notify admin of new registration (non-fatal)
+      const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL
+      if (adminEmail) {
+        await sendNewUserNotification({
+          adminEmail,
+          newUserName: result.name,
+          newUserEmail: result.email,
+          newUserWhatsapp: input.whatsappNumber,
+        })
+      }
 
       return {
         ...result,
-        token: accessToken, // Return new access token
+        token: accessToken,
       }
     }),
 

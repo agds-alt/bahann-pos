@@ -9,7 +9,72 @@ import { supabaseAdmin as supabase } from '@/infra/supabase/server'
 import { createAuditLog } from '@/lib/audit'
 import { TRPCError } from '@trpc/server'
 
+const PLAN_LIMITS: Record<string, number> = {
+  free: 100,
+  warung: Infinity,
+  starter: Infinity,
+  professional: Infinity,
+  business: Infinity,
+  enterprise: Infinity,
+}
+
+async function getMonthlyTransactionCount(outletId: string): Promise<number> {
+  const now = new Date()
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+  const { count } = await supabase
+    .from('transactions')
+    .select('id', { count: 'exact', head: true })
+    .eq('outlet_id', outletId)
+    .eq('status', 'completed')
+    .gte('created_at', startOfMonth)
+  return count ?? 0
+}
+
+async function getAccountPlan(userId: string): Promise<string> {
+  const { data: user } = await supabase
+    .from('users')
+    .select('plan, role')
+    .eq('id', userId)
+    .single()
+
+  if (!user) return 'free'
+
+  // Admin uses their own plan
+  if (user.role === 'admin') return user.plan
+
+  // Non-admin (cashier/manager) inherits the highest plan among all admins
+  const { data: admins } = await supabase
+    .from('users')
+    .select('plan')
+    .eq('role', 'admin')
+
+  const planOrder = ['free', 'warung', 'starter', 'professional', 'business', 'enterprise']
+  const highestPlan = admins
+    ?.map(a => a.plan)
+    .sort((a, b) => planOrder.indexOf(b) - planOrder.indexOf(a))[0]
+
+  return highestPlan ?? user.plan
+}
+
 export const transactionsRouter = router({
+  /**
+   * Get current plan usage for the authenticated user
+   */
+  getPlanUsage: protectedProcedure
+    .input(z.object({ outletId: z.string().uuid() }))
+    .query(async ({ input, ctx }) => {
+      const plan = await getAccountPlan(ctx.userId)
+      const limit = PLAN_LIMITS[plan] ?? 100
+      const count = await getMonthlyTransactionCount(input.outletId)
+      return {
+        plan,
+        limit: limit === Infinity ? null : limit,
+        count,
+        remaining: limit === Infinity ? null : Math.max(0, limit - count),
+        isAtLimit: limit !== Infinity && count >= limit,
+      }
+    }),
+
   /**
    * Create new transaction (replaces direct sales.record for atomic transactions)
    */
@@ -33,6 +98,19 @@ export const transactionsRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      // Check plan transaction limit
+      const plan = await getAccountPlan(ctx.userId)
+      const limit = PLAN_LIMITS[plan] ?? 100
+      if (limit !== Infinity) {
+        const count = await getMonthlyTransactionCount(input.outletId)
+        if (count >= limit) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: `PLAN_LIMIT_REACHED:${plan}:${count}:${limit}`,
+          })
+        }
+      }
+
       // Calculate totals
       const subtotal = input.items.reduce(
         (sum, item) => sum + item.quantity * item.unitPrice,

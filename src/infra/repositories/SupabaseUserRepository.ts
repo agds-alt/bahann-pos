@@ -12,6 +12,7 @@ export class SupabaseUserRepository implements UserRepository {
       outlet_id: user.outletId,
       role: user.role,
       created_at: user.createdAt?.toISOString(),
+      whatsapp_number: user.whatsappNumber,
     })
 
     if (error) {
@@ -37,7 +38,8 @@ export class SupabaseUserRepository implements UserRepository {
       data.password_hash,
       data.outlet_id || undefined,
       data.role || undefined,
-      data.created_at ? new Date(data.created_at) : undefined
+      data.created_at ? new Date(data.created_at) : undefined,
+      data.whatsapp_number || undefined
     )
   }
 
@@ -59,7 +61,8 @@ export class SupabaseUserRepository implements UserRepository {
       data.password_hash,
       data.outlet_id || undefined,
       data.role || undefined,
-      data.created_at ? new Date(data.created_at) : undefined
+      data.created_at ? new Date(data.created_at) : undefined,
+      data.whatsapp_number || undefined
     )
   }
 

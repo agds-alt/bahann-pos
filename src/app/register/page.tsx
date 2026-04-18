@@ -16,8 +16,9 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
     name: '',
+    whatsappNumber: '',
     outletId: '',
-    role: 'user', // Default role, will be set by admin later
+    role: 'user',
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
@@ -42,13 +43,17 @@ export default function RegisterPage() {
 
     // Validate password match
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
+      setError('Password tidak cocok')
       return
     }
 
-    // Validate password length
     if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters')
+      setError('Password minimal 8 karakter')
+      return
+    }
+
+    if (!formData.whatsappNumber || formData.whatsappNumber.length < 9) {
+      setError('Nomor WhatsApp wajib diisi (minimal 9 digit)')
       return
     }
 
@@ -59,6 +64,7 @@ export default function RegisterPage() {
         email: formData.email,
         password: formData.password,
         name: formData.name,
+        whatsappNumber: formData.whatsappNumber,
         outletId: formData.outletId || undefined,
         role: formData.role,
       })
@@ -124,6 +130,29 @@ export default function RegisterPage() {
                   fullWidth
                   required
                 />
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Nomor WhatsApp *
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium text-sm select-none">
+                      +62
+                    </span>
+                    <input
+                      type="tel"
+                      name="whatsappNumber"
+                      placeholder="8123456789"
+                      value={formData.whatsappNumber}
+                      onChange={handleChange}
+                      className="w-full pl-14 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Digunakan untuk aktivasi akun dan notifikasi
+                  </p>
+                </div>
 
                 <Input
                   type="email"
@@ -223,14 +252,6 @@ export default function RegisterPage() {
                   </p>
                 </div>
 
-                <div className="pt-4 text-center">
-                  <a
-                    href="/test/users"
-                    className="text-sm text-blue-600 hover:underline"
-                  >
-                    🔍 View Registered Users (Test)
-                  </a>
-                </div>
               </form>
             )}
           </CardBody>
@@ -240,11 +261,11 @@ export default function RegisterPage() {
         <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-200 dark:border-blue-800 rounded-xl">
           <p className="text-sm text-blue-900 dark:text-blue-200 font-semibold mb-2">ℹ️ Informasi Pendaftaran:</p>
           <ul className="text-xs text-blue-800 dark:text-blue-300 space-y-1">
+            <li>• Nomor WhatsApp wajib diisi untuk aktivasi</li>
             <li>• Password minimal 8 karakter</li>
             <li>• Email harus unik (belum terdaftar)</li>
-            <li>• Outlet bersifat opsional</li>
-            <li>• Role default adalah "User" (bisa diubah admin nanti)</li>
-            <li>• Setelah daftar, hubungi admin untuk aktivasi akun</li>
+            <li>• Setelah daftar, tim kami akan menghubungi Anda via WhatsApp</li>
+            <li>• Akun aktif dalam 1×24 jam setelah verifikasi</li>
           </ul>
         </div>
       </div>

@@ -9,12 +9,14 @@ export interface RegisterUserInput {
   name: string
   outletId?: string
   role?: string
+  whatsappNumber: string
 }
 
 export interface RegisterUserOutput {
   userId: string
   email: string
   name: string
+  whatsappNumber: string
 }
 
 export class RegisterUserUseCase {
@@ -48,6 +50,7 @@ export class RegisterUserUseCase {
       passwordHash,
       outletId: input.outletId,
       role: input.role || 'user',
+      whatsappNumber: input.whatsappNumber,
     })
 
     // Save to database
@@ -57,6 +60,7 @@ export class RegisterUserUseCase {
       userId: user.id,
       email: user.email,
       name: user.name,
+      whatsappNumber: user.whatsappNumber!,
     }
   }
 }

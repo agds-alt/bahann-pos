@@ -145,6 +145,59 @@ export async function sendPasswordResetEmail({
   }
 }
 
+export interface SendNewUserNotificationParams {
+  adminEmail: string
+  newUserName: string
+  newUserEmail: string
+  newUserWhatsapp: string
+}
+
+export async function sendNewUserNotification({
+  adminEmail,
+  newUserName,
+  newUserEmail,
+  newUserWhatsapp,
+}: SendNewUserNotificationParams) {
+  const waLink = `https://wa.me/${newUserWhatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Halo ${newUserName}, akun AGDS POS Anda sudah aktif! Silakan login dan mulai gunakan aplikasinya.`)}`
+  const usersUrl = `${APP_URL}/settings/users`
+
+  try {
+    const resend = getResend()
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: adminEmail,
+      subject: `🆕 Pendaftar Baru: ${newUserName}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px">
+          <h2 style="color:#2563eb">Ada Pendaftar Baru!</h2>
+          <p>Pengguna berikut baru saja mendaftar ke AGDS POS:</p>
+          <table style="width:100%;border-collapse:collapse;margin:16px 0">
+            <tr><td style="padding:8px;font-weight:bold;color:#374151">Nama</td><td style="padding:8px">${newUserName}</td></tr>
+            <tr style="background:#f9fafb"><td style="padding:8px;font-weight:bold;color:#374151">Email</td><td style="padding:8px">${newUserEmail}</td></tr>
+            <tr><td style="padding:8px;font-weight:bold;color:#374151">WhatsApp</td><td style="padding:8px">${newUserWhatsapp}</td></tr>
+          </table>
+          <p>Aksi yang perlu dilakukan:</p>
+          <ol style="color:#374151">
+            <li>Hubungi user via WhatsApp untuk verifikasi</li>
+            <li>Ubah role mereka ke <strong>admin</strong> di panel users</li>
+          </ol>
+          <div style="margin-top:24px;display:flex;gap:12px">
+            <a href="${waLink}" style="background:#25d366;color:white;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;margin-right:12px">
+              💬 Chat via WhatsApp
+            </a>
+            <a href="${usersUrl}" style="background:#2563eb;color:white;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">
+              👥 Buka Panel Users
+            </a>
+          </div>
+        </div>
+      `,
+    })
+  } catch (err) {
+    console.error('Failed to send new user notification:', err)
+    // Non-fatal — registration still succeeds
+  }
+}
+
 /**
  * Generate secure random token for password reset
  */

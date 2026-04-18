@@ -38,6 +38,7 @@ export default function SalesTransactionPage() {
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
   const [error, setError] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [isPromoExpanded, setIsPromoExpanded] = useState(false)
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [barcodeInput, setBarcodeInput] = useState('')
@@ -72,6 +73,11 @@ export default function SalesTransactionPage() {
   const createTransactionMutation = trpc.transactions.create.useMutation()
   const validatePromoMutation = trpc.promotions.validate.useMutation()
   const recordPromoUsageMutation = trpc.promotions.recordUsage.useMutation()
+
+  const { data: planUsage, refetch: refetchPlanUsage } = trpc.transactions.getPlanUsage.useQuery(
+    { outletId: selectedOutletId },
+    { enabled: !!selectedOutletId }
+  )
 
   const selectedProduct = products?.find(p => p.id === selectedProductId)
   const selectedOutlet = outlets?.find(o => o.id === selectedOutletId)
@@ -424,11 +430,16 @@ export default function SalesTransactionPage() {
       setPromoCode('')
       setAppliedPromo(null)
       setPendingTransactionId('')
+      refetchPlanUsage()
 
       setTimeout(() => setShowSuccess(false), 3000)
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Gagal mencatat penjualan'
-      setError(errorMessage)
+      const message = err instanceof Error ? err.message : 'Gagal mencatat penjualan'
+      if (message.includes('PLAN_LIMIT_REACHED')) {
+        setShowUpgradeModal(true)
+      } else {
+        setError(message)
+      }
     }
   }
 
@@ -441,12 +452,69 @@ export default function SalesTransactionPage() {
         <p className="text-gray-600 dark:text-gray-400">Proses transaksi penjualan dengan keranjang multi-item</p>
       </div>
 
+      {/* Plan usage warning banner (free plan approaching limit) */}
+      {planUsage && planUsage.limit !== null && !planUsage.isAtLimit && planUsage.count >= 80 && (
+        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-700 rounded-xl flex items-center justify-between gap-4">
+          <div>
+            <p className="font-semibold text-yellow-800 dark:text-yellow-300">
+              ⚠️ Hampir mencapai batas paket Gratis
+            </p>
+            <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-0.5">
+              {planUsage.count} dari {planUsage.limit} transaksi bulan ini terpakai. Upgrade agar tidak terhenti.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowUpgradeModal(true)}
+            className="shrink-0 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors"
+          >
+            Upgrade Sekarang
+          </button>
+        </div>
+      )}
+
       {/* Success Message */}
       {showSuccess && (
         <div className="p-4 bg-green-50 border-2 border-green-200 rounded-xl">
           <p className="text-sm font-semibold text-green-600">
             ✅ Penjualan berhasil dicatat!
           </p>
+        </div>
+      )}
+
+      {/* Upgrade Modal */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">🚫</span>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              Batas Transaksi Tercapai
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-2">
+              Paket <span className="font-semibold text-blue-600">Gratis</span> hanya mendukung{' '}
+              <span className="font-semibold">100 transaksi per bulan</span>.
+            </p>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Upgrade ke paket <span className="font-semibold text-orange-500">Warung (Rp 99rb/bulan)</span> untuk transaksi tidak terbatas.
+            </p>
+            <div className="flex flex-col gap-3">
+              <a
+                href={`https://wa.me/6287874415491?text=${encodeURIComponent('Halo, saya ingin upgrade dari paket Gratis ke paket Warung AGDS POS (Rp 99rb/bulan). Mohon bantuannya.')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold text-lg transition-colors"
+              >
+                💬 Upgrade via WhatsApp
+              </a>
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

@@ -6,7 +6,8 @@ export class User {
     public readonly passwordHash: string,
     public readonly outletId?: string,
     public readonly role?: string,
-    public readonly createdAt?: Date
+    public readonly createdAt?: Date,
+    public readonly whatsappNumber?: string
   ) {}
 
   static create(props: {
@@ -16,6 +17,7 @@ export class User {
     passwordHash: string
     outletId?: string
     role?: string
+    whatsappNumber?: string
   }): User {
     return new User(
       props.id || crypto.randomUUID(),
@@ -24,7 +26,8 @@ export class User {
       props.passwordHash,
       props.outletId,
       props.role,
-      new Date()
+      new Date(),
+      props.whatsappNumber
     )
   }
 }
