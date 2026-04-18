@@ -63,25 +63,27 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-md">
-        {/* Logo/Header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-3"><img src="/logo.svg" alt="Laku POS" className="w-16 h-16 rounded-2xl shadow-md" /></div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">Laku POS</h1>
-          <p className="text-gray-600 dark:text-gray-400">Warehouse & Point of Sale System</p>
+        {/* Logo/Header — compact on mobile */}
+        <div className="text-center mb-4 sm:mb-8">
+          <div className="flex justify-center mb-2 sm:mb-3">
+            <img src="/logo.svg" alt="Laku POS" className="w-10 h-10 sm:w-16 sm:h-16 rounded-2xl shadow-md" />
+          </div>
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1 sm:mb-2">Laku POS</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 hidden sm:block">Warehouse & Point of Sale System</p>
         </div>
 
         {/* Login Card */}
         <Card variant="elevated" padding="lg">
-          <CardHeader>
+          <CardHeader className="pb-2 sm:pb-4">
             <CardTitle>{t('login.title')}</CardTitle>
           </CardHeader>
 
-          <CardBody>
-            <form onSubmit={handleLogin} className="space-y-6">
+          <CardBody className="pt-0 sm:pt-2">
+            <form onSubmit={handleLogin} className="space-y-3 sm:space-y-6">
               {showRegisteredMessage && (
-                <div className="p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+                <div className="p-3 bg-green-50 border-2 border-green-200 rounded-xl">
                   <p className="text-sm font-semibold text-green-600">
                     ✅ {t('register.success')}
                   </p>
@@ -89,7 +91,7 @@ function LoginContent() {
               )}
 
               {error && (
-                <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+                <div className="p-3 bg-red-50 border-2 border-red-200 rounded-xl">
                   <p className="text-sm text-red-600">{error}</p>
                 </div>
               )}
@@ -104,7 +106,7 @@ function LoginContent() {
                 required
               />
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
                   {t('login.password')}
                 </label>
@@ -114,7 +116,7 @@ function LoginContent() {
                     placeholder="Masukkan password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 pr-12 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
+                    className="w-full px-4 py-2.5 sm:py-3 pr-12 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 text-sm sm:text-base"
                     required
                   />
                   <button
@@ -147,7 +149,7 @@ function LoginContent() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-4 sm:mt-6 text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 {t('login.noAccount')}{' '}
                 <a href="/register" className="font-semibold text-gray-900 dark:text-gray-100 hover:underline">
@@ -157,13 +159,6 @@ function LoginContent() {
             </div>
           </CardBody>
         </Card>
-
-        {/* Footer Note */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500 dark:text-gray-500">
-            Session valid for 7 days
-          </p>
-        </div>
       </div>
     </div>
   )
