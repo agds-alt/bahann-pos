@@ -531,7 +531,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-gray-500 text-sm">
-            <p>© 2025 Laku POS. Hak cipta dilindungi.</p>
+            <p>© 2026 Laku POS. Hak cipta dilindungi.</p>
             <p>Dibuat dengan ❤️ untuk warung Indonesia</p>
           </div>
         </div>

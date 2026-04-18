@@ -6,6 +6,8 @@ import { ReactNode, useEffect, useState } from 'react'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { useTheme } from '@/lib/theme/ThemeContext'
 import { logger } from '@/lib/logger'
+import { usePWA } from '@/lib/pwa/PWAContext'
+import { trpc } from '@/lib/trpc/client'
 
 interface SidebarItemProps {
   href: string
@@ -124,10 +126,16 @@ export function Sidebar() {
   const router = useRouter()
   const { language, setLanguage, t } = useLanguage()
   const { theme, toggleTheme } = useTheme()
+  const { canInstall, isInstalled, install } = usePWA()
   const [userName, setUserName] = useState('User')
   const [userEmail, setUserEmail] = useState('')
   const [userRole, setUserRole] = useState('user')
   const [isCollapsed, setIsCollapsed] = useState(false)
+
+  const { data: planData } = trpc.auth.getPlan.useQuery(undefined, {
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  })
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -319,6 +327,16 @@ export function Sidebar() {
               </button>
             </div>
 
+            {planData && planData.plan !== 'free' && canInstall && !isInstalled && (
+              <button
+                onClick={install}
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-lg transition-colors border border-green-200 dark:border-green-800"
+              >
+                <span>📲</span>
+                <span>Install Aplikasi</span>
+              </button>
+            )}
+
             <div className="flex items-center justify-between">
               <span className={`px-2 py-1 rounded-full text-xs font-semibold ${roleBadge.color}`}>
                 {roleBadge.label}
@@ -353,6 +371,15 @@ export function Sidebar() {
             >
               <span className="text-2xl">{language === 'id' ? '🇮🇩' : '🇬🇧'}</span>
             </button>
+            {planData && planData.plan !== 'free' && canInstall && !isInstalled && (
+              <button
+                onClick={install}
+                className="w-12 h-12 flex items-center justify-center rounded-lg bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
+                title="Install Aplikasi"
+              >
+                <span className="text-2xl">📲</span>
+              </button>
+            )}
             <button
               onClick={handleLogout}
               className="w-12 h-12 flex items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 transition-colors"

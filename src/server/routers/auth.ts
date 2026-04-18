@@ -168,6 +168,19 @@ export const authRouter = router({
   }),
 
   /**
+   * Get current user's subscription plan
+   */
+  getPlan: protectedProcedure.query(async ({ ctx }) => {
+    const { supabaseAdmin } = await import('@/infra/supabase/server')
+    const { data } = await supabaseAdmin
+      .from('users')
+      .select('plan')
+      .eq('id', ctx.userId)
+      .single()
+    return { plan: (data?.plan as string) || 'free' }
+  }),
+
+  /**
    * Refresh access token using refresh token
    * This implements token rotation for security
    */

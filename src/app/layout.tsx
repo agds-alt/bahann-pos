@@ -4,7 +4,7 @@ import "./globals.css";
 import { TRPCProvider } from "@/lib/trpc/Provider";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { ThemeProvider } from "@/lib/theme/ThemeContext";
-import { PWAInstaller } from "@/components/PWAInstaller";
+import { PWAProvider } from "@/lib/pwa/PWAContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastProvider } from "@/components/ui/Toast";
 
@@ -55,16 +55,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-200`}
       >
-        <PWAInstaller />
-        <ThemeProvider>
-          <ToastProvider>
-            <ErrorBoundary>
-              <TRPCProvider>
-                <LanguageProvider>{children}</LanguageProvider>
-              </TRPCProvider>
-            </ErrorBoundary>
-          </ToastProvider>
-        </ThemeProvider>
+        <PWAProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <ErrorBoundary>
+                <TRPCProvider>
+                  <LanguageProvider>{children}</LanguageProvider>
+                </TRPCProvider>
+              </ErrorBoundary>
+            </ToastProvider>
+          </ThemeProvider>
+        </PWAProvider>
       </body>
     </html>
   );
