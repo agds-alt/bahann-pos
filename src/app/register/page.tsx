@@ -16,6 +16,7 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
     name: '',
+    storeName: '',
     whatsappNumber: '',
   })
   const [error, setError] = useState('')
@@ -57,6 +58,7 @@ export default function RegisterPage() {
         email: formData.email,
         password: formData.password,
         name: formData.name,
+        storeName: formData.storeName,
         whatsappNumber: formData.whatsappNumber,
       })
 
@@ -104,6 +106,17 @@ export default function RegisterPage() {
                   label={t('register.name')}
                   placeholder={t('register.name')}
                   value={formData.name}
+                  onChange={handleChange}
+                  fullWidth
+                  required
+                />
+
+                <Input
+                  type="text"
+                  name="storeName"
+                  label="Nama Toko / Warung"
+                  placeholder="cth: Warung Bu Sari, Toko Makmur"
+                  value={formData.storeName}
                   onChange={handleChange}
                   fullWidth
                   required

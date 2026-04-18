@@ -22,6 +22,7 @@ export const authRouter = router({
         email: z.string().email(),
         password: z.string().min(8),
         name: z.string().min(1),
+        storeName: z.string().min(1, 'Nama toko wajib diisi'),
         whatsappNumber: z.string().min(9, 'Nomor WhatsApp tidak valid').regex(/^[0-9+\-\s()]+$/, 'Format nomor tidak valid'),
       })
     )
@@ -51,7 +52,7 @@ export const authRouter = router({
       const { data: outlet } = await supabaseAdmin
         .from('outlets')
         .insert({
-          name: `${result.name} - Outlet Utama`,
+          name: input.storeName,
           owner_id: result.userId,
         })
         .select('id')
