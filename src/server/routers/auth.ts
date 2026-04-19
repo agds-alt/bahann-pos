@@ -190,21 +190,45 @@ export const authRouter = router({
   }),
 
   /**
-   * Get current user's full profile (for receipt/nota)
+   * Get current user's full profile (for receipt/nota and profile page)
    */
   getProfile: protectedProcedure.query(async ({ ctx }) => {
     const { supabaseAdmin } = await import('@/infra/supabase/server')
     const { data } = await supabaseAdmin
       .from('users')
-      .select('name, email, whatsapp_number')
+      .select('name, email, whatsapp_number, role, outlet_id')
       .eq('id', ctx.userId)
       .single()
     return {
+      id: ctx.userId,
       name: data?.name || ctx.session?.name || '',
       email: data?.email || ctx.session?.email || '',
       whatsappNumber: data?.whatsapp_number || '',
+      role: data?.role || ctx.session?.role || 'user',
+      outletId: data?.outlet_id || ctx.session?.outletId || null,
     }
   }),
+
+  /**
+   * Update current user's profile (name and whatsapp_number)
+   */
+  updateProfile: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1),
+      whatsappNumber: z.string().regex(/^[0-9+\-\s()]*$/).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { supabaseAdmin } = await import('@/infra/supabase/server')
+      const { error } = await supabaseAdmin
+        .from('users')
+        .update({
+          name: input.name,
+          whatsapp_number: input.whatsappNumber || null,
+        })
+        .eq('id', ctx.userId)
+      if (error) throw new Error(`Failed to update profile: ${error.message}`)
+      return { success: true }
+    }),
 
   /**
    * Get current user's subscription plan
