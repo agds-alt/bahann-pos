@@ -535,11 +535,8 @@ export default function SalesTransactionPage() {
 
             {/* Receipt panel — appears after transaction */}
             {receiptData && (
-              <div className="flex flex-col w-36 shrink-0 overflow-hidden">
-                <div className="flex items-center justify-between mb-1.5 shrink-0">
-                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Struk</p>
-                  <button onClick={() => setIsPrintModalOpen(true)} className="text-xs text-blue-600 hover:text-blue-700 font-semibold">🖨️ Print</button>
-                </div>
+              <div className="flex flex-col w-44 shrink-0 overflow-hidden gap-1.5">
+                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide shrink-0">Struk Terakhir</p>
                 <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-2 space-y-1 text-xs">
                   <p className="font-bold text-center text-gray-900 dark:text-gray-100">Laku POS</p>
                   <div className="border-t border-dashed border-gray-300 dark:border-gray-600" />
@@ -555,6 +552,12 @@ export default function SalesTransactionPage() {
                     <span className="text-blue-600">{formatCurrency(receiptData.total)}</span>
                   </div>
                 </div>
+                <button
+                  onClick={() => setIsPrintModalOpen(true)}
+                  className="w-full py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-colors shrink-0"
+                >
+                  🖨️ Print Struk
+                </button>
               </div>
             )}
           </div>
