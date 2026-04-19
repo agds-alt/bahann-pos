@@ -44,7 +44,7 @@ export const productsRouter = router({
       }
 
       if (input?.search) {
-        const searchFilter = `name.ilike.%${input.search}%,sku.ilike.%${input.search}%`
+        const searchFilter = `name.ilike.%${input.search}%,sku.ilike.%${input.search}%,barcode.ilike.%${input.search}%`
         countQuery = countQuery.or(searchFilter)
         dataQuery = dataQuery.or(searchFilter)
       }
@@ -96,6 +96,7 @@ export const productsRouter = router({
     .input(
       z.object({
         sku: z.string().min(1),
+        barcode: z.string().optional(),
         name: z.string().min(1),
         category: z.string().optional(),
         price: z.number().positive().optional(),
@@ -106,6 +107,7 @@ export const productsRouter = router({
         .from('products')
         .insert({
           sku: input.sku,
+          barcode: input.barcode || null,
           name: input.name,
           category: input.category || null,
           price: input.price || null,
@@ -138,6 +140,7 @@ export const productsRouter = router({
         products: z.array(
           z.object({
             sku: z.string().min(1),
+            barcode: z.string().optional(),
             name: z.string().min(1),
             category: z.string().optional(),
             price: z.number().positive().optional(),
@@ -148,6 +151,7 @@ export const productsRouter = router({
     .mutation(async ({ input, ctx }) => {
       const rows = input.products.map((p) => ({
         sku: p.sku,
+        barcode: p.barcode || null,
         name: p.name,
         category: p.category || null,
         price: p.price || null,
@@ -195,6 +199,7 @@ export const productsRouter = router({
       z.object({
         id: z.string().uuid(),
         sku: z.string().min(1),
+        barcode: z.string().optional(),
         name: z.string().min(1),
         category: z.string().optional(),
         price: z.number().positive().optional(),
@@ -213,6 +218,7 @@ export const productsRouter = router({
         .from('products')
         .update({
           sku: input.sku,
+          barcode: input.barcode || null,
           name: input.name,
           category: input.category || null,
           price: input.price || null,
@@ -231,7 +237,7 @@ export const productsRouter = router({
         entityId: input.id,
         changes: {
           before: oldData,
-          after: { sku: input.sku, name: input.name, category: input.category, price: input.price },
+          after: { sku: input.sku, barcode: input.barcode, name: input.name, category: input.category, price: input.price },
         },
         metadata: { sku: input.sku, name: input.name },
       })

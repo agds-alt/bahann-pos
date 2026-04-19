@@ -393,6 +393,7 @@ interface ProductFormModalProps {
 function ProductFormModal({ product, onClose, onSuccess }: ProductFormModalProps) {
   const [formData, setFormData] = useState({
     sku: product?.sku || '',
+    barcode: product?.barcode || '',
     name: product?.name || '',
     category: product?.category || '',
     price: product?.price || '',
@@ -408,6 +409,7 @@ function ProductFormModal({ product, onClose, onSuccess }: ProductFormModalProps
     try {
       const data = {
         sku: formData.sku,
+        barcode: formData.barcode || undefined,
         name: formData.name,
         category: formData.category || undefined,
         price: formData.price ? parseFloat(formData.price.toString()) : undefined,
@@ -460,6 +462,15 @@ function ProductFormModal({ product, onClose, onSuccess }: ProductFormModalProps
               placeholder="e.g., PROD-001"
               fullWidth
               required
+            />
+
+            <Input
+              label="Barcode"
+              type="text"
+              value={formData.barcode}
+              onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+              placeholder="e.g., 8991234567890"
+              fullWidth
             />
 
             <Input

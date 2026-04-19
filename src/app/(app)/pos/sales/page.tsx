@@ -95,7 +95,9 @@ export default function SalesTransactionPage() {
   // Filter products by search query
   const filteredProducts = products?.filter(p => {
     const q = productSearch.toLowerCase()
-    return p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
+    return p.name.toLowerCase().includes(q)
+      || p.sku.toLowerCase().includes(q)
+      || (p.barcode && p.barcode.toLowerCase().includes(q))
   }) || []
 
   // Add item to cart
@@ -159,8 +161,10 @@ export default function SalesTransactionPage() {
 
   // Barcode scan handler (for camera scanner)
   const handleBarcodeScan = (barcode: string) => {
-    // Find product by SKU
-    const product = products?.find(p => p.sku === barcode.toUpperCase())
+    const trimmed = barcode.trim()
+    // Search by barcode field first, then fall back to SKU
+    const product = products?.find(p => p.barcode && p.barcode === trimmed)
+      ?? products?.find(p => p.sku === trimmed.toUpperCase())
 
     if (product) {
       setSelectedProductId(product.id)
