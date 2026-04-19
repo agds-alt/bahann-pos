@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { router, protectedProcedure } from '../trpc'
+import { supabaseAdmin as supabase } from '@/infra/supabase/server'
 import { RecordDailyStockUseCase } from '@/use-cases/stock/RecordDailyStockUseCase'
 import { SupabaseDailyStockRepository } from '@/infra/repositories/SupabaseDailyStockRepository'
 
@@ -55,8 +56,6 @@ export const stockRouter = router({
       }).optional()
     )
     .query(async ({ input }) => {
-      const { supabase } = await import('@/infra/supabase/client')
-
       // Get all products with their latest stock per outlet
       const { data: products, error: productsError } = await supabase
         .from('products')
