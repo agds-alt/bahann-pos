@@ -525,11 +525,11 @@ export default function SalesTransactionPage() {
             </div>
           </div>
 
-          {/* Bottom: Recent Transactions + Receipt side by side */}
-          <div className="flex gap-2 flex-1 overflow-hidden min-h-0">
+          {/* Bottom: Recent Transactions, then Receipt below */}
+          <div className="flex flex-col flex-1 overflow-hidden min-h-0 gap-2">
 
             {/* Recent Transactions */}
-            <div className="flex flex-col flex-1 overflow-hidden min-w-0">
+            <div className="flex flex-col flex-1 overflow-hidden min-w-0 min-h-0">
               <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 shrink-0">Transaksi Terbaru</p>
               <div className="overflow-y-auto flex-1 space-y-1.5">
                 {!recentTransactions || recentTransactions.length === 0 ? (
@@ -546,22 +546,35 @@ export default function SalesTransactionPage() {
               </div>
             </div>
 
-            {/* Receipt panel — appears after transaction */}
+            {/* Receipt panel — appears below recent transactions after a sale */}
             {receiptData && (
-              <div className="flex flex-col w-44 shrink-0 overflow-hidden gap-1.5">
-                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide shrink-0">Struk Terakhir</p>
-                {/* Mini preview */}
-                <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-2 space-y-1 text-xs">
-                  <p className="font-bold text-center text-gray-900 dark:text-gray-100">Laku POS</p>
-                  <div className="border-t border-dashed border-gray-300 dark:border-gray-600" />
+              <div className="shrink-0 border-t border-gray-200 dark:border-gray-700 pt-2 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Struk Terakhir</p>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={handleDirectPrint}
+                      className="px-2.5 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                    >
+                      🖨️ Print
+                    </button>
+                    <button
+                      onClick={() => setIsPrintModalOpen(true)}
+                      className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-semibold rounded-lg transition-colors"
+                      title="Preview struk"
+                    >
+                      👁
+                    </button>
+                  </div>
+                </div>
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-2 space-y-1 text-xs">
                   {receiptData.items.map((item, i) => (
-                    <div key={i} className="flex justify-between gap-1">
-                      <span className="text-gray-700 dark:text-gray-300 truncate flex-1">{item.name}</span>
+                    <div key={i} className="flex justify-between gap-2">
+                      <span className="text-gray-700 dark:text-gray-300 truncate flex-1">{item.name} ×{item.quantity}</span>
                       <span className="text-gray-900 dark:text-gray-100 font-semibold shrink-0">{formatCurrency(item.total)}</span>
                     </div>
                   ))}
-                  <div className="border-t border-dashed border-gray-300 dark:border-gray-600" />
-                  <div className="flex justify-between font-bold">
+                  <div className="flex justify-between font-bold pt-1 border-t border-dashed border-gray-200 dark:border-gray-600">
                     <span className="text-gray-900 dark:text-gray-100">Total</span>
                     <span className="text-blue-600">{formatCurrency(receiptData.total)}</span>
                   </div>
@@ -569,21 +582,6 @@ export default function SalesTransactionPage() {
                 {/* Hidden full receipt for printing */}
                 <div className="hidden">
                   <PrintReceipt ref={receiptRef} data={receiptData} />
-                </div>
-                <div className="flex gap-1 shrink-0">
-                  <button
-                    onClick={handleDirectPrint}
-                    className="flex-1 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-colors"
-                  >
-                    🖨️ Print
-                  </button>
-                  <button
-                    onClick={() => setIsPrintModalOpen(true)}
-                    className="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-semibold rounded-lg transition-colors"
-                    title="Preview struk"
-                  >
-                    👁
-                  </button>
                 </div>
               </div>
             )}
