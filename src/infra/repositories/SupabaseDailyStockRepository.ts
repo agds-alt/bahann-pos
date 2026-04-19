@@ -18,7 +18,9 @@ export class SupabaseDailyStockRepository implements DailyStockRepository {
       stock_akhir: stock.stockAkhir,
     };
 
-    const { error } = await supabase.from('daily_stock').insert(row);
+    const { error } = await supabase
+      .from('daily_stock')
+      .upsert(row, { onConflict: 'product_id,outlet_id,stock_date' });
     if (error) throw new Error(`Supabase insert error: ${error.message}`);
   }
 
