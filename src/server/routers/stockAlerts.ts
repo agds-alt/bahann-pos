@@ -22,13 +22,7 @@ export const stockAlertsRouter = router({
     .query(async ({ input }) => {
       let query = supabase
         .from('stock_alerts')
-        .select(
-          `
-          *,
-          product:products (id, name, sku, category),
-          outlet:outlets (id, name, address)
-        `
-        )
+        .select('*')
         .eq('is_acknowledged', false)
         .order('created_at', { ascending: false })
 
@@ -36,7 +30,7 @@ export const stockAlertsRouter = router({
         query = query.eq('outlet_id', input.outletId)
       }
 
-      const { data, error } = await query
+      const { data: alerts, error } = await query
 
       if (error) {
         throw new TRPCError({
@@ -45,7 +39,25 @@ export const stockAlertsRouter = router({
         })
       }
 
-      return data || []
+      if (!alerts || alerts.length === 0) return []
+
+      // Fetch related products and outlets separately to avoid PostgREST join issues
+      const productIds = [...new Set(alerts.map(a => a.product_id).filter(Boolean))]
+      const outletIds = [...new Set(alerts.map(a => a.outlet_id).filter(Boolean))]
+
+      const [{ data: products }, { data: outlets }] = await Promise.all([
+        supabase.from('products').select('id, name, sku, category').in('id', productIds),
+        supabase.from('outlets').select('id, name, address').in('id', outletIds),
+      ])
+
+      const productMap = Object.fromEntries((products || []).map(p => [p.id, p]))
+      const outletMap = Object.fromEntries((outlets || []).map(o => [o.id, o]))
+
+      return alerts.map(alert => ({
+        ...alert,
+        product: productMap[alert.product_id] ?? null,
+        outlet: outletMap[alert.outlet_id] ?? null,
+      }))
     }),
 
   /**
