@@ -71,11 +71,6 @@ export default function StockManagementPage() {
     }
   }
 
-  const calculateStockAkhir = () => {
-    const akhir = formData.stockAwal + formData.stockIn - formData.stockOut
-    setFormData({ ...formData, stockAkhir: akhir })
-  }
-
   const selectedProduct = products?.find(p => p.id === formData.productId)
   const selectedOutlet = outlets?.find(o => o.id === formData.outletId)
 
@@ -177,8 +172,8 @@ export default function StockManagementPage() {
                   label="Stock Awal (Beginning)"
                   value={formData.stockAwal}
                   onChange={(e) => {
-                    const value = parseInt(e.target.value) || 0
-                    setFormData({ ...formData, stockAwal: value })
+                    const stockAwal = parseInt(e.target.value) || 0
+                    setFormData({ ...formData, stockAwal, stockAkhir: stockAwal + formData.stockIn - formData.stockOut })
                   }}
                   fullWidth
                   required
@@ -190,8 +185,8 @@ export default function StockManagementPage() {
                   label="Stock In (Received)"
                   value={formData.stockIn}
                   onChange={(e) => {
-                    const value = parseInt(e.target.value) || 0
-                    setFormData({ ...formData, stockIn: value })
+                    const stockIn = parseInt(e.target.value) || 0
+                    setFormData({ ...formData, stockIn, stockAkhir: formData.stockAwal + stockIn - formData.stockOut })
                   }}
                   fullWidth
                   required
@@ -205,36 +200,26 @@ export default function StockManagementPage() {
                   label="Stock Out (Sold/Used)"
                   value={formData.stockOut}
                   onChange={(e) => {
-                    const value = parseInt(e.target.value) || 0
-                    setFormData({ ...formData, stockOut: value })
+                    const stockOut = parseInt(e.target.value) || 0
+                    setFormData({ ...formData, stockOut, stockAkhir: formData.stockAwal + formData.stockIn - stockOut })
                   }}
                   fullWidth
                   required
                   min="0"
                 />
 
-                <Input
-                  type="number"
-                  label="Stock Akhir (Ending)"
-                  value={formData.stockAkhir}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value) || 0
-                    setFormData({ ...formData, stockAkhir: value })
-                  }}
-                  fullWidth
-                  required
-                  min="0"
-                />
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Stock Akhir (Ending)</label>
+                  <div className={`px-3 py-2 rounded-lg border-2 text-lg font-bold text-center ${
+                    formData.stockAkhir < 0
+                      ? 'border-red-400 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                      : 'border-green-400 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                  }`}>
+                    {formData.stockAkhir}
+                  </div>
+                  <p className="text-xs text-gray-400">Awal + In − Out</p>
+                </div>
               </div>
-
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={calculateStockAkhir}
-                fullWidth
-              >
-                🧮 Auto Calculate Stock Akhir
-              </Button>
 
               <Button
                 type="submit"
@@ -341,8 +326,7 @@ export default function StockManagementPage() {
         <ul className="text-xs text-blue-800 dark:text-blue-300 space-y-1">
           <li>• Select a product and outlet from the dropdowns</li>
           <li>• Enter stock beginning (Stock Awal), received (Stock In), and sold (Stock Out)</li>
-          <li>• Click "Auto Calculate" to automatically compute Stock Akhir</li>
-          <li>• Stock Akhir = Stock Awal + Stock In - Stock Out</li>
+          <li>• Stock Akhir dihitung otomatis: Awal + In − Out</li>
           <li>• Low stock alert triggers when inventory falls below 10 units</li>
         </ul>
       </div>
