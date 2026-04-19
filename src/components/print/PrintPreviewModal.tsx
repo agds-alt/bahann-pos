@@ -25,27 +25,45 @@ export function PrintPreviewModal({ isOpen, onClose, receiptData }: PrintPreview
   }, [isOpen, onClose])
 
   const handlePrint = () => {
-    // Hide non-printable elements
-    const modalOverlay = document.querySelector('.modal-overlay') as HTMLElement
-    const originalDisplay = modalOverlay?.style.display
+    if (!componentRef.current) return
 
-    if (modalOverlay) {
-      // Add print-specific class
-      modalOverlay.classList.add('printing')
+    // Copy all <style> tags (including styled-jsx injected ones) so scoped
+    // selectors still match the receipt HTML in the new window.
+    const styleSheets = Array.from(document.querySelectorAll('style'))
+      .map((s) => s.outerHTML)
+      .join('\n')
+
+    const receiptHTML = componentRef.current.outerHTML
+
+    const printWindow = window.open('', '_blank', 'width=400,height=800')
+    if (!printWindow) {
+      alert('Aktifkan popup di browser untuk fitur print.')
+      return
     }
 
-    // Trigger print
-    window.print()
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Struk Pembayaran</title>
+  ${styleSheets}
+  <style>
+    @page { size: 80mm auto; margin: 0; }
+    body { margin: 0; padding: 0; background: white; }
+  </style>
+</head>
+<body>
+  ${receiptHTML}
+</body>
+</html>`)
 
-    // Restore after printing
+    printWindow.document.close()
+    printWindow.focus()
+    // Give the new window time to apply styles before printing
     setTimeout(() => {
-      if (modalOverlay) {
-        modalOverlay.classList.remove('printing')
-        if (originalDisplay) {
-          modalOverlay.style.display = originalDisplay
-        }
-      }
-    }, 100)
+      printWindow.print()
+      printWindow.close()
+    }, 300)
   }
 
   if (!isOpen) return null
@@ -184,59 +202,6 @@ export function PrintPreviewModal({ isOpen, onClose, receiptData }: PrintPreview
           background: #9ca3af;
         }
 
-        @media print {
-          /* Hide all page content */
-          body * {
-            visibility: hidden !important;
-          }
-
-          /* Show only the receipt and its children */
-          .receipt-container,
-          .receipt-container * {
-            visibility: visible !important;
-          }
-
-          /* Position receipt for printing */
-          .receipt-container {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 80mm !important;
-          }
-
-          .modal-overlay {
-            background: white !important;
-            backdrop-filter: none !important;
-            position: static !important;
-          }
-
-          .modal-header,
-          .modal-footer {
-            display: none !important;
-            visibility: hidden !important;
-          }
-
-          .modal-container {
-            max-width: none !important;
-            box-shadow: none !important;
-            border: none !important;
-            border-radius: 0 !important;
-            max-height: none !important;
-            position: static !important;
-          }
-
-          .modal-body {
-            padding: 0 !important;
-            overflow: visible !important;
-          }
-
-          .receipt-preview-wrapper {
-            background: white !important;
-            border: none !important;
-            box-shadow: none !important;
-            padding: 0 !important;
-          }
-        }
       `}</style>
     </div>
   )
