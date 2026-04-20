@@ -19,6 +19,8 @@
     "gen:icons": "node scripts/generate-icons.js"
   },
   "dependencies": {
+    "@nivo/core": "^0.99.0",
+    "@nivo/line": "^0.99.0",
     "@sentry/nextjs": "^10.25.0",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/supabase-js": "^2.78.0",

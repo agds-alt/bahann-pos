@@ -1,56 +1,80 @@
-/**
- * Revenue Area Chart Component (Lazy Loadable)
- */
 'use client'
 
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
+import { ChartContainer, ChartTooltipContent, GradientDef, CHART_COLORS } from '@/components/ui/chart'
 
 interface RevenueAreaChartProps {
   data: Array<{ date: string; revenue: number }>
   formatCurrency?: (value: number) => string
   formatDate?: (date: string) => string
   height?: number
+  className?: string
+  hideMobileYAxis?: boolean
 }
 
 export default function RevenueAreaChartLazy({
   data,
-  formatCurrency = (v) => v.toString(),
+  formatCurrency = (v) => v.toLocaleString(),
   formatDate = (d) => d,
   height = 384,
+  className,
+  hideMobileYAxis = false,
 }: RevenueAreaChartProps) {
   return (
-    <div style={{ height: `${height}px` }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data}>
-          <defs>
-            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-              <stop offset="95%" stopColor="#10b981" stopOpacity={0.1}/>
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis
-            dataKey="date"
-            tickFormatter={formatDate}
-            stroke="#6b7280"
-          />
-          <YAxis
-            stroke="#6b7280"
-            tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
-          />
-          <Tooltip
-            formatter={(value: number) => formatCurrency(value)}
-            labelFormatter={formatDate}
-          />
-          <Area
-            type="monotone"
-            dataKey="revenue"
-            stroke="#10b981"
-            strokeWidth={3}
-            fill="url(#colorRevenue)"
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
+    <ChartContainer height={height} className={className}>
+      <AreaChart
+        data={data}
+        margin={{ left: hideMobileYAxis ? -20 : 4, right: 16, top: 8, bottom: 0 }}
+      >
+        <GradientDef id="areaRevenue" color={CHART_COLORS.emerald} fromOpacity={0.35} />
+        <CartesianGrid
+          strokeDasharray="4 4"
+          stroke="var(--chart-grid)"
+          vertical={false}
+        />
+        <XAxis
+          dataKey="date"
+          tickFormatter={formatDate}
+          stroke="none"
+          tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
+          tickLine={false}
+          axisLine={false}
+          interval="preserveStartEnd"
+        />
+        <YAxis
+          stroke="none"
+          tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(v) => `${(v / 1_000_000).toFixed(1)}M`}
+          width={hideMobileYAxis ? 28 : 48}
+          hide={hideMobileYAxis}
+        />
+        <Tooltip
+          content={
+            <ChartTooltipContent
+              labelFormatter={formatDate}
+              formatter={formatCurrency}
+            />
+          }
+          cursor={{ stroke: CHART_COLORS.emerald, strokeWidth: 1.5, strokeOpacity: 0.3 }}
+        />
+        <Area
+          type="monotone"
+          dataKey="revenue"
+          name="Revenue"
+          stroke={CHART_COLORS.emerald}
+          strokeWidth={2.5}
+          fill="url(#areaRevenue)"
+          dot={false}
+          activeDot={{
+            r: 5,
+            fill: CHART_COLORS.emerald,
+            stroke: '#fff',
+            strokeWidth: 2,
+          }}
+        />
+      </AreaChart>
+    </ChartContainer>
   )
 }

@@ -69,128 +69,124 @@ export default function ReportsPage() {
   }))
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 md:space-y-8">
       <div>
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">Financial Reports</h1>
+        <h1 className="text-base md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">Financial Reports</h1>
         <p className="text-gray-600 dark:text-gray-400">Comprehensive revenue and sales analytics</p>
       </div>
 
-      {/* Filters */}
-      <Card variant="elevated" padding="lg">
-        <CardHeader>
-          <CardTitle>Report Filters</CardTitle>
-        </CardHeader>
-        <CardBody>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select
-              label="Outlet"
-              value={selectedOutletId}
-              onChange={(e) => setSelectedOutletId(e.target.value)}
-              options={[
-                { value: '', label: 'All Outlets' },
-                ...(outlets?.map(outlet => ({
-                  value: outlet.id,
-                  label: outlet.name,
-                })) || []),
-              ]}
-              fullWidth
-            />
-            <Select
-              label="Time Period"
-              value={dateRange.toString()}
-              onChange={(e) => setDateRange(Number(e.target.value) as 7 | 14 | 30 | 0)}
-              options={[
-                { value: '7', label: 'Last 7 Days' },
-                { value: '14', label: 'Last 14 Days' },
-                { value: '30', label: 'Last 30 Days' },
-                { value: '0', label: 'All Time' },
-              ]}
-              fullWidth
-            />
-          </div>
-        </CardBody>
-      </Card>
+      {/* Filters — compact inline on mobile */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Select
+          label="Outlet"
+          value={selectedOutletId}
+          onChange={(e) => setSelectedOutletId(e.target.value)}
+          options={[
+            { value: '', label: 'All Outlets' },
+            ...(outlets?.map(outlet => ({ value: outlet.id, label: outlet.name })) || []),
+          ]}
+          fullWidth
+        />
+        <div className="flex gap-1 sm:hidden">
+          {([7, 14, 30, 0] as const).map(d => (
+            <button key={d} onClick={() => setDateRange(d)}
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg border-2 transition-colors ${dateRange === d ? 'bg-blue-500 text-white border-blue-500' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700'}`}>
+              {d === 0 ? 'All' : `${d}d`}
+            </button>
+          ))}
+        </div>
+        <div className="hidden sm:block flex-1">
+          <Select
+            label="Time Period"
+            value={dateRange.toString()}
+            onChange={(e) => setDateRange(Number(e.target.value) as 7 | 14 | 30 | 0)}
+            options={[
+              { value: '7', label: 'Last 7 Days' },
+              { value: '14', label: 'Last 14 Days' },
+              { value: '30', label: 'Last 30 Days' },
+              { value: '0', label: 'All Time' },
+            ]}
+            fullWidth
+          />
+        </div>
+      </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card variant="default" padding="lg">
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Total Revenue</p>
-            <p className="text-3xl font-bold text-green-600">
-              {formatCurrency(stats?.totalRevenue || 0)}
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{dateRange === 0 ? 'All Time' : `${dateRange} days`}</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 md:gap-6">
+        <Card variant="default" padding="sm">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Total Revenue</p>
+            <p className="text-xs md:text-base font-bold text-green-600 truncate">{formatCurrency(stats?.totalRevenue || 0)}</p>
+            <p className="text-xs text-gray-400">{dateRange === 0 ? 'All' : `${dateRange}d`}</p>
           </div>
         </Card>
 
-        <Card variant="default" padding="lg">
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Avg Daily Revenue</p>
-            <p className="text-3xl font-bold text-blue-600">
-              {formatCurrency(averageDailyRevenue)}
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Per day</p>
+        <Card variant="default" padding="sm">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Avg/Hari</p>
+            <p className="text-xs md:text-base font-bold text-blue-600 truncate">{formatCurrency(averageDailyRevenue)}</p>
+            <p className="text-xs text-gray-400">Per day</p>
           </div>
         </Card>
 
-        <Card variant="default" padding="lg">
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Total Transactions</p>
-            <p className="text-3xl font-bold text-purple-600">
-              {stats?.transactionCount || 0}
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Completed sales</p>
+        <Card variant="default" padding="sm">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Transaksi</p>
+            <p className="text-xs md:text-base font-bold text-purple-600">{stats?.transactionCount || 0}</p>
+            <p className="text-xs text-gray-400">Selesai</p>
           </div>
         </Card>
 
-        <Card variant="default" padding="lg">
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Avg Items/Day</p>
-            <p className="text-3xl font-bold text-orange-600">
-              {Math.round(averageItemsPerDay)}
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Units sold</p>
+        <Card variant="default" padding="sm">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Avg Item/Hari</p>
+            <p className="text-xs md:text-base font-bold text-orange-600">{Math.round(averageItemsPerDay)}</p>
+            <p className="text-xs text-gray-400">Units</p>
           </div>
         </Card>
       </div>
 
       {/* Revenue Trend Chart - Lazy loaded with Suspense */}
-      <Card variant="elevated" padding="lg">
+      <Card variant="elevated" padding="sm">
         <CardHeader>
           <CardTitle>📈 Revenue Trend</CardTitle>
         </CardHeader>
         <CardBody>
           {salesTrend && salesTrend.length > 0 ? (
-            <Suspense fallback={<ChartSkeleton height={320} />}>
+            <Suspense fallback={<ChartSkeleton height={200} />}>
               <RevenueLineChart
                 data={salesTrend}
                 formatCurrency={formatCurrency}
                 formatDate={formatDate}
+                className="h-[200px] md:h-[320px]"
+                hideMobileYAxis
               />
             </Suspense>
           ) : (
-            <div className="h-80 flex items-center justify-center text-gray-500 dark:text-gray-400">
-              No revenue data available for the selected period
+            <div className="h-[200px] md:h-80 flex items-center justify-center text-gray-500 dark:text-gray-400 text-sm">
+              No revenue data available
             </div>
           )}
         </CardBody>
       </Card>
 
       {/* Items Sold Trend - Lazy loaded */}
-      <Card variant="elevated" padding="lg">
+      <Card variant="elevated" padding="sm">
         <CardHeader>
-          <CardTitle>📦 Items Sold Trend</CardTitle>
+          <CardTitle>📦 Items Sold</CardTitle>
         </CardHeader>
         <CardBody>
           {salesTrend && salesTrend.length > 0 ? (
-            <Suspense fallback={<ChartSkeleton height={320} />}>
+            <Suspense fallback={<ChartSkeleton height={160} />}>
               <ItemsSoldBarChart
                 data={salesTrend}
                 formatDate={formatDate}
+                className="h-[160px] md:h-[320px]"
+                hideMobileYAxis
               />
             </Suspense>
           ) : (
-            <div className="h-80 flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <div className="h-[160px] md:h-80 flex items-center justify-center text-gray-500 dark:text-gray-400 text-sm">
               No sales data available
             </div>
           )}
@@ -198,7 +194,7 @@ export default function ReportsPage() {
       </Card>
 
       {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
         {/* Top Products by Revenue */}
         <Card variant="default" padding="lg">
           <CardHeader>
@@ -206,32 +202,28 @@ export default function ReportsPage() {
           </CardHeader>
           <CardBody>
             {topProducts && topProducts.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {topProducts.map((product, index) => {
                   const percentage = stats?.totalRevenue
                     ? (product.totalRevenue / stats.totalRevenue) * 100
                     : 0
 
                   return (
-                    <div key={product.productId} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm`}
+                    <div key={product.productId} className="space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className={`w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-white font-bold text-xs`}
                             style={{ backgroundColor: COLORS[index % COLORS.length] }}>
                             #{index + 1}
                           </div>
-                          <div>
-                            <p className="font-semibold text-gray-900 dark:text-gray-100">{product.productName}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {product.totalQuantity} units • SKU: {product.productSku}
-                            </p>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{product.productName}</p>
+                            <p className="text-xs text-gray-400 truncate">{product.totalQuantity}× · {product.productSku}</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-green-600">
-                            {formatCurrency(product.totalRevenue)}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{percentage.toFixed(1)}%</p>
+                        <div className="text-right shrink-0">
+                          <p className="text-xs font-bold text-green-600">{formatCurrency(product.totalRevenue)}</p>
+                          <p className="text-xs text-gray-400">{percentage.toFixed(1)}%</p>
                         </div>
                       </div>
                       <div className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
@@ -269,7 +261,7 @@ export default function ReportsPage() {
                 />
               </Suspense>
             ) : (
-              <div className="h-80 flex items-center justify-center text-gray-500 dark:text-gray-400">
+              <div className="h-[200px] md:h-80 flex items-center justify-center text-gray-500 dark:text-gray-400 text-sm">
                 No revenue distribution data
               </div>
             )}
@@ -283,24 +275,24 @@ export default function ReportsPage() {
           <CardTitle>📉 Performance Metrics</CardTitle>
         </CardHeader>
         <CardBody>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="p-4 bg-green-50 dark:bg-green-900/30 rounded-xl border-2 border-green-200 dark:border-green-800">
-              <p className="text-sm text-green-700 dark:text-green-400 font-semibold mb-2">Highest Daily Revenue</p>
-              <p className="text-2xl font-bold text-green-900 dark:text-green-200">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 md:gap-6">
+            <div className="p-2.5 md:p-4 bg-green-50 dark:bg-green-900/30 rounded-xl border-2 border-green-200 dark:border-green-800">
+              <p className="text-xs text-green-700 dark:text-green-400 font-semibold mb-1">Tertinggi/Hari</p>
+              <p className="text-base md:text-2xl font-bold text-green-900 dark:text-green-200">
                 {formatCurrency(highestRevenue)}
               </p>
             </div>
 
-            <div className="p-4 bg-red-50 dark:bg-red-900/30 rounded-xl border-2 border-red-200 dark:border-red-800">
-              <p className="text-sm text-red-700 dark:text-red-400 font-semibold mb-2">Lowest Daily Revenue</p>
-              <p className="text-2xl font-bold text-red-900 dark:text-red-200">
+            <div className="p-2.5 md:p-4 bg-red-50 dark:bg-red-900/30 rounded-xl border-2 border-red-200 dark:border-red-800">
+              <p className="text-xs text-red-700 dark:text-red-400 font-semibold mb-1">Terendah/Hari</p>
+              <p className="text-base md:text-2xl font-bold text-red-900 dark:text-red-200">
                 {formatCurrency(lowestRevenue)}
               </p>
             </div>
 
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-xl border-2 border-blue-200 dark:border-blue-800">
-              <p className="text-sm text-blue-700 dark:text-blue-400 font-semibold mb-2">Avg Transaction Value</p>
-              <p className="text-2xl font-bold text-blue-900 dark:text-blue-200">
+            <div className="p-2.5 md:p-4 bg-blue-50 dark:bg-blue-900/30 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+              <p className="text-xs text-blue-700 dark:text-blue-400 font-semibold mb-1">Avg Transaksi</p>
+              <p className="text-base md:text-2xl font-bold text-blue-900 dark:text-blue-200">
                 {formatCurrency(
                   stats?.transactionCount && stats.transactionCount > 0
                     ? stats.totalRevenue / stats.transactionCount
@@ -309,9 +301,9 @@ export default function ReportsPage() {
               </p>
             </div>
 
-            <div className="p-4 bg-purple-50 dark:bg-purple-900/30 rounded-xl border-2 border-purple-200 dark:border-purple-800">
-              <p className="text-sm text-purple-700 dark:text-purple-400 font-semibold mb-2">Total Items Sold</p>
-              <p className="text-2xl font-bold text-purple-900 dark:text-purple-200">
+            <div className="p-2.5 md:p-4 bg-purple-50 dark:bg-purple-900/30 rounded-xl border-2 border-purple-200 dark:border-purple-800">
+              <p className="text-xs text-purple-700 dark:text-purple-400 font-semibold mb-1">Total Item Terjual</p>
+              <p className="text-base md:text-2xl font-bold text-purple-900 dark:text-purple-200">
                 {stats?.totalItemsSold.toLocaleString() || 0}
               </p>
             </div>
@@ -321,8 +313,8 @@ export default function ReportsPage() {
 
       {/* Export Section - Lazy loaded only when opened */}
       <Card variant="default" padding="lg">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Export Report</h3>
+        <div className="flex items-center justify-between mb-2 md:mb-4">
+          <h3 className="text-xs md:text-lg font-semibold">Export Report</h3>
           {canExport ? (
             <Button
               variant="primary"
@@ -361,8 +353,8 @@ export default function ReportsPage() {
         )}
       </Card>
 
-      {/* Info Box */}
-      <div className="p-4 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-200 dark:border-blue-800 rounded-xl">
+      {/* Info Box — hidden on mobile */}
+      <div className="hidden md:block p-3 md:p-4 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-200 dark:border-blue-800 rounded-xl">
         <p className="text-sm text-blue-900 dark:text-blue-200 font-semibold mb-2">💡 About Financial Reports:</p>
         <ul className="text-xs text-blue-800 dark:text-blue-300 space-y-1">
           <li>• Track revenue trends and sales performance over time</li>

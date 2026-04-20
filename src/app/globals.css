@@ -5,6 +5,17 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Chart color palette */
+  --chart-1: #10b981;
+  --chart-2: #3b82f6;
+  --chart-3: #f59e0b;
+  --chart-4: #8b5cf6;
+  --chart-5: #ef4444;
+  --chart-grid: rgba(107, 114, 128, 0.12);
+  --chart-axis: #9ca3af;
+  --chart-tooltip-bg: rgba(255, 255, 255, 0.98);
+  --chart-tooltip-border: rgba(229, 231, 235, 1);
 }
 
 @theme inline {
@@ -53,6 +64,10 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --chart-grid: rgba(255, 255, 255, 0.06);
+    --chart-axis: #6b7280;
+    --chart-tooltip-bg: rgba(17, 24, 39, 0.98);
+    --chart-tooltip-border: rgba(55, 65, 81, 1);
   }
 }
 
