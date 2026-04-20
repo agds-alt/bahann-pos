@@ -7,8 +7,10 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { StatCard } from '@/components/ui/StatCard'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { UpgradeModal } from '@/components/ui/UpgradeModal'
 import { useToast } from '@/components/ui/Toast'
 import { trpc } from '@/lib/trpc/client'
+import { getLimits } from '@/lib/plans'
 import type { Outlet } from '@/types'
 
 // ─── Modal ───────────────────────────────────────────────────────────────────
@@ -63,17 +65,27 @@ function OutletFormModal({ outlet, onClose, onSuccess }: {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function OutletsPage() {
-  const [isModalOpen, setIsModalOpen]       = useState(false)
-  const [editingOutlet, setEditingOutlet]   = useState<Outlet | null>(null)
+  const [isModalOpen, setIsModalOpen]           = useState(false)
+  const [editingOutlet, setEditingOutlet]       = useState<Outlet | null>(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const { showToast } = useToast()
 
-  const { data: outletsResponse, isLoading, refetch } = trpc.outlets.getAll.useQuery()
+  const { data: planData }                                        = trpc.auth.getPlan.useQuery()
+  const { data: outletsResponse, isLoading, refetch }            = trpc.outlets.getAll.useQuery()
   const outlets = outletsResponse?.outlets || []
+  const limits  = getLimits(planData?.plan ?? 'free')
 
   const deleteOutlet = trpc.outlets.delete.useMutation({ onSuccess: () => refetch() })
 
   const handleEdit = (outlet: Outlet) => { setEditingOutlet(outlet); setIsModalOpen(true) }
-  const handleAddNew = () => { setEditingOutlet(null); setIsModalOpen(true) }
+  const handleAddNew = () => {
+    if (outlets.length >= limits.maxOutlets) {
+      setShowUpgradeModal(true)
+      return
+    }
+    setEditingOutlet(null)
+    setIsModalOpen(true)
+  }
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Hapus outlet "${name}"? Aksi ini tidak bisa dibatalkan.`)) return
@@ -147,6 +159,14 @@ export default function OutletsPage() {
           onSuccess={() => { refetch(); setIsModalOpen(false); setEditingOutlet(null) }}
         />
       )}
+
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="outlets"
+        currentPlan={planData?.plan ?? 'free'}
+        currentUsage={{ used: outlets.length, max: limits.maxOutlets }}
+      />
     </div>
   )
 }
