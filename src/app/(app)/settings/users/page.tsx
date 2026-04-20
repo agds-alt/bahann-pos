@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/Input'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { useToast } from '@/components/ui/Toast'
+import { UpgradeModal } from '@/components/ui/UpgradeModal'
 import { trpc } from '@/lib/trpc/client'
+import { getLimits } from '@/lib/plans'
 
 type UserRole = 'admin' | 'manager' | 'cashier' | 'user'
 
@@ -52,8 +54,11 @@ export default function UsersManagementPage() {
   const { data: users, refetch } = trpc.users.list.useQuery()
   const { data: outletsResponse } = trpc.outlets.getAll.useQuery()
   const outlets = outletsResponse?.outlets || []
+  const { data: planData } = trpc.auth.getPlan.useQuery()
+  const limits = getLimits(planData?.plan ?? 'free')
 
   const [editingUser,   setEditingUser]   = useState<string | null>(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [permissions,   setPermissions]   = useState<any>({})
   const [selectedRole,  setSelectedRole]  = useState<UserRole>('user')
@@ -107,7 +112,11 @@ export default function UsersManagementPage() {
       <PageHeader
         title="Manajemen Pengguna"
         subtitle="Kelola kasir dan hak akses"
-        action={<Button variant="primary" onClick={() => setShowAddCashier(true)}>+ Tambah Kasir</Button>}
+        action={<Button variant="primary" onClick={() => {
+          const cashiers = users?.filter(u => u.role !== 'admin' && u.role !== 'manager') ?? []
+          if (cashiers.length >= limits.maxCashiers) { setShowUpgradeModal(true); return }
+          setShowAddCashier(true)
+        }}>+ Tambah Kasir</Button>}
       />
 
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden">
@@ -209,6 +218,14 @@ export default function UsersManagementPage() {
           </div>
         </div>
       )}
+
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="cashiers"
+        currentPlan={planData?.plan ?? 'free'}
+        currentUsage={{ used: users?.filter(u => u.role !== 'admin' && u.role !== 'manager').length ?? 0, max: limits.maxCashiers }}
+      />
 
       {/* Edit Permissions Modal */}
       {editingUser && (

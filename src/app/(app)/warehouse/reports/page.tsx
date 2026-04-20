@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { StatCard } from '@/components/ui/StatCard'
 import { FilterBar } from '@/components/ui/FilterBar'
+import { UpgradeModal } from '@/components/ui/UpgradeModal'
 import { trpc } from '@/lib/trpc/client'
 import { ChartSkeleton, ExportLoadingSkeleton } from '@/components/ui/Skeletons'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -22,6 +23,7 @@ export default function ReportsPage() {
   const [selectedOutletId, setSelectedOutletId] = useState('')
   const [dateRange, setDateRange]               = useState<1 | 7 | 14 | 30 | 0>(30)
   const [showExporter, setShowExporter]         = useState(false)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   const { data: planData }       = trpc.auth.getPlan.useQuery()
   const canExport                = getLimits(planData?.plan ?? 'free').canExport
@@ -161,25 +163,22 @@ export default function ReportsPage() {
         title="Export Laporan"
         action={canExport
           ? <Button variant="primary" onClick={() => setShowExporter(!showExporter)}>📥 Export Data</Button>
-          : <a href="/settings/subscriptions"><Button variant="secondary">🔒 Upgrade untuk Export</Button></a>
+          : <Button variant="secondary" onClick={() => setShowUpgradeModal(true)}>🔒 Upgrade untuk Export</Button>
         }
       >
-        {!canExport && (
-          <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
-            <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
-              Fitur export tersedia mulai plan <strong>Warung</strong> ke atas.
-            </p>
-            <a href="/settings/subscriptions" className="text-sm text-amber-700 dark:text-amber-300 underline mt-1 inline-block">
-              Lihat pilihan upgrade →
-            </a>
-          </div>
-        )}
         {canExport && showExporter && (
           <Suspense fallback={<ExportLoadingSkeleton />}>
             <ReportExporter outletId={selectedOutletId || undefined} days={dateRange} onClose={() => setShowExporter(false)} />
           </Suspense>
         )}
       </SectionCard>
+
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="export"
+        currentPlan={planData?.plan ?? 'free'}
+      />
     </div>
   )
 }
