@@ -22,13 +22,14 @@ if (fs.existsSync(envPath)) {
   }
 }
 
-if (!process.env.DATABASE_URL) {
-  console.error('❌  DATABASE_URL is not set in .env.local')
+const DB_CONN = process.env.DIRECT_URL || process.env.DATABASE_URL
+if (!DB_CONN) {
+  console.error('❌  DIRECT_URL (or DATABASE_URL) is not set in .env.local')
   process.exit(1)
 }
 
 async function run() {
-  const client = new Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
+  const client = new Client({ connectionString: DB_CONN, ssl: { rejectUnauthorized: false } })
   await client.connect()
   console.log('✅  Connected\n')
 

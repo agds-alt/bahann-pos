@@ -27,10 +27,14 @@ if (fs.existsSync(envPath)) {
   }
 }
 
-const DATABASE_URL = process.env.DATABASE_URL
+// Migration runner uses DIRECT_URL (port 5432) — DDL (CREATE TABLE, ALTER TABLE, etc.)
+// is not compatible with PgBouncer transaction mode (port 6543).
+// If DIRECT_URL is not set, falls back to DATABASE_URL for local dev convenience.
+const DATABASE_URL = process.env.DIRECT_URL || process.env.DATABASE_URL
 
 if (!DATABASE_URL) {
-  console.error('❌  DATABASE_URL is not set in .env.local')
+  console.error('❌  DIRECT_URL (or DATABASE_URL) is not set in .env.local')
+  console.error('    Set DIRECT_URL to the Supabase direct connection (port 5432), not the pooler.')
   process.exit(1)
 }
 
