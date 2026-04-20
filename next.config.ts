@@ -1,9 +1,7 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
-// Bundle Analyzer Configuration
-// Install with: npm install --save-dev @next/bundle-analyzer
-// Uncomment the imports below after installation
+// Bundle analyzer tidak kompatibel dengan Turbopack
 // import withBundleAnalyzer from '@next/bundle-analyzer'
 
 const nextConfig: NextConfig = {
@@ -76,12 +74,6 @@ const nextConfig: NextConfig = {
     ]
   },
 };
-
-// Bundle Analyzer wrapper (enable with ANALYZE=true)
-// Uncomment after installing @next/bundle-analyzer:
-// export default withBundleAnalyzer({
-//   enabled: process.env.ANALYZE === 'true',
-// })(nextConfig)
 
 export default withSentryConfig(nextConfig, {
   // Sentry build options
