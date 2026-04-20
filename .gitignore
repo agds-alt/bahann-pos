@@ -49,3 +49,6 @@ next-env.d.ts
 *.docx
 /.docdex/
 /.docdex-state/
+
+# Sentry Config File
+.env.sentry-build-plugin
