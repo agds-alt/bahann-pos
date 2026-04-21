@@ -118,28 +118,22 @@ export const authRouter = router({
       const useCase = new LoginUserUseCase(userRepository)
       const result = await useCase.execute(input)
 
-      // Create refresh token and new short-lived access token
+      // Create refresh token and set cookies in parallel
       const { refreshToken, accessToken } = await createRefreshToken(result.user.id)
+      await Promise.all([setAuthCookie(accessToken), setRefreshCookie(refreshToken)])
 
-      // Set httpOnly cookies (access token = 30 min, refresh token = 30 days)
-      await setAuthCookie(accessToken)
-      await setRefreshCookie(refreshToken)
-
-      // Audit log for login
-      await createAuditLog({
+      // Fire-and-forget audit log (non-critical, don't block response)
+      createAuditLog({
         userId: result.user.id,
         userEmail: result.user.email,
         action: 'LOGIN',
         entityType: 'auth',
-        metadata: {
-          name: result.user.name,
-          role: result.user.role,
-        },
-      })
+        metadata: { name: result.user.name, role: result.user.role },
+      }).catch(() => {})
 
       return {
         ...result,
-        token: accessToken, // Return new access token
+        token: accessToken,
       }
     }),
 
@@ -507,7 +501,7 @@ export const authRouter = router({
       }
 
       // Hash new password
-      const hashedPassword = await bcrypt.hash(input.newPassword, 10)
+      const hashedPassword = await bcrypt.hash(input.newPassword, 8)
 
       // Update user password
       const { error: updateError } = await supabase

@@ -123,7 +123,7 @@ export const usersRouter = router({
         })
       }
 
-      const passwordHash = await bcrypt.hash(input.password, 10)
+      const passwordHash = await bcrypt.hash(input.password, 8)
 
       const { data: newUser, error } = await supabase
         .from('users')

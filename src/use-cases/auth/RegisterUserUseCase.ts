@@ -41,7 +41,7 @@ export class RegisterUserUseCase {
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(input.password, 10)
+    const passwordHash = await bcrypt.hash(input.password, 8)
 
     // Create user
     const user = User.create({

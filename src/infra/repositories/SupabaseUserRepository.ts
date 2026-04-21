@@ -23,7 +23,7 @@ export class SupabaseUserRepository implements UserRepository {
   async findByEmail(email: string): Promise<User | null> {
     const { data, error } = await supabaseAdmin
       .from('users')
-      .select('*')
+      .select('id, email, name, password_hash, outlet_id, role, created_at, whatsapp_number')
       .eq('email', email)
       .single()
 
