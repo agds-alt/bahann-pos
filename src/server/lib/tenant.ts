@@ -10,7 +10,7 @@ export async function getTenantOwnerId(
   role: string | undefined,
   outletId: string | undefined,
 ): Promise<string | null> {
-  if (role === 'admin') return userId
+  if (role === 'admin' || role === 'super_admin') return userId
 
   if (outletId) {
     const { data } = await supabaseAdmin
