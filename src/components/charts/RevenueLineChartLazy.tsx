@@ -2,6 +2,8 @@
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine } from 'recharts'
 import { ChartContainer, ChartTooltipContent, CHART_COLORS } from '@/components/ui/chart'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { formatChartYAxis } from '@/lib/utils/formatters'
 
 interface RevenueLineChartProps {
   data: Array<{ date: string; revenue: number }>
@@ -28,6 +30,7 @@ export default function RevenueLineChartLazy({
     )
   }
 
+  const { language } = useLanguage()
   const avg = data.reduce((s, d) => s + d.revenue, 0) / data.length
 
   return (
@@ -55,7 +58,7 @@ export default function RevenueLineChartLazy({
           tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(v) => `${(v / 1_000_000).toFixed(1)}M`}
+          tickFormatter={(v) => formatChartYAxis(v, language)}
           width={hideMobileYAxis ? 0 : 48}
           hide={hideMobileYAxis}
         />

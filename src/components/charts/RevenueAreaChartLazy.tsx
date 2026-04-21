@@ -2,6 +2,8 @@
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import { ChartContainer, ChartTooltipContent, GradientDef, CHART_COLORS } from '@/components/ui/chart'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { formatChartYAxis } from '@/lib/utils/formatters'
 
 interface RevenueAreaChartProps {
   data: Array<{ date: string; revenue: number }>
@@ -20,6 +22,8 @@ export default function RevenueAreaChartLazy({
   className,
   hideMobileYAxis = false,
 }: RevenueAreaChartProps) {
+  const { language } = useLanguage()
+
   return (
     <ChartContainer height={height} className={className}>
       <AreaChart
@@ -46,7 +50,7 @@ export default function RevenueAreaChartLazy({
           tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(v) => `${(v / 1_000_000).toFixed(1)}M`}
+          tickFormatter={(v) => formatChartYAxis(v, language)}
           width={hideMobileYAxis ? 28 : 48}
           hide={hideMobileYAxis}
         />

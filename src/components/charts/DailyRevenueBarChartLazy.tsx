@@ -2,6 +2,8 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from 'recharts'
 import { ChartContainer, ChartTooltipContent, GradientDef, CHART_COLORS } from '@/components/ui/chart'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { formatChartYAxis } from '@/lib/utils/formatters'
 
 interface DailyRevenueBarChartProps {
   data: Array<{ date: string; revenue: number }>
@@ -20,6 +22,7 @@ export default function DailyRevenueBarChartLazy({
   className,
   hideMobileYAxis = false,
 }: DailyRevenueBarChartProps) {
+  const { language } = useLanguage()
   const maxVal = Math.max(...(data.map((d) => d.revenue) || [0]))
 
   return (
@@ -49,7 +52,7 @@ export default function DailyRevenueBarChartLazy({
           tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(v) => `${(v / 1_000_000).toFixed(1)}M`}
+          tickFormatter={(v) => formatChartYAxis(v, language)}
           width={hideMobileYAxis ? 28 : 48}
           hide={hideMobileYAxis}
         />
