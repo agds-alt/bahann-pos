@@ -43,9 +43,9 @@ export async function createContext(opts: FetchCreateContextFnOptions) {
       const redis = getRedisClient()
       if (redis) {
         try {
-          const sessionData = await redis.get(`session:${userId}`)
+          const sessionData = await redis.get<SessionData>(`session:${userId}`)
           if (sessionData) {
-            session = JSON.parse(sessionData)
+            session = sessionData
           }
         } catch (error) {
           // Continue without Redis session, JWT is enough
