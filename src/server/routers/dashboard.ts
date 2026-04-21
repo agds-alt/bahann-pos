@@ -33,7 +33,7 @@ interface SalesTrendRow   { sale_date: string; revenue: string; items_sold: stri
 interface TopProductRow   { product_id: string; product_name: string; product_sku: string; total_quantity: string; total_revenue: string }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const rpc = (supabase.rpc as unknown as (fn: string, args?: object) => Promise<{ data: any; error: unknown }>)
+const rpc = supabase.rpc.bind(supabase) as unknown as (fn: string, args?: object) => Promise<{ data: any; error: unknown }>
 
 async function rpcSalesSummary(p: { p_outlet_ids: string[]; p_start_date: string; p_end_date: string }) {
   const { data } = await rpc('get_sales_summary', p)

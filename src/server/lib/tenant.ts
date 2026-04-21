@@ -21,7 +21,14 @@ export async function getTenantOwnerId(
     return data?.owner_id ?? null
   }
 
-  return null
+  // Fallback: user may have a legacy/null role but still be an outlet owner.
+  // Check DB directly rather than relying solely on the JWT role claim.
+  const { data } = await supabaseAdmin
+    .from('outlets')
+    .select('id')
+    .eq('owner_id', userId)
+    .limit(1)
+  return data && data.length > 0 ? userId : null
 }
 
 /**
