@@ -3,6 +3,8 @@
 import dynamic from 'next/dynamic'
 import { useMemo } from 'react'
 import { CHART_COLORS } from '@/components/ui/chart'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { formatChartYAxis } from '@/lib/utils/formatters'
 
 // Nivo must be client-only — no SSR
 const ResponsiveLine = dynamic(
@@ -28,6 +30,7 @@ export default function DashboardRevenueChart({
   formatDate,
   height = 280,
 }: DashboardRevenueChartProps) {
+  const { language } = useLanguage()
   const nivoData = useMemo(() => {
     if (!data || data.length === 0) return []
     return [
@@ -111,7 +114,7 @@ export default function DashboardRevenueChart({
           tickSize: 0,
           tickPadding: 10,
           tickValues: 5,
-          format: (v) => `${((v as number) / 1_000_000).toFixed(1)}M`,
+          format: (v) => formatChartYAxis(v as number, language),
         }}
         markers={[
           {
