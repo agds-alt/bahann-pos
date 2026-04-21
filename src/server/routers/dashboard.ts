@@ -293,6 +293,8 @@ export const dashboardRouter = router({
       const ownerId = await getTenantOwnerId(ctx.userId, ctx.session.role, ctx.session.outletId)
       if (!ownerId) throw new TRPCError({ code: 'FORBIDDEN', message: 'Tenant not found' })
 
+      const cacheKey = dashKey('recent', ownerId, input?.outletId, `${limit}`)
+      return withCache(cacheKey, 30, async () => {
       const outletIds = await getTenantOutletIds(ownerId, input?.outletId)
       if (outletIds.length === 0) return []
 
@@ -361,6 +363,7 @@ export const dashboardRouter = router({
       })
 
       return flatTransactions
+      }) // end withCache
     }),
 
   /**
