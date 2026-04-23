@@ -297,6 +297,7 @@ export function Sidebar({ mobileOpen, setMobileOpen }: SidebarProps) {
             <SidebarSection sectionKey="superadmin" title="Super Admin" isCollapsed={showCollapsed} activePaths={['/admin']}>
               <SidebarItem href="/admin" icon={<Crown />} label="Admin Panel" isCollapsed={showCollapsed} />
               <SidebarItem href="/admin/tenants" icon={<Users />} label="Tenant" isCollapsed={showCollapsed} />
+              <SidebarItem href="/admin/payments" icon={<CreditCard />} label="Pembayaran" isCollapsed={showCollapsed} />
             </SidebarSection>
           )}
 
