@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 import { Button } from '@/components/ui/Button'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { X, Camera, RefreshCw } from 'lucide-react'
 
 interface BarcodeScannerProps {
   onScan: (barcode: string) => void
@@ -10,6 +12,7 @@ interface BarcodeScannerProps {
 }
 
 export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
+  const { t } = useLanguage()
   const [isScanning, setIsScanning] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const scannerRef = useRef<Html5Qrcode | null>(null)
@@ -18,47 +21,35 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null)
 
   useEffect(() => {
-    // Request camera permission first
     requestCameraPermission()
-
-    return () => {
-      stopScanning()
-    }
+    return () => { stopScanning() }
   }, [])
 
   const requestCameraPermission = async () => {
     try {
-      // Check if navigator.mediaDevices is available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setError('Camera API not supported in this browser')
+        setError(t('scanner.cameraError'))
         setPermissionGranted(false)
         return
       }
 
-      // Request camera permission
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' } // Prefer back camera
+        video: { facingMode: 'environment' }
       })
-
-      // Permission granted! Stop the stream (we just needed permission)
       stream.getTracks().forEach(track => track.stop())
       setPermissionGranted(true)
       setError(null)
-
-      // Now get available cameras
       await getCameraList()
     } catch (err: any) {
-      console.error('Camera permission error:', err)
       setPermissionGranted(false)
-
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setError('📷 Akses kamera ditolak. Silakan izinkan akses kamera di pengaturan browser/sistem.')
+        setError(t('scanner.permissionDenied'))
       } else if (err.name === 'NotFoundError') {
-        setError('📷 Kamera tidak ditemukan pada perangkat ini.')
+        setError(t('scanner.cameraNotFound'))
       } else if (err.name === 'NotReadableError') {
-        setError('📷 Kamera sedang digunakan aplikasi lain. Tutup aplikasi tersebut dan coba lagi.')
+        setError(t('scanner.cameraInUse'))
       } else {
-        setError(`📷 Gagal mengakses kamera: ${err.message || 'Unknown error'}`)
+        setError(`${t('scanner.cameraError')}: ${err.message || 'Unknown error'}`)
       }
     }
   }
@@ -72,23 +63,18 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
           label: device.label || `Camera ${device.id}`,
         }))
         setCameras(cameraList)
-        // Prefer back camera for mobile
         const backCamera = devices.find((d) => d.label.toLowerCase().includes('back'))
         setSelectedCamera(backCamera?.id || devices[0].id)
       } else {
-        setError('Tidak ada kamera yang ditemukan')
+        setError(t('scanner.noCameras'))
       }
-    } catch (err) {
-      console.error('Error getting cameras:', err)
-      setError('Gagal mendapatkan daftar kamera')
+    } catch {
+      setError(t('scanner.failedCameraList'))
     }
   }
 
   const startScanning = async () => {
-    if (!selectedCamera) {
-      setError('Please select a camera')
-      return
-    }
+    if (!selectedCamera) return
 
     try {
       const html5QrCode = new Html5Qrcode('barcode-reader')
@@ -96,26 +82,18 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
       await html5QrCode.start(
         selectedCamera,
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
         (decodedText) => {
-          // Success callback
           onScan(decodedText)
           stopScanning()
         },
-        (errorMessage) => {
-          // Error callback (scanning in progress, not an actual error)
-          // console.log('Scanning...', errorMessage)
-        }
+        () => {}
       )
 
       setIsScanning(true)
       setError(null)
-    } catch (err) {
-      console.error('Error starting scanner:', err)
-      setError('Failed to start camera. Please check permissions.')
+    } catch {
+      setError(t('scanner.cameraError'))
     }
   }
 
@@ -126,9 +104,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
         scannerRef.current.clear()
         scannerRef.current = null
         setIsScanning(false)
-      } catch (err) {
-        console.error('Error stopping scanner:', err)
-      }
+      } catch { /* ignore */ }
     }
   }
 
@@ -138,59 +114,67 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-lg w-full p-3 md:p-6 space-y-4">
+    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl max-w-lg w-full p-3 md:p-6 space-y-4 border border-gray-200 dark:border-gray-700">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-base md:text-2xl font-bold text-gray-900">📷 Scan Barcode</h2>
+          <div className="flex items-center gap-2">
+            <Camera className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            <h2 className="text-base md:text-xl font-bold text-gray-900 dark:text-white">{t('scanner.title')}</h2>
+          </div>
           <button
             onClick={handleClose}
-            className="text-gray-500 hover:text-gray-700 text-base md:text-2xl"
+            className="p-1.5 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
-            ✕
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Permission Status */}
+        {/* Permission: requesting */}
         {permissionGranted === null && (
-          <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
-            <p className="text-sm font-semibold text-blue-900">📷 Meminta izin akses kamera...</p>
-            <p className="text-xs text-blue-700 mt-1">Silakan izinkan akses kamera saat diminta browser.</p>
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl">
+            <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">{t('scanner.requestingPermission')}</p>
+            <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">{t('scanner.allowPrompt')}</p>
           </div>
         )}
 
+        {/* Permission: denied */}
         {permissionGranted === false && (
-          <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl space-y-3">
+          <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl space-y-3">
             <div>
-              <p className="text-sm font-semibold text-red-900">❌ {error}</p>
-              <p className="text-xs text-red-700 mt-2">Untuk menggunakan scanner barcode, Anda perlu:</p>
-              <ul className="text-xs text-red-700 mt-1 ml-4 list-disc space-y-1">
-                <li>Izinkan akses kamera di browser</li>
-                <li>Periksa pengaturan kamera perangkat</li>
-                <li>Pastikan tidak ada aplikasi lain yang menggunakan kamera</li>
+              <p className="text-sm font-semibold text-red-900 dark:text-red-200">{error}</p>
+              <p className="text-xs text-red-700 dark:text-red-300 mt-2">{t('scanner.toUse')}</p>
+              <ul className="text-xs text-red-700 dark:text-red-300 mt-1 ml-4 list-disc space-y-1">
+                <li>{t('scanner.allowBrowser')}</li>
+                <li>{t('scanner.checkSettings')}</li>
+                <li>{t('scanner.closeOtherApps')}</li>
               </ul>
             </div>
             <Button variant="primary" onClick={requestCameraPermission} fullWidth>
-              🔄 Coba Lagi
+              <RefreshCw className="w-4 h-4 mr-1.5" />
+              {t('scanner.retry')}
             </Button>
           </div>
         )}
 
+        {/* Permission: granted but error */}
         {permissionGranted === true && error && (
-          <div className="p-3 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
-            <p className="text-sm font-semibold text-yellow-900">⚠️ {error}</p>
+          <div className="p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-xl">
+            <p className="text-sm font-semibold text-yellow-900 dark:text-yellow-200">{error}</p>
           </div>
         )}
 
+        {/* Camera selector */}
         {permissionGranted === true && cameras.length > 0 && (
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Select Camera
+          <div className="space-y-1.5">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+              {t('scanner.selectCamera')}
             </label>
             <select
               value={selectedCamera}
               onChange={(e) => setSelectedCamera(e.target.value)}
               disabled={isScanning}
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all disabled:bg-gray-100"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition-all disabled:opacity-50"
             >
               {cameras.map((camera, index) => (
                 <option key={`${camera.id}-${index}`} value={camera.id}>
@@ -201,30 +185,28 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
           </div>
         )}
 
+        {/* Camera viewport */}
         <div
           id="barcode-reader"
-          className="w-full rounded-xl overflow-hidden border-2 border-gray-300"
+          className="w-full rounded-xl overflow-hidden border border-gray-300 dark:border-gray-600 bg-black"
           style={{ minHeight: '300px' }}
         />
 
+        {/* Action buttons */}
         {permissionGranted === true && (
           <div className="flex gap-3">
             {!isScanning ? (
-              <Button
-                variant="primary"
-                onClick={startScanning}
-                disabled={!selectedCamera}
-                fullWidth
-              >
-                📷 Start Scanning
+              <Button variant="primary" onClick={startScanning} disabled={!selectedCamera} fullWidth>
+                <Camera className="w-4 h-4 mr-1.5" />
+                {t('scanner.startScanning')}
               </Button>
             ) : (
               <Button variant="secondary" onClick={stopScanning} fullWidth>
-                ⏸️ Stop Scanning
+                {t('scanner.stopScanning')}
               </Button>
             )}
             <Button variant="outline" onClick={handleClose} fullWidth>
-              Close
+              {t('scanner.close')}
             </Button>
           </div>
         )}
@@ -232,18 +214,19 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
         {permissionGranted !== true && (
           <div className="flex gap-3">
             <Button variant="outline" onClick={handleClose} fullWidth>
-              Close
+              {t('scanner.close')}
             </Button>
           </div>
         )}
 
-        <div className="p-3 bg-blue-50 border-2 border-blue-200 rounded-xl">
-          <p className="text-xs text-blue-900 font-semibold">💡 Tips:</p>
-          <ul className="text-xs text-blue-800 space-y-1 mt-1">
-            <li>• Hold the barcode steady in front of the camera</li>
-            <li>• Make sure there's good lighting</li>
-            <li>• Keep the barcode within the scanning box</li>
-            <li>• Supports QR codes, EAN-13, Code128, and more</li>
+        {/* Tips */}
+        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+          <p className="text-xs text-blue-900 dark:text-blue-200 font-semibold">{t('scanner.tips')}</p>
+          <ul className="text-xs text-blue-800 dark:text-blue-300 space-y-1 mt-1">
+            <li>• {t('scanner.tip1')}</li>
+            <li>• {t('scanner.tip2')}</li>
+            <li>• {t('scanner.tip3')}</li>
+            <li>• {t('scanner.tip4')}</li>
           </ul>
         </div>
       </div>
