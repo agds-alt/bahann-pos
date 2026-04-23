@@ -23,10 +23,6 @@
     {
       "path": "/api/cron/expire-trials",
       "schedule": "0 1 * * *"
-    },
-    {
-      "path": "/api/cron/check-crypto",
-      "schedule": "*/3 * * * *"
     }
   ],
   "headers": [
