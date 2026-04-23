@@ -313,10 +313,6 @@ export function Sidebar({ mobileOpen, setMobileOpen }: SidebarProps) {
             <SidebarItem href="/alerts"       icon={<Bell />}           label="Alert Stok"   isCollapsed={showCollapsed} />
           </SidebarSection>
 
-          <SidebarSection sectionKey="masterdata" title="Master Data" isCollapsed={showCollapsed} activePaths={['/products', '/outlets']}>
-            <SidebarItem href="/products" icon={<Tag />}   label="Produk"  isCollapsed={showCollapsed} />
-            <SidebarItem href="/outlets"  icon={<Store />} label="Outlet"  isCollapsed={showCollapsed} />
-          </SidebarSection>
         </nav>
 
         {/* ── Settings & Support (X-style collapsible) ── */}
@@ -327,18 +323,25 @@ export function Sidebar({ mobileOpen, setMobileOpen }: SidebarProps) {
               <span>Pengaturan & Bantuan</span>
               <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${settingsOpen ? 'rotate-180' : ''}`} />
             </button>
-            <div className={`overflow-hidden transition-all duration-200 ${settingsOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className={`overflow-hidden transition-all duration-200 ${settingsOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}>
               <div className="px-2 pb-2 space-y-0.5">
+                {/* Master Data group */}
+                <p className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Master Data</p>
+                <SidebarItem href="/products" icon={<Tag />}   label="Produk"  isCollapsed={false} />
+                <SidebarItem href="/outlets"  icon={<Store />} label="Outlet"  isCollapsed={false} />
                 {isAdmin && (
                   <>
+                    {/* Admin settings group */}
+                    <p className="px-3 pt-3 pb-1 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Pengaturan</p>
                     <SidebarItem href="/settings/payments"      icon={<DollarSign />} label="Pembayaran"  isCollapsed={false} />
                     <SidebarItem href="/settings/users"         icon={<Users />}      label="Pengguna"    isCollapsed={false} />
                     <SidebarItem href="/settings/audit-logs"    icon={<Shield />}     label="Audit Log"   isCollapsed={false} />
                     <SidebarItem href="/settings/reset"         icon={<Trash2 />}     label="Reset Data"  isCollapsed={false} />
                     <SidebarItem href="/settings/subscriptions" icon={<Star />}       label="Langganan"   isCollapsed={false} />
-                    <div className="h-px bg-gray-200 dark:bg-gray-700/60 mx-3 my-1" />
                   </>
                 )}
+                {/* Support group */}
+                <p className="px-3 pt-3 pb-1 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Bantuan</p>
                 <SidebarItem href="/profile" icon={<User />}       label={t('sidebar.profile')} isCollapsed={false} />
                 <SidebarItem href="/help"    icon={<HelpCircle />} label="Bantuan"               isCollapsed={false} />
                 <SidebarItem href="/about"   icon={<Info />}       label={t('sidebar.about')}   isCollapsed={false} />
@@ -357,6 +360,8 @@ export function Sidebar({ mobileOpen, setMobileOpen }: SidebarProps) {
         {/* Collapsed: settings + support icons */}
         {showCollapsed && (
           <div className="border-t border-gray-200 dark:border-gray-800 p-2 flex-shrink-0 space-y-1">
+            <SidebarItem href="/products"          icon={<Tag />}        label="Produk"                isCollapsed={true} />
+            <SidebarItem href="/outlets"           icon={<Store />}      label="Outlet"                isCollapsed={true} />
             <SidebarItem href="/profile"           icon={<User />}       label={t('sidebar.profile')} isCollapsed={true} />
             <SidebarItem href="/help"              icon={<HelpCircle />} label="Bantuan"               isCollapsed={true} />
             <SidebarItem href="/settings/payments" icon={<Settings />}   label="Pengaturan"            isCollapsed={true} />
