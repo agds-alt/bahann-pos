@@ -126,7 +126,7 @@ export async function GET(request: Request) {
       const transfers = await getRecentSolTransfers(sinceTimestamp)
       for (const transfer of transfers) {
         const req = solRequests.find(r =>
-          r.crypto_amount && matchTransferToAmount(transfer.amount, parseFloat(r.crypto_amount))
+          r.crypto_amount && matchTransferToAmount(transfer.amount, parseFloat(r.crypto_amount), 0.000001)
         )
         if (!req) continue
         const ok = await approveRequest(req.id, req.user_id, req.plan, req.amount, 'sol', transfer.signature)

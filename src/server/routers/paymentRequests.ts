@@ -181,8 +181,9 @@ export const paymentRequestsRouter = router({
         transfers = await getRecentTransfers(pending.crypto_token as 'usdc' | 'usdt', sinceTimestamp)
       }
 
+      const tolerance = pending.crypto_token === 'sol' ? 0.000001 : 0.0001
       const match = transfers.find(t =>
-        matchTransferToAmount(t.amount, parseFloat(pending.crypto_amount!))
+        matchTransferToAmount(t.amount, parseFloat(pending.crypto_amount!), tolerance)
       )
 
       if (!match) return { checked: true, matched: false }
