@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { router, protectedProcedure } from '../trpc'
 import { supabaseAdmin as supabase } from '@/infra/supabase/server'
 import { createAuditLog } from '@/lib/audit'
+import { getTenantOwnerId } from '@/server/lib/tenant'
 import { TRPCError } from '@trpc/server'
 
 const PLAN_LIMITS: Record<string, number> = {
@@ -62,6 +63,16 @@ async function getAccountPlan(userId: string): Promise<string> {
   }
 
   return 'free'
+}
+
+async function getTenantOutletIds(userId: string, role: string | undefined, outletId: string | undefined): Promise<string[]> {
+  const ownerId = await getTenantOwnerId(userId, role, outletId)
+  if (!ownerId) return []
+  const { data } = await supabase
+    .from('outlets')
+    .select('id')
+    .eq('owner_id', ownerId)
+  return data?.map(o => o.id) ?? []
 }
 
 export const transactionsRouter = router({
@@ -322,6 +333,8 @@ export const transactionsRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      const tenantOutlets = await getTenantOutletIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+
       // Get transaction
       const { data: transaction, error: fetchError } = await supabase
         .from('transactions')
@@ -329,7 +342,7 @@ export const transactionsRouter = router({
         .eq('id', input.transactionId)
         .single()
 
-      if (fetchError || !transaction) {
+      if (fetchError || !transaction || !tenantOutlets.includes(transaction.outlet_id)) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Transaction not found',
@@ -401,13 +414,15 @@ export const transactionsRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      const tenantOutlets = await getTenantOutletIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+
       const { data: transaction, error: fetchError } = await supabase
         .from('transactions')
         .select('*')
         .eq('id', input.transactionId)
         .single()
 
-      if (fetchError || !transaction) {
+      if (fetchError || !transaction || !tenantOutlets.includes(transaction.outlet_id)) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Transaction not found',
@@ -469,7 +484,9 @@ export const transactionsRouter = router({
    */
   getById: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const tenantOutlets = await getTenantOutletIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+
       const { data: transaction, error } = await supabase
         .from('transactions')
         .select(
@@ -483,7 +500,7 @@ export const transactionsRouter = router({
         .eq('id', input.id)
         .single()
 
-      if (error) {
+      if (error || !transaction || !tenantOutlets.includes(transaction.outlet_id)) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Transaction not found',
@@ -507,7 +524,10 @@ export const transactionsRouter = router({
         offset: z.number().default(0),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const tenantOutlets = await getTenantOutletIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+      if (tenantOutlets.length === 0) return { transactions: [], total: 0 }
+
       let query = supabase
         .from('transactions')
         .select(
@@ -519,6 +539,7 @@ export const transactionsRouter = router({
         `,
           { count: 'estimated' }
         )
+        .in('outlet_id', tenantOutlets)
         .order('created_at', { ascending: false })
 
       if (input.outletId) query = query.eq('outlet_id', input.outletId)
@@ -554,10 +575,16 @@ export const transactionsRouter = router({
         dateTo: z.string(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const tenantOutlets = await getTenantOutletIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+      if (tenantOutlets.length === 0) {
+        return { totalTransactions: 0, completedTransactions: 0, voidedTransactions: 0, refundedTransactions: 0, totalRevenue: 0, totalDiscounts: 0, cashSales: 0, cardSales: 0, transferSales: 0, ewalletSales: 0 }
+      }
+
       let query = supabase
         .from('transactions')
         .select('*')
+        .in('outlet_id', tenantOutlets)
         .gte('created_at', input.dateFrom)
         .lte('created_at', input.dateTo)
 
