@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { trpc } from '@/lib/trpc/client'
 import {
   CheckCircle, XCircle, Clock, Image, Eye, ChevronLeft, ChevronRight,
-  CreditCard, Search, Filter,
+  CreditCard, Search, Filter, ExternalLink, Wallet,
 } from 'lucide-react'
 
 const PLAN_COLORS: Record<string, string> = {
@@ -169,12 +169,25 @@ function PaymentsContent() {
                             </span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{fmtRupiah(req.amount)}</td>
-                        <td className="px-4 py-3 text-gray-600 dark:text-gray-400 capitalize">
-                          {req.payment_method === 'qris' ? 'QRIS' : 'Transfer Bank'}
+                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
+                          {req.crypto_amount
+                            ? <span className="text-purple-600 dark:text-purple-400">{parseFloat(req.crypto_amount).toFixed(4)} {req.crypto_token?.toUpperCase()}</span>
+                            : fmtRupiah(req.amount)}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                          {req.crypto_token ? (
+                            <span className="inline-flex items-center gap-1 text-purple-600 dark:text-purple-400">
+                              <Wallet className="w-3.5 h-3.5" /> {req.crypto_token.toUpperCase()} (SOL)
+                            </span>
+                          ) : req.payment_method === 'qris' ? 'QRIS' : 'Transfer Bank'}
                         </td>
                         <td className="px-4 py-3">
-                          {req.proof_url ? (
+                          {req.crypto_tx_hash ? (
+                            <a href={`https://solscan.io/tx/${req.crypto_tx_hash}`} target="_blank" rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs font-medium text-purple-600 dark:text-purple-400 hover:underline">
+                              <ExternalLink className="w-3.5 h-3.5" /> TX
+                            </a>
+                          ) : req.proof_url ? (
                             <button onClick={() => setProofModal(req.proof_url!)}
                               className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline">
                               <Eye className="w-3.5 h-3.5" /> Lihat
@@ -238,16 +251,27 @@ function PaymentsContent() {
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${PLAN_COLORS[req.plan] || PLAN_COLORS.free}`}>
                         {req.plan}
                       </span>
-                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 ml-auto">{fmtRupiah(req.amount)}</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 ml-auto">
+                        {req.crypto_amount
+                          ? <span className="text-purple-600 dark:text-purple-400">{parseFloat(req.crypto_amount).toFixed(4)} {req.crypto_token?.toUpperCase()}</span>
+                          : fmtRupiah(req.amount)}
+                      </span>
                     </div>
 
                     <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3">
-                      <span>{req.payment_method === 'qris' ? 'QRIS' : 'Transfer Bank'}</span>
+                      <span>{req.crypto_token
+                        ? <span className="inline-flex items-center gap-1 text-purple-600 dark:text-purple-400"><Wallet className="w-3 h-3" /> {req.crypto_token.toUpperCase()} (SOL)</span>
+                        : req.payment_method === 'qris' ? 'QRIS' : 'Transfer Bank'}</span>
                       <span>{fmtDate(req.created_at)}</span>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      {req.proof_url ? (
+                      {req.crypto_tx_hash ? (
+                        <a href={`https://solscan.io/tx/${req.crypto_tx_hash}`} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-medium text-purple-600 dark:text-purple-400">
+                          <ExternalLink className="w-3.5 h-3.5" /> TX: {req.crypto_tx_hash.slice(0, 8)}...
+                        </a>
+                      ) : req.proof_url ? (
                         <button onClick={() => setProofModal(req.proof_url!)}
                           className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400">
                           <Eye className="w-3.5 h-3.5" /> Lihat Bukti

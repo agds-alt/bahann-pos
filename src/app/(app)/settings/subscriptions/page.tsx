@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { trpc } from '@/lib/trpc/client'
-import { Gift, CreditCard, ClipboardList, CheckCircle, Check, Upload, Clock, XCircle, Image, ChevronDown } from 'lucide-react'
+import { Gift, CreditCard, ClipboardList, CheckCircle, Check, Upload, Clock, XCircle, Image, ChevronDown, Copy, Wallet, ExternalLink } from 'lucide-react'
 
 const PLANS = [
   {
@@ -121,6 +121,7 @@ function BillingHistory() {
 function UserUpgradeView() {
   const { data: planData, isLoading } = trpc.auth.getPlan.useQuery()
   const { data: myRequests, refetch: refetchRequests } = trpc.paymentRequests.myRequests.useQuery()
+  const { data: cryptoConfig } = trpc.paymentRequests.cryptoConfig.useQuery()
   const createMutation = trpc.paymentRequests.create.useMutation({ onSuccess: () => refetchRequests() })
   const uploadMutation = trpc.paymentRequests.uploadProof.useMutation({ onSuccess: () => refetchRequests() })
 
@@ -129,8 +130,9 @@ function UserUpgradeView() {
   const pendingRequest = myRequests?.find(r => r.status === 'pending')
 
   const [checkoutPlan, setCheckoutPlan] = useState<string | null>(null)
-  const [paymentMethod, setPaymentMethod] = useState<'bank_transfer' | 'qris'>('bank_transfer')
+  const [paymentMethod, setPaymentMethod] = useState<'bank_transfer' | 'qris' | 'crypto_usdc' | 'crypto_usdt'>('bank_transfer')
   const [uploading, setUploading] = useState(false)
+  const [copied, setCopied] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const bankName = process.env.NEXT_PUBLIC_BANK_NAME || 'BCA'
@@ -139,6 +141,14 @@ function UserUpgradeView() {
   const waNumber = process.env.NEXT_PUBLIC_SUPPORT_WA || ''
 
   const checkoutPlanData = PLANS.find(p => p.value === checkoutPlan)
+  const isCrypto = paymentMethod === 'crypto_usdc' || paymentMethod === 'crypto_usdt'
+  const cryptoPriceUsd = checkoutPlan ? cryptoConfig?.prices?.[checkoutPlan] : null
+
+  const copyToClipboard = (text: string, key: string) => {
+    navigator.clipboard.writeText(text)
+    setCopied(key)
+    setTimeout(() => setCopied(null), 2000)
+  }
 
   const handleUpgradeClick = (planValue: string) => {
     if (pendingRequest) return
@@ -196,32 +206,72 @@ function UserUpgradeView() {
 
       {/* Pending Request Banner */}
       {pendingRequest && (
-        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl">
+        <div className={`p-4 rounded-xl border ${
+          pendingRequest.crypto_token
+            ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800'
+            : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+        }`}>
           <div className="flex items-start gap-3">
-            <Clock className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+            {pendingRequest.crypto_token
+              ? <Wallet className="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" />
+              : <Clock className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+            }
             <div className="flex-1">
-              <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-200">
-                Permintaan upgrade ke <PlanBadge plan={pendingRequest.plan} /> sedang menunggu verifikasi
+              <p className={`text-sm font-semibold ${pendingRequest.crypto_token ? 'text-purple-800 dark:text-purple-200' : 'text-yellow-800 dark:text-yellow-200'}`}>
+                Permintaan upgrade ke <PlanBadge plan={pendingRequest.plan} /> {pendingRequest.crypto_token ? 'menunggu pembayaran crypto' : 'sedang menunggu verifikasi'}
               </p>
-              <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
-                {fmtRupiah(pendingRequest.amount)} — {new Date(pendingRequest.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-              </p>
-              {!pendingRequest.proof_url && (
-                <div className="mt-3">
-                  <input type="file" ref={fileInputRef} accept="image/*" className="hidden"
-                    onChange={e => handleFileUpload(e, pendingRequest.id)} />
-                  <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
-                    className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors disabled:opacity-50">
-                    <Upload className="w-4 h-4" />
-                    {uploading ? 'Mengupload...' : 'Upload Bukti Transfer'}
-                  </button>
+
+              {pendingRequest.crypto_token && pendingRequest.crypto_amount && cryptoConfig?.walletAddress ? (
+                <div className="mt-3 space-y-2">
+                  <div>
+                    <p className="text-xs text-purple-600 dark:text-purple-400 mb-1">Kirim ke wallet (Solana):</p>
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs bg-white dark:bg-gray-900 px-2 py-1.5 rounded-lg border border-purple-200 dark:border-purple-700 text-gray-900 dark:text-gray-100 break-all font-mono flex-1">
+                        {cryptoConfig.walletAddress}
+                      </code>
+                      <button onClick={() => copyToClipboard(cryptoConfig.walletAddress, 'pw')}
+                        className="p-1.5 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors flex-shrink-0">
+                        {copied === 'pw' ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-purple-400" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="p-2.5 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <p className="text-xs text-purple-600 dark:text-purple-400">Jumlah persis ({pendingRequest.crypto_token.toUpperCase()}):</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-lg font-bold text-purple-800 dark:text-purple-200">{parseFloat(pendingRequest.crypto_amount).toFixed(4)}</span>
+                      <button onClick={() => copyToClipboard(parseFloat(pendingRequest.crypto_amount!).toFixed(4), 'pa')}
+                        className="p-1 rounded hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors">
+                        {copied === 'pa' ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-purple-400" />}
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-purple-500 dark:text-purple-400">
+                    Pembayaran diverifikasi otomatis dalam 2-5 menit setelah konfirmasi on-chain.
+                  </p>
                 </div>
-              )}
-              {pendingRequest.proof_url && (
-                <div className="mt-2 flex items-center gap-2">
-                  <Image className="w-4 h-4 text-green-500" />
-                  <span className="text-xs text-green-700 dark:text-green-400 font-medium">Bukti transfer sudah diupload</span>
-                </div>
+              ) : (
+                <>
+                  <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                    {fmtRupiah(pendingRequest.amount)} — {new Date(pendingRequest.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                  {!pendingRequest.proof_url && (
+                    <div className="mt-3">
+                      <input type="file" ref={fileInputRef} accept="image/*" className="hidden"
+                        onChange={e => handleFileUpload(e, pendingRequest.id)} />
+                      <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
+                        className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors disabled:opacity-50">
+                        <Upload className="w-4 h-4" />
+                        {uploading ? 'Mengupload...' : 'Upload Bukti Transfer'}
+                      </button>
+                    </div>
+                  )}
+                  {pendingRequest.proof_url && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <Image className="w-4 h-4 text-green-500" />
+                      <span className="text-xs text-green-700 dark:text-green-400 font-medium">Bukti transfer sudah diupload</span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -244,22 +294,23 @@ function UserUpgradeView() {
             <div className="space-y-2 mb-5">
               <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Metode Pembayaran</label>
               <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => setPaymentMethod('bank_transfer')}
-                  className={`p-3 rounded-xl border-2 text-sm font-medium transition-colors ${
-                    paymentMethod === 'bank_transfer'
-                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
-                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300'
-                  }`}>
-                  Transfer Bank
-                </button>
-                <button onClick={() => setPaymentMethod('qris')}
-                  className={`p-3 rounded-xl border-2 text-sm font-medium transition-colors ${
-                    paymentMethod === 'qris'
-                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
-                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300'
-                  }`}>
-                  QRIS
-                </button>
+                {([
+                  { key: 'bank_transfer' as const, label: 'Transfer Bank' },
+                  { key: 'qris' as const, label: 'QRIS' },
+                  ...(cryptoConfig?.enabled && cryptoPriceUsd ? [
+                    { key: 'crypto_usdc' as const, label: 'USDC (SOL)' },
+                    { key: 'crypto_usdt' as const, label: 'USDT (SOL)' },
+                  ] : []),
+                ]).map(m => (
+                  <button key={m.key} onClick={() => setPaymentMethod(m.key)}
+                    className={`p-3 rounded-xl border-2 text-sm font-medium transition-colors ${
+                      paymentMethod === m.key
+                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                        : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300'
+                    }`}>
+                    {m.label}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -290,8 +341,53 @@ function UserUpgradeView() {
               </div>
             )}
 
+            {isCrypto && cryptoConfig?.walletAddress && cryptoPriceUsd && (
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-5 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Wallet className="w-4 h-4 text-purple-500" />
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                    Bayar dengan {paymentMethod === 'crypto_usdc' ? 'USDC' : 'USDT'} (Solana)
+                  </span>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Kirim ke wallet address:</p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs bg-white dark:bg-gray-900 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 break-all font-mono">
+                      {cryptoConfig.walletAddress}
+                    </code>
+                    <button onClick={() => copyToClipboard(cryptoConfig.walletAddress, 'wallet')}
+                      className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex-shrink-0">
+                      {copied === 'wallet' ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-gray-400" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <p className="text-xs text-purple-600 dark:text-purple-400 mb-1">Jumlah yang harus dikirim (persis):</p>
+                  <p className="text-lg font-bold text-purple-800 dark:text-purple-200">
+                    Akan ditampilkan setelah submit
+                  </p>
+                  <p className="text-[11px] text-purple-500 dark:text-purple-400 mt-1">
+                    Kirim jumlah persis agar pembayaran terdeteksi otomatis
+                  </p>
+                </div>
+
+                <div className="flex items-start gap-2 p-2 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                  <Clock className="w-3.5 h-3.5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-yellow-700 dark:text-yellow-300">
+                    Pembayaran akan diverifikasi otomatis dalam 2-5 menit setelah konfirmasi on-chain. Pastikan kirim di jaringan <strong>Solana</strong>.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2 mb-4">
-              <p className="text-xs text-gray-500 dark:text-gray-400">Setelah transfer, upload bukti pembayaran. Plan akan diaktifkan setelah admin memverifikasi.</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {isCrypto
+                  ? 'Setelah submit, Anda akan mendapat jumlah unik untuk dikirim. Plan diaktifkan otomatis setelah terdeteksi on-chain.'
+                  : 'Setelah transfer, upload bukti pembayaran. Plan akan diaktifkan setelah admin memverifikasi.'}
+              </p>
             </div>
 
             <div className="flex gap-3">
@@ -396,7 +492,17 @@ function UserUpgradeView() {
                       <PlanBadge plan={req.plan} />
                       <span className="text-xs font-medium">{s.label}</span>
                     </div>
-                    <p className="text-xs mt-1 opacity-80">{fmtRupiah(req.amount)} — {req.payment_method === 'qris' ? 'QRIS' : 'Transfer Bank'}</p>
+                    <p className="text-xs mt-1 opacity-80">
+                      {req.crypto_token
+                        ? `${parseFloat(req.crypto_amount!).toFixed(4)} ${req.crypto_token.toUpperCase()} (Solana)`
+                        : `${fmtRupiah(req.amount)} — ${req.payment_method === 'qris' ? 'QRIS' : 'Transfer Bank'}`}
+                    </p>
+                    {req.crypto_tx_hash && (
+                      <a href={`https://solscan.io/tx/${req.crypto_tx_hash}`} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs mt-1 opacity-80 hover:opacity-100 underline">
+                        <ExternalLink className="w-3 h-3" /> TX: {req.crypto_tx_hash.slice(0, 12)}...
+                      </a>
+                    )}
                     {req.admin_note && <p className="text-xs mt-1 opacity-70">Catatan: {req.admin_note}</p>}
                     {req.status === 'pending' && !req.proof_url && (
                       <div className="mt-2">

@@ -4,16 +4,16 @@ import { supabaseAdmin as supabase } from '@/infra/supabase/server'
 import { createAuditLog } from '@/lib/audit'
 import { TRPCError } from '@trpc/server'
 import { sendPlanUpgradeEmail } from '@/lib/email'
+import { CRYPTO_PRICES_USD, generateUniqueAmount } from '@/lib/solana'
 
 export const paymentRequestsRouter = router({
   create: protectedProcedure
     .input(z.object({
       plan: z.enum(['warung', 'starter', 'professional', 'business', 'enterprise']),
       amount: z.number().int().min(0),
-      paymentMethod: z.enum(['bank_transfer', 'qris']).default('bank_transfer'),
+      paymentMethod: z.enum(['bank_transfer', 'qris', 'crypto_usdc', 'crypto_usdt']).default('bank_transfer'),
     }))
     .mutation(async ({ input, ctx }) => {
-      // Check no pending request already
       const { data: existing } = await supabase
         .from('payment_requests')
         .select('id')
@@ -28,6 +28,32 @@ export const paymentRequestsRouter = router({
         })
       }
 
+      const isCrypto = input.paymentMethod === 'crypto_usdc' || input.paymentMethod === 'crypto_usdt'
+      let cryptoAmount: number | null = null
+      let cryptoToken: string | null = null
+
+      if (isCrypto) {
+        const basePrice = CRYPTO_PRICES_USD[input.plan]
+        if (!basePrice) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Plan ini tidak tersedia untuk pembayaran crypto.' })
+        }
+        cryptoToken = input.paymentMethod === 'crypto_usdc' ? 'usdc' : 'usdt'
+
+        let attempts = 0
+        while (attempts < 10) {
+          cryptoAmount = generateUniqueAmount(basePrice)
+          const { data: collision } = await supabase
+            .from('payment_requests')
+            .select('id')
+            .eq('status', 'pending')
+            .eq('crypto_token', cryptoToken)
+            .eq('crypto_amount', cryptoAmount)
+            .single()
+          if (!collision) break
+          attempts++
+        }
+      }
+
       const { data, error } = await supabase
         .from('payment_requests')
         .insert({
@@ -36,6 +62,8 @@ export const paymentRequestsRouter = router({
           amount: input.amount,
           payment_method: input.paymentMethod,
           status: 'pending',
+          crypto_amount: cryptoAmount,
+          crypto_token: cryptoToken,
         })
         .select()
         .single()
@@ -48,7 +76,7 @@ export const paymentRequestsRouter = router({
         action: 'CREATE',
         entityType: 'payment_request',
         entityId: data.id,
-        changes: { plan: input.plan, amount: input.amount, method: input.paymentMethod },
+        changes: { plan: input.plan, amount: input.amount, method: input.paymentMethod, cryptoAmount, cryptoToken },
       })
 
       return data
@@ -109,13 +137,22 @@ export const paymentRequestsRouter = router({
   myRequests: protectedProcedure.query(async ({ ctx }) => {
     const { data, error } = await supabase
       .from('payment_requests')
-      .select('id, plan, amount, payment_method, proof_url, status, admin_note, created_at, reviewed_at')
+      .select('id, plan, amount, payment_method, proof_url, status, admin_note, created_at, reviewed_at, crypto_amount, crypto_token, crypto_tx_hash')
       .eq('user_id', ctx.userId)
       .order('created_at', { ascending: false })
       .limit(20)
 
     if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message })
     return data ?? []
+  }),
+
+  cryptoConfig: protectedProcedure.query(async () => {
+    const walletAddress = process.env.SOLANA_WALLET_ADDRESS || ''
+    return {
+      enabled: !!walletAddress,
+      walletAddress,
+      prices: CRYPTO_PRICES_USD,
+    }
   }),
 
   // Super admin: list all pending + recent
@@ -128,7 +165,7 @@ export const paymentRequestsRouter = router({
     .query(async ({ input }) => {
       let query = supabase
         .from('payment_requests')
-        .select('id, user_id, plan, amount, payment_method, proof_url, status, admin_note, created_at, reviewed_at', { count: 'exact' })
+        .select('id, user_id, plan, amount, payment_method, proof_url, status, admin_note, created_at, reviewed_at, crypto_amount, crypto_token, crypto_tx_hash', { count: 'exact' })
         .order('created_at', { ascending: false })
 
       if (input?.status) query = query.eq('status', input.status)
