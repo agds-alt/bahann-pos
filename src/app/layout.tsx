@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   title: "Laku POS - Point of Sale untuk Warung",
   description: "Aplikasi kasir modern untuk warung dan toko kecil Indonesia",
   manifest: "/manifest.json",
-  icons: { icon: "/logo.svg", apple: "/logo.svg" },
+  icons: { icon: "/logo.svg", apple: "/apple-touch-icon.png" },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
