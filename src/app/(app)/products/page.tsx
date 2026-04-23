@@ -258,11 +258,11 @@ export default function ProductsPage() {
 
       {/* Batch toolbar */}
       {selectedProducts.size > 0 && (
-        <div className="flex items-center justify-between gap-3 p-3.5 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-2xl">
           <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
             {selectedProducts.size} produk dipilih
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="primary" size="sm" onClick={handleBatchCategory}><Tag className="w-4 h-4 mr-1" /> Update Kategori</Button>
             <Button variant="danger" size="sm" onClick={handleBatchDelete}><Trash2 className="w-4 h-4 mr-1" /> Hapus</Button>
             <Button variant="outline" size="sm" onClick={clearSelection}>✕ Batal</Button>

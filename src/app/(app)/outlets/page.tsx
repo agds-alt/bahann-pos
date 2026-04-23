@@ -106,7 +106,7 @@ export default function OutletsPage() {
         action={<Button variant="primary" onClick={handleAddNew}><Plus className="w-4 h-4 mr-1" /> Tambah Outlet</Button>}
       />
 
-      <div className="grid grid-cols-3 gap-2 md:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-4">
         <StatCard icon={<Store />} label="Total Outlet" value={outlets.length} color="gray" />
         <StatCard icon={<CheckCircle />} label="Aktif"         value={outlets.length} color="green" />
         <StatCard icon={<MapPin />} label="Lokasi"        value={outlets.length} color="blue" />

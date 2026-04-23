@@ -21,7 +21,7 @@ export default function PaymentsPage() {
     <div className="space-y-4 md:space-y-6">
       <PageHeader title="Manajemen Pembayaran" subtitle="Kelola dan konfirmasi pembayaran yang masuk" />
 
-      <div className="grid grid-cols-3 gap-2 md:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-4">
         <StatCard icon={<Smartphone />}  label="QRIS Pending"         value="0" color="yellow" sub="Menunggu konfirmasi" />
         <StatCard icon={<Building2 />}   label="Transfer Pending"     value="0" color="blue"   sub="Menunggu konfirmasi" />
         <StatCard icon={<CheckCircle />}  label="Dikonfirmasi Hari Ini" value="0" color="green"  sub="Total pembayaran" />
@@ -41,7 +41,7 @@ export default function PaymentsPage() {
       </SectionCard>
 
       <SectionCard title="Metode Pembayaran Tersedia">
-        <div className="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 md:gap-3">
           {PAYMENT_METHODS.map(m => (
             <div key={m.label} className="flex flex-col items-center gap-1.5 p-3 md:p-4 bg-gray-50 dark:bg-gray-700/40 rounded-xl">
               <div className="text-gray-600 dark:text-gray-300">{m.icon}</div>

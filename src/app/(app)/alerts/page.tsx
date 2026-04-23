@@ -58,7 +58,7 @@ export default function AlertsPage() {
       />
 
       {summary && (
-        <div className="grid grid-cols-3 gap-2 md:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-4">
           <StatCard icon={<XCircle />} label="Habis"         value={summary.outOfStock} color="red" />
           <StatCard icon={<AlertCircle />} label="Hampir Habis"  value={summary.lowStock}   color="yellow" />
           <StatCard icon={<ClipboardList />} label="Total Alerts"  value={summary.total}      color="blue" />

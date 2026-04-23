@@ -141,7 +141,7 @@ function SuperAdminView() {
                     </td>
                     <td className="px-3 md:px-4 py-3">
                       {editing === user.id ? (
-                        <div className="space-y-2 min-w-[260px]">
+                        <div className="space-y-2 min-w-[200px] sm:min-w-[260px]">
                           <select value={selectedPlan} onChange={e => setSelectedPlan(e.target.value as Plan)}
                             className="w-full px-3 py-1.5 text-xs border-2 border-green-400 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none">
                             {PLANS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
