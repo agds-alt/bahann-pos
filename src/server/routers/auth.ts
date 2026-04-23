@@ -118,6 +118,37 @@ export const authRouter = router({
       const useCase = new LoginUserUseCase(userRepository)
       const result = await useCase.execute(input)
 
+      // Check if tenant (or tenant's admin) is suspended
+      const { supabaseAdmin } = await import('@/infra/supabase/server')
+      const { data: loginUser } = await supabaseAdmin
+        .from('users')
+        .select('is_suspended, outlet_id, role')
+        .eq('id', result.user.id)
+        .single()
+
+      if (loginUser?.is_suspended) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Akun Anda telah dinonaktifkan. Hubungi admin.' })
+      }
+
+      // If cashier, check if their admin (outlet owner) is suspended
+      if (loginUser?.role === 'user' && loginUser?.outlet_id) {
+        const { data: outlet } = await supabaseAdmin
+          .from('outlets')
+          .select('owner_id')
+          .eq('id', loginUser.outlet_id)
+          .single()
+        if (outlet?.owner_id) {
+          const { data: owner } = await supabaseAdmin
+            .from('users')
+            .select('is_suspended')
+            .eq('id', outlet.owner_id)
+            .single()
+          if (owner?.is_suspended) {
+            throw new TRPCError({ code: 'FORBIDDEN', message: 'Akun bisnis Anda telah dinonaktifkan. Hubungi pemilik.' })
+          }
+        }
+      }
+
       // Create refresh token and set cookies in parallel
       const { refreshToken, accessToken } = await createRefreshToken(result.user.id)
       await Promise.all([setAuthCookie(accessToken), setRefreshCookie(refreshToken)])

@@ -19,6 +19,8 @@ export type AuditAction =
   | 'PASSWORD_RESET_REQUEST'
   | 'PASSWORD_RESET_COMPLETE'
   | 'EXPORT'
+  | 'SUSPEND'
+  | 'ACTIVATE'
 
 export type AuditEntity =
   | 'user'
@@ -31,6 +33,7 @@ export type AuditEntity =
   | 'cash_session'
   | 'promotion'
   | 'stock_alert'
+  | 'tenant'
 
 export interface AuditLogData {
   userId: string

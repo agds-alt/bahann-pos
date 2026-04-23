@@ -1,0 +1,430 @@
+'use client'
+
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { trpc } from '@/lib/trpc/client'
+import { ArrowLeft, Search, Store, Users, ShoppingCart, Package, Ban, CheckCircle, ChevronDown } from 'lucide-react'
+
+const PLAN_COLORS: Record<string, string> = {
+  free: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
+  warung: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300',
+  starter: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300',
+  professional: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300',
+  business: 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300',
+  enterprise: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300',
+}
+const PLANS = ['free', 'warung', 'starter', 'professional', 'business', 'enterprise'] as const
+
+export default function TenantsPage() {
+  return (
+    <Suspense fallback={<div className="h-32 flex items-center justify-center"><div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>}>
+      <TenantsContent />
+    </Suspense>
+  )
+}
+
+function TenantsContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const selectedId = searchParams.get('id')
+
+  const [userRole, setUserRole] = useState('')
+  const [search, setSearch] = useState('')
+  const [filterPlan, setFilterPlan] = useState('')
+  const [filterSuspended, setFilterSuspended] = useState<boolean | undefined>(undefined)
+
+  useEffect(() => {
+    const user = localStorage.getItem('user')
+    if (user) {
+      try {
+        const u = JSON.parse(user)
+        if (u.role !== 'super_admin') { router.push('/dashboard'); return }
+        setUserRole(u.role)
+      } catch { router.push('/dashboard') }
+    }
+  }, [router])
+
+  const utils = trpc.useUtils()
+
+  const { data: tenantsData, isLoading } = trpc.superAdmin.listTenants.useQuery(
+    { search: search || undefined, plan: filterPlan || undefined, suspended: filterSuspended, limit: 50 },
+    { enabled: userRole === 'super_admin' }
+  )
+
+  const { data: detail, isLoading: detailLoading } = trpc.superAdmin.getTenantDetail.useQuery(
+    { tenantId: selectedId! },
+    { enabled: userRole === 'super_admin' && !!selectedId }
+  )
+
+  const suspendMutation = trpc.superAdmin.suspendTenant.useMutation({
+    onSuccess: () => {
+      utils.superAdmin.listTenants.invalidate()
+      utils.superAdmin.getTenantDetail.invalidate()
+      utils.superAdmin.globalStats.invalidate()
+    },
+  })
+
+  const updatePlanMutation = trpc.users.updatePlan.useMutation({
+    onSuccess: () => {
+      utils.superAdmin.listTenants.invalidate()
+      utils.superAdmin.getTenantDetail.invalidate()
+      utils.superAdmin.globalStats.invalidate()
+    },
+  })
+
+  const [showPlanModal, setShowPlanModal] = useState(false)
+  const [newPlan, setNewPlan] = useState('')
+  const [planNote, setPlanNote] = useState('')
+  const [planAmount, setPlanAmount] = useState('')
+
+  const [showSuspendModal, setShowSuspendModal] = useState(false)
+  const [suspendReason, setSuspendReason] = useState('')
+
+  if (userRole !== 'super_admin') return null
+
+  const fmtCurrency = (n: number) => `Rp ${n.toLocaleString('id-ID')}`
+  const fmtDate = (d: string | null) => d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'
+
+  // Detail view
+  if (selectedId && detail) {
+    return (
+      <div className="space-y-4 pt-2 md:pt-0">
+        <button onClick={() => router.push('/admin/tenants')} className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+          Kembali
+        </button>
+
+        {/* Tenant Header */}
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-5 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">{detail.name}</h1>
+                {detail.is_suspended && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 dark:bg-red-900/40 text-red-600">Suspended</span>
+                )}
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{detail.email}</p>
+              {detail.whatsapp_number && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">WA: {detail.whatsapp_number}</p>}
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Bergabung: {fmtDate(detail.created_at)}</p>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`px-3 py-1 rounded-full text-xs font-bold ${PLAN_COLORS[detail.plan || 'free']}`}>
+                {(detail.plan || 'free').charAt(0).toUpperCase() + (detail.plan || 'free').slice(1)}
+                {detail.is_trial && ' (Trial)'}
+              </span>
+              <button onClick={() => { setNewPlan(detail.plan || 'free'); setPlanNote(''); setPlanAmount(''); setShowPlanModal(true) }}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
+                Ubah Plan
+              </button>
+              <button onClick={() => { setSuspendReason(''); setShowSuspendModal(true) }}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                  detail.is_suspended
+                    ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100'
+                    : 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100'
+                }`}>
+                {detail.is_suspended ? 'Aktifkan' : 'Suspend'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {[
+            { label: 'Outlet', value: detail.stats.outletCount, icon: <Store className="w-4 h-4" /> },
+            { label: 'User', value: detail.stats.userCount, icon: <Users className="w-4 h-4" /> },
+            { label: 'Produk', value: detail.stats.productCount, icon: <Package className="w-4 h-4" /> },
+            { label: 'Transaksi', value: detail.stats.transactionCount.toLocaleString('id-ID'), icon: <ShoppingCart className="w-4 h-4" /> },
+            { label: 'Revenue', value: fmtCurrency(detail.stats.totalRevenue), icon: <ShoppingCart className="w-4 h-4" /> },
+          ].map(s => (
+            <div key={s.label} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm">
+              <div className="flex items-center gap-2 mb-1 text-gray-400 dark:text-gray-500">{s.icon}<span className="text-[10px] font-medium uppercase">{s.label}</span></div>
+              <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{s.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Outlets */}
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white">Outlet ({detail.outlets.length})</h2>
+          </div>
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            {detail.outlets.map(o => (
+              <div key={o.id} className="px-4 py-3">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{o.name}</p>
+                {o.address && <p className="text-xs text-gray-500 dark:text-gray-400">{o.address}</p>}
+              </div>
+            ))}
+            {detail.outlets.length === 0 && <div className="px-4 py-6 text-center text-sm text-gray-400">Belum ada outlet</div>}
+          </div>
+        </div>
+
+        {/* Users */}
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white">Pengguna ({detail.users.length} kasir)</h2>
+          </div>
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            {detail.users.map(u => (
+              <div key={u.id} className="px-4 py-3 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{u.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
+                </div>
+                <span className="text-xs text-gray-400 dark:text-gray-500">{u.role}</span>
+              </div>
+            ))}
+            {detail.users.length === 0 && <div className="px-4 py-6 text-center text-sm text-gray-400">Belum ada kasir</div>}
+          </div>
+        </div>
+
+        {/* Billing History */}
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white">Riwayat Billing</h2>
+          </div>
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            {detail.billing.map(b => (
+              <div key={b.id} className="px-4 py-3 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {b.previous_plan} → {b.plan}
+                    {b.is_trial && <span className="ml-1 text-xs text-yellow-600">(Trial)</span>}
+                  </p>
+                  {b.note && <p className="text-xs text-gray-500 dark:text-gray-400">{b.note}</p>}
+                </div>
+                <div className="text-right flex-shrink-0 ml-3">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{fmtCurrency(b.amount)}</p>
+                  <p className="text-xs text-gray-400">{fmtDate(b.created_at)}</p>
+                </div>
+              </div>
+            ))}
+            {detail.billing.length === 0 && <div className="px-4 py-6 text-center text-sm text-gray-400">Belum ada riwayat</div>}
+          </div>
+        </div>
+
+        {/* Change Plan Modal */}
+        {showPlanModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={e => e.target === e.currentTarget && setShowPlanModal(false)}>
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-100 dark:border-gray-800">
+              <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4">Ubah Plan</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Plan Baru</label>
+                  <div className="relative mt-1">
+                    <select value={newPlan} onChange={e => setNewPlan(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm appearance-none pr-8">
+                      {PLANS.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Jumlah Bayar (Rp)</label>
+                  <input type="number" value={planAmount} onChange={e => setPlanAmount(e.target.value)} placeholder="0"
+                    className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Catatan</label>
+                  <input type="text" value={planNote} onChange={e => setPlanNote(e.target.value)} placeholder="Contoh: Transfer BNI dikonfirmasi"
+                    className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm" />
+                </div>
+              </div>
+              <div className="flex gap-3 mt-5">
+                <button onClick={() => setShowPlanModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  Batal
+                </button>
+                <button
+                  disabled={updatePlanMutation.isPending || newPlan === detail.plan}
+                  onClick={() => {
+                    updatePlanMutation.mutate({
+                      userId: selectedId!,
+                      plan: newPlan as any,
+                      amount: parseInt(planAmount) || 0,
+                      note: planNote || undefined,
+                    }, { onSuccess: () => setShowPlanModal(false) })
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-sm font-semibold text-white transition-colors">
+                  {updatePlanMutation.isPending ? 'Menyimpan...' : 'Simpan'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Suspend Modal */}
+        {showSuspendModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={e => e.target === e.currentTarget && setShowSuspendModal(false)}>
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-100 dark:border-gray-800">
+              <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-4 ${detail.is_suspended ? 'bg-green-50 dark:bg-green-900/30 text-green-500' : 'bg-red-50 dark:bg-red-900/30 text-red-500'}`}>
+                {detail.is_suspended ? <CheckCircle className="w-6 h-6" /> : <Ban className="w-6 h-6" />}
+              </div>
+              <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 text-center mb-1">
+                {detail.is_suspended ? 'Aktifkan Tenant?' : 'Suspend Tenant?'}
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
+                {detail.is_suspended
+                  ? `${detail.name} akan bisa login kembali.`
+                  : `${detail.name} dan semua kasirnya tidak bisa login.`}
+              </p>
+              {!detail.is_suspended && (
+                <input type="text" value={suspendReason} onChange={e => setSuspendReason(e.target.value)}
+                  placeholder="Alasan (opsional)"
+                  className="w-full mb-4 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm" />
+              )}
+              <div className="flex gap-3">
+                <button onClick={() => setShowSuspendModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  Batal
+                </button>
+                <button
+                  disabled={suspendMutation.isPending}
+                  onClick={() => {
+                    suspendMutation.mutate({
+                      tenantId: selectedId!,
+                      suspend: !detail.is_suspended,
+                      reason: suspendReason || undefined,
+                    }, { onSuccess: () => setShowSuspendModal(false) })
+                  }}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors ${
+                    detail.is_suspended ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+                  } disabled:opacity-50`}>
+                  {suspendMutation.isPending ? '...' : detail.is_suspended ? 'Ya, Aktifkan' : 'Ya, Suspend'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (selectedId && detailLoading) {
+    return (
+      <div className="space-y-4 pt-2 md:pt-0">
+        <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />)}
+        </div>
+      </div>
+    )
+  }
+
+  // List view
+  return (
+    <div className="space-y-4 pt-2 md:pt-0">
+      <div className="flex items-center justify-between">
+        <div className="hidden md:block">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Manajemen Tenant</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Kelola semua tenant di platform</p>
+        </div>
+        <button onClick={() => router.push('/admin')} className="md:hidden flex items-center gap-1.5 text-sm text-gray-500">
+          <ArrowLeft className="w-4 h-4" /> Dashboard
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 md:p-4 shadow-sm">
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Cari nama atau email..."
+              className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm" />
+          </div>
+          <div className="flex gap-2">
+            <div className="relative">
+              <select value={filterPlan} onChange={e => setFilterPlan(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm appearance-none pr-8">
+                <option value="">Semua Plan</option>
+                {PLANS.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
+              </select>
+              <ChevronDown className="w-4 h-4 text-gray-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+            <div className="relative">
+              <select value={filterSuspended === undefined ? '' : filterSuspended ? 'true' : 'false'}
+                onChange={e => setFilterSuspended(e.target.value === '' ? undefined : e.target.value === 'true')}
+                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm appearance-none pr-8">
+                <option value="">Semua Status</option>
+                <option value="false">Aktif</option>
+                <option value="true">Suspended</option>
+              </select>
+              <ChevronDown className="w-4 h-4 text-gray-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tenant List */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm overflow-hidden">
+        {isLoading ? (
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="px-4 py-4">
+                <div className="h-5 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-2" />
+                <div className="h-4 w-56 bg-gray-100 dark:bg-gray-700/50 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            {/* Desktop table header */}
+            <div className="hidden md:grid grid-cols-[1fr_100px_80px_80px_80px_100px] gap-2 px-5 py-3 bg-gray-50 dark:bg-gray-800/50 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">
+              <span>Tenant</span><span>Plan</span><span>Outlet</span><span>User</span><span>Status</span><span>Bergabung</span>
+            </div>
+            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+              {tenantsData?.tenants?.map(t => (
+                <button key={t.id} onClick={() => router.push(`/admin/tenants?id=${t.id}`)}
+                  className="w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                  {/* Mobile */}
+                  <div className="md:hidden px-4 py-3 flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{t.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{t.email}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0 ml-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${PLAN_COLORS[t.plan || 'free']}`}>
+                        {(t.plan || 'free').charAt(0).toUpperCase() + (t.plan || 'free').slice(1)}
+                      </span>
+                      {t.is_suspended && <span className="w-2 h-2 rounded-full bg-red-500" />}
+                    </div>
+                  </div>
+                  {/* Desktop */}
+                  <div className="hidden md:grid grid-cols-[1fr_100px_80px_80px_80px_100px] gap-2 px-5 py-3 items-center">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{t.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{t.email}</p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold text-center w-fit ${PLAN_COLORS[t.plan || 'free']}`}>
+                      {(t.plan || 'free').charAt(0).toUpperCase() + (t.plan || 'free').slice(1)}
+                    </span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{t.outletCount}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{t.userCount}</span>
+                    <span className={`text-xs font-medium ${t.is_suspended ? 'text-red-500' : 'text-emerald-500'}`}>
+                      {t.is_suspended ? 'Suspended' : 'Aktif'}
+                    </span>
+                    <span className="text-xs text-gray-400">{fmtDate(t.created_at)}</span>
+                  </div>
+                </button>
+              ))}
+              {(!tenantsData?.tenants || tenantsData.tenants.length === 0) && (
+                <div className="px-5 py-10 text-center text-sm text-gray-400 dark:text-gray-500">Tidak ada tenant ditemukan</div>
+              )}
+            </div>
+            {tenantsData && tenantsData.total > 0 && (
+              <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-400 dark:text-gray-500">
+                Menampilkan {tenantsData.tenants.length} dari {tenantsData.total} tenant
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}

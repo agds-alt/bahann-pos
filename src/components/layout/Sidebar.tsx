@@ -15,7 +15,7 @@ import {
   Tag, Store, Users, Shield, Trash2, Star,
   User, HelpCircle, Info,
   Moon, Sun, LogOut, Download, X,
-  Settings, ChevronDown,
+  Settings, ChevronDown, Crown,
 } from 'lucide-react'
 
 function SidebarItem({ href, icon, label, badge, isCollapsed }: {
@@ -207,6 +207,7 @@ export function Sidebar({ mobileOpen, setMobileOpen }: SidebarProps) {
   const plan        = planData?.plan || 'free'
   const showCollapsed = isCollapsed && !isMobile
   const isAdmin = userRole === 'admin' || userRole === 'super_admin'
+  const isSuperAdmin = userRole === 'super_admin'
 
   return (
     <>
@@ -291,6 +292,13 @@ export function Sidebar({ mobileOpen, setMobileOpen }: SidebarProps) {
 
         {/* ── Nav ── */}
         <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+
+          {isSuperAdmin && (
+            <SidebarSection sectionKey="superadmin" title="Super Admin" isCollapsed={showCollapsed} activePaths={['/admin']}>
+              <SidebarItem href="/admin" icon={<Crown />} label="Admin Panel" isCollapsed={showCollapsed} />
+              <SidebarItem href="/admin/tenants" icon={<Users />} label="Tenant" isCollapsed={showCollapsed} />
+            </SidebarSection>
+          )}
 
           <div className={`${showCollapsed ? 'mb-1' : 'mb-2'}`}>
             <SidebarItem href="/dashboard" icon={<LayoutDashboard />} label={t('sidebar.dashboard')} isCollapsed={showCollapsed} />
