@@ -3,6 +3,7 @@ import { router, protectedProcedure } from '../trpc'
 import { supabaseAdmin as supabase } from '@/infra/supabase/server'
 import { RecordDailyStockUseCase } from '@/use-cases/stock/RecordDailyStockUseCase'
 import { SupabaseDailyStockRepository } from '@/infra/repositories/SupabaseDailyStockRepository'
+import { getTenantOwnerId, assertOutletBelongsToTenant } from '@/server/lib/tenant'
 
 const stockRepository = new SupabaseDailyStockRepository()
 
@@ -29,15 +30,15 @@ export const stockRouter = router({
         stockAkhir: z.number(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const ownerId = await getTenantOwnerId(ctx.userId, ctx.session.role, ctx.session.outletId)
+      if (ownerId) await assertOutletBelongsToTenant(input.outletId, ownerId)
+
       const useCase = new RecordDailyStockUseCase(stockRepository)
       await useCase.execute(input)
       return { success: true }
     }),
 
-  /**
-   * Get latest stock for a product
-   */
   getLatest: protectedProcedure
     .input(
       z.object({
@@ -45,7 +46,10 @@ export const stockRouter = router({
         outletId: z.string().uuid(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const ownerId = await getTenantOwnerId(ctx.userId, ctx.session.role, ctx.session.outletId)
+      if (ownerId) await assertOutletBelongsToTenant(input.outletId, ownerId)
+
       const stock = await stockRepository.getLatestByProduct(
         input.outletId,
         input.productId
@@ -53,21 +57,23 @@ export const stockRouter = router({
       return stock
     }),
 
-  /**
-   * Get inventory list with current stock quantities
-   */
   getInventoryList: protectedProcedure
     .input(
       z.object({
         outletId: z.string().uuid().optional(),
       }).optional()
     )
-    .query(async ({ input }) => {
-      // Get all products with their latest stock per outlet
-      const { data: products, error: productsError } = await supabase
+    .query(async ({ input, ctx }) => {
+      const ownerId = await getTenantOwnerId(ctx.userId, ctx.session.role, ctx.session.outletId)
+
+      let productQuery = supabase
         .from('products')
         .select('*')
         .order('name', { ascending: true })
+
+      if (ownerId) productQuery = productQuery.eq('owner_id', ownerId)
+
+      const { data: products, error: productsError } = await productQuery
 
       if (productsError) {
         throw new Error(`Failed to fetch products: ${productsError.message}`)

@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { router, protectedProcedure, adminProcedure } from '../trpc'
 import { supabaseAdmin as supabase } from '@/infra/supabase/server'
 import { createAuditLog } from '@/lib/audit'
+import { getTenantOwnerId } from '@/server/lib/tenant'
 import { TRPCError } from '@trpc/server'
 
 export const promotionsRouter = router({
@@ -283,15 +284,16 @@ export const promotionsRouter = router({
         activeOnly: z.boolean().default(false),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const ownerId = await getTenantOwnerId(ctx.userId, ctx.session.role, ctx.session.outletId)
+
       let query = supabase
         .from('promotions')
         .select('*, created_by_user:users!created_by (id, name)')
         .order('created_at', { ascending: false })
 
-      if (input.activeOnly) {
-        query = query.eq('is_active', true)
-      }
+      if (ownerId) query = query.eq('created_by', ownerId)
+      if (input.activeOnly) query = query.eq('is_active', true)
 
       const { data, error } = await query
 
@@ -310,14 +312,16 @@ export const promotionsRouter = router({
    */
   getById: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const ownerId = await getTenantOwnerId(ctx.userId, ctx.session.role, ctx.session.outletId)
+
       const { data, error } = await supabase
         .from('promotions')
         .select('*, created_by_user:users!created_by (id, name)')
         .eq('id', input.id)
         .single()
 
-      if (error) {
+      if (error || (ownerId && data?.created_by !== ownerId)) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Promotion not found',

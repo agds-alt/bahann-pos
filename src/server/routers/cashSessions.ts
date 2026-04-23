@@ -7,7 +7,15 @@ import { z } from 'zod'
 import { router, protectedProcedure } from '../trpc'
 import { supabaseAdmin as supabase } from '@/infra/supabase/server'
 import { createAuditLog } from '@/lib/audit'
+import { getTenantOwnerId, assertOutletBelongsToTenant } from '@/server/lib/tenant'
 import { TRPCError } from '@trpc/server'
+
+async function getTenantOutletIds(userId: string, role: string | undefined, outletId: string | undefined): Promise<string[]> {
+  const ownerId = await getTenantOwnerId(userId, role, outletId)
+  if (!ownerId) return []
+  const { data } = await supabase.from('outlets').select('id').eq('owner_id', ownerId)
+  return data?.map(o => o.id) ?? []
+}
 
 export const cashSessionsRouter = router({
   /**
@@ -21,6 +29,9 @@ export const cashSessionsRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      const ownerId = await getTenantOwnerId(ctx.userId, ctx.session.role, ctx.session.outletId)
+      if (ownerId) await assertOutletBelongsToTenant(input.outletId, ownerId)
+
       // Check if there's already an open session
       const { data: existing } = await supabase
         .from('cash_sessions')
@@ -80,14 +91,15 @@ export const cashSessionsRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      // Get session
+      const tenantOutlets = await getTenantOutletIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+
       const { data: session, error: sessionError } = await supabase
         .from('cash_sessions')
         .select('*')
         .eq('id', input.sessionId)
         .single()
 
-      if (sessionError || !session) {
+      if (sessionError || !session || !tenantOutlets.includes(session.outlet_id)) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Session not found',
@@ -196,7 +208,9 @@ export const cashSessionsRouter = router({
    */
   getCurrent: protectedProcedure
     .input(z.object({ outletId: z.string().uuid() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const ownerId = await getTenantOwnerId(ctx.userId, ctx.session.role, ctx.session.outletId)
+      if (ownerId) await assertOutletBelongsToTenant(input.outletId, ownerId)
       const { data } = await supabase
         .from('cash_sessions')
         .select(
@@ -218,7 +232,9 @@ export const cashSessionsRouter = router({
    */
   getReport: protectedProcedure
     .input(z.object({ sessionId: z.string().uuid() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const tenantOutlets = await getTenantOutletIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+
       const { data: session, error: sessionError } = await supabase
         .from('cash_sessions')
         .select(
@@ -232,7 +248,7 @@ export const cashSessionsRouter = router({
         .eq('id', input.sessionId)
         .single()
 
-      if (sessionError || !session) {
+      if (sessionError || !session || !tenantOutlets.includes(session.outlet_id)) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Session not found',
@@ -268,7 +284,10 @@ export const cashSessionsRouter = router({
         offset: z.number().default(0),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const tenantOutlets = await getTenantOutletIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+      if (tenantOutlets.length === 0) return { sessions: [], total: 0 }
+
       let query = supabase
         .from('cash_sessions')
         .select(
@@ -279,6 +298,7 @@ export const cashSessionsRouter = router({
         `,
           { count: 'estimated' }
         )
+        .in('outlet_id', tenantOutlets)
         .order('opened_at', { ascending: false })
 
       if (input.outletId) query = query.eq('outlet_id', input.outletId)

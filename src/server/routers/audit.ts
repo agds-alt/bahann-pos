@@ -6,7 +6,19 @@
 import { z } from 'zod'
 import { router, adminProcedure } from '../trpc'
 import { supabaseAdmin as supabase } from '@/infra/supabase/server'
+import { getTenantOwnerId } from '@/server/lib/tenant'
 import { TRPCError } from '@trpc/server'
+
+async function getTenantUserIds(userId: string, role: string | undefined, outletId: string | undefined): Promise<string[]> {
+  const ownerId = await getTenantOwnerId(userId, role, outletId)
+  if (!ownerId) return []
+  const { data: outlets } = await supabase.from('outlets').select('id').eq('owner_id', ownerId)
+  const outletIds = outlets?.map(o => o.id) ?? []
+  const { data: users } = await supabase.from('users').select('id').in('outlet_id', outletIds)
+  const userIds = users?.map(u => u.id) ?? []
+  if (!userIds.includes(ownerId)) userIds.push(ownerId)
+  return userIds
+}
 
 export const auditRouter = router({
   /**
@@ -25,13 +37,16 @@ export const auditRouter = router({
         offset: z.number().default(0),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const tenantUserIds = await getTenantUserIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+      if (tenantUserIds.length === 0) return { logs: [], total: 0 }
+
       let query = supabase
         .from('audit_logs')
         .select('*', { count: 'estimated' })
+        .in('user_id', tenantUserIds)
         .order('created_at', { ascending: false })
 
-      // Apply filters
       if (input.userId) query = query.eq('user_id', input.userId)
       if (input.action) query = query.eq('action', input.action)
       if (input.entityType) query = query.eq('entity_type', input.entityType)
@@ -68,14 +83,16 @@ export const auditRouter = router({
    */
   getById: adminProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const tenantUserIds = await getTenantUserIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+
       const { data, error } = await supabase
         .from('audit_logs')
         .select('*')
         .eq('id', input.id)
         .single()
 
-      if (error) {
+      if (error || !tenantUserIds.includes(data?.user_id)) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Audit log not found',
@@ -95,10 +112,14 @@ export const auditRouter = router({
         dateTo: z.string().optional(),
       }).optional()
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const tenantUserIds = await getTenantUserIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+      if (tenantUserIds.length === 0) return { totalLogs: 0, byAction: {}, byEntityType: {}, uniqueUsersCount: 0 }
+
       let query = supabase
         .from('audit_logs')
         .select('action, entity_type, user_id')
+        .in('user_id', tenantUserIds)
 
       if (input?.dateFrom) query = query.gte('created_at', input.dateFrom)
       if (input?.dateTo) query = query.lte('created_at', input.dateTo)
@@ -143,23 +164,26 @@ export const auditRouter = router({
   /**
    * Get distinct values for filters
    */
-  getFilterOptions: adminProcedure.query(async () => {
-    // Get distinct actions
+  getFilterOptions: adminProcedure.query(async ({ ctx }) => {
+    const tenantUserIds = await getTenantUserIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+    if (tenantUserIds.length === 0) return { actions: [], entityTypes: [], users: [] }
+
     const { data: actions } = await supabase
       .from('audit_logs')
       .select('action')
+      .in('user_id', tenantUserIds)
       .order('action')
 
-    // Get distinct entity types
     const { data: entityTypes } = await supabase
       .from('audit_logs')
       .select('entity_type')
+      .in('user_id', tenantUserIds)
       .order('entity_type')
 
-    // Get distinct users
     const { data: users } = await supabase
       .from('audit_logs')
       .select('user_id, user_email')
+      .in('user_id', tenantUserIds)
       .order('user_email')
 
     return {

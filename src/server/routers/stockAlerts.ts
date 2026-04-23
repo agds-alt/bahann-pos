@@ -7,7 +7,15 @@ import { z } from 'zod'
 import { router, protectedProcedure, adminProcedure } from '../trpc'
 import { supabaseAdmin as supabase } from '@/infra/supabase/server'
 import { createAuditLog } from '@/lib/audit'
+import { getTenantOwnerId } from '@/server/lib/tenant'
 import { TRPCError } from '@trpc/server'
+
+async function getTenantOutletIds(userId: string, role: string | undefined, outletId: string | undefined): Promise<string[]> {
+  const ownerId = await getTenantOwnerId(userId, role, outletId)
+  if (!ownerId) return []
+  const { data } = await supabase.from('outlets').select('id').eq('owner_id', ownerId)
+  return data?.map(o => o.id) ?? []
+}
 
 interface StockRow {
   product_id: string
@@ -26,11 +34,15 @@ export const stockAlertsRouter = router({
         outletId: z.string().uuid().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const tenantOutlets = await getTenantOutletIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+      if (tenantOutlets.length === 0) return []
+
       let query = supabase
         .from('stock_alerts')
         .select('*')
         .eq('is_acknowledged', false)
+        .in('outlet_id', tenantOutlets)
         .order('created_at', { ascending: false })
 
       if (input.outletId) {
@@ -72,6 +84,9 @@ export const stockAlertsRouter = router({
    */
   generate: adminProcedure.mutation(async ({ ctx }) => {
     try {
+      const tenantOutlets = await getTenantOutletIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+      if (tenantOutlets.length === 0) return { alertsGenerated: 0 }
+
       // Get latest stock for each product-outlet combination
       const { data: stockData, error: stockError } = await supabase
         .from('daily_stock')
@@ -82,6 +97,7 @@ export const stockAlertsRouter = router({
           stock_date,
           products!inner(id, reorder_point)
         `)
+        .in('outlet_id', tenantOutlets)
         .order('stock_date', { ascending: false })
 
       if (stockError) {
@@ -165,6 +181,12 @@ export const stockAlertsRouter = router({
   acknowledge: protectedProcedure
     .input(z.object({ alertId: z.string().uuid() }))
     .mutation(async ({ input, ctx }) => {
+      const tenantOutlets = await getTenantOutletIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+      const { data: alert } = await supabase.from('stock_alerts').select('outlet_id').eq('id', input.alertId).single()
+      if (!alert || !tenantOutlets.includes(alert.outlet_id)) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Alert not found' })
+      }
+
       const { error } = await supabase
         .from('stock_alerts')
         .update({
@@ -204,6 +226,9 @@ export const stockAlertsRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      const tenantOutlets = await getTenantOutletIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+      if (tenantOutlets.length === 0) return { success: true }
+
       let query = supabase
         .from('stock_alerts')
         .update({
@@ -213,6 +238,7 @@ export const stockAlertsRouter = router({
         })
         .eq('product_id', input.productId)
         .eq('is_acknowledged', false)
+        .in('outlet_id', tenantOutlets)
 
       if (input.outletId) {
         query = query.eq('outlet_id', input.outletId)
@@ -244,7 +270,10 @@ export const stockAlertsRouter = router({
         offset: z.number().default(0),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const tenantOutlets = await getTenantOutletIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+      if (tenantOutlets.length === 0) return { alerts: [], total: 0 }
+
       let query = supabase
         .from('stock_alerts')
         .select(
@@ -256,6 +285,7 @@ export const stockAlertsRouter = router({
         `,
           { count: 'exact' }
         )
+        .in('outlet_id', tenantOutlets)
         .order('created_at', { ascending: false })
 
       if (input.outletId) query = query.eq('outlet_id', input.outletId)
@@ -289,11 +319,15 @@ export const stockAlertsRouter = router({
         outletId: z.string().uuid().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const tenantOutlets = await getTenantOutletIds(ctx.userId, ctx.session.role, ctx.session.outletId)
+      if (tenantOutlets.length === 0) return { total: 0, outOfStock: 0, lowStock: 0, reorderSuggested: 0 }
+
       let query = supabase
         .from('stock_alerts')
         .select('alert_type, is_acknowledged')
         .eq('is_acknowledged', false)
+        .in('outlet_id', tenantOutlets)
 
       if (input.outletId) {
         query = query.eq('outlet_id', input.outletId)
@@ -332,6 +366,12 @@ export const stockAlertsRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      const ownerId = await getTenantOwnerId(ctx.userId, ctx.session.role, ctx.session.outletId)
+      if (ownerId) {
+        const { data: prod } = await supabase.from('products').select('owner_id').eq('id', input.productId).single()
+        if (!prod || prod.owner_id !== ownerId) throw new TRPCError({ code: 'FORBIDDEN', message: 'Access denied' })
+      }
+
       const { productId, ...updates } = input
 
       const { error } = await supabase
