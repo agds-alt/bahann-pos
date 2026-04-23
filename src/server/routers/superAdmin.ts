@@ -345,4 +345,39 @@ export const superAdminRouter = router({
 
       return { success: true }
     }),
+
+  uploadQris: superAdminProcedure
+    .input(z.object({
+      base64: z.string(),
+      fileName: z.string(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const ext = input.fileName.split('.').pop() || 'png'
+      const filePath = `platform/qris.${ext}`
+
+      const buffer = Buffer.from(input.base64, 'base64')
+      const { error: uploadError } = await supabase.storage
+        .from('payment-proofs')
+        .upload(filePath, buffer, {
+          contentType: `image/${ext === 'png' ? 'png' : 'jpeg'}`,
+          upsert: true,
+        })
+
+      if (uploadError) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `Upload gagal: ${uploadError.message}` })
+
+      const { data: urlData } = supabase.storage
+        .from('payment-proofs')
+        .getPublicUrl(filePath)
+
+      await supabase
+        .from('platform_settings')
+        .upsert({
+          key: 'qris_image_url',
+          value: urlData.publicUrl,
+          updated_at: new Date().toISOString(),
+          updated_by: ctx.userId,
+        })
+
+      return { url: urlData.publicUrl }
+    }),
 })

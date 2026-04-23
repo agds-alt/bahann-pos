@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { trpc } from '@/lib/trpc/client'
 import { QRCodeSVG } from 'qrcode.react'
 import {
-  Save, Wallet, Building2, MessageCircle, QrCode, CheckCircle, Loader2,
+  Save, Wallet, Building2, MessageCircle, QrCode, CheckCircle, Loader2, Upload,
 } from 'lucide-react'
 
 function SettingField({ label, value, onChange, placeholder, type = 'text', hint }: {
@@ -46,6 +46,7 @@ export default function AdminSettingsPage() {
   })
 
   const updateMutation = trpc.superAdmin.updateSettings.useMutation()
+  const uploadQrisMutation = trpc.superAdmin.uploadQris.useMutation()
 
   const [form, setForm] = useState({
     solana_wallet_address: '',
@@ -179,18 +180,41 @@ export default function AdminSettingsPage() {
             <h2 className="text-sm font-bold text-gray-900 dark:text-white">QRIS</h2>
           </div>
 
-          <SettingField
-            label="URL Gambar QRIS"
-            value={form.qris_image_url}
-            onChange={v => setForm(f => ({ ...f, qris_image_url: v }))}
-            placeholder="https://..."
-            hint="Upload gambar QRIS ke storage dan paste URL-nya di sini"
-          />
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Upload Gambar QRIS</label>
+            <div className="flex items-center gap-3">
+              <input type="file" id="qris-upload" accept="image/*" className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  if (file.size > 5 * 1024 * 1024) { alert('Maksimal 5MB'); return }
+                  const reader = new FileReader()
+                  reader.onload = async () => {
+                    const base64 = (reader.result as string).split(',')[1]
+                    const result = await uploadQrisMutation.mutateAsync({ base64, fileName: file.name })
+                    setForm(f => ({ ...f, qris_image_url: result.url }))
+                  }
+                  reader.readAsDataURL(file)
+                }}
+              />
+              <label htmlFor="qris-upload"
+                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800 rounded-xl cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors">
+                <Upload className="w-4 h-4" />
+                {uploadQrisMutation.isPending ? 'Mengupload...' : 'Pilih Gambar'}
+              </label>
+              {form.qris_image_url && (
+                <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                  <CheckCircle className="w-3.5 h-3.5" /> Terupload
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5">Format: JPG/PNG, maks 5MB. Gambar disimpan ke Supabase Storage.</p>
+          </div>
 
           {form.qris_image_url && (
             <div className="pt-1">
               <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Preview QRIS</p>
-              <img src={form.qris_image_url} alt="QRIS" className="w-40 h-40 object-contain bg-white rounded-xl border border-gray-200 dark:border-gray-600 p-2" />
+              <img src={form.qris_image_url} alt="QRIS" className="w-48 h-48 object-contain bg-white rounded-xl border border-gray-200 dark:border-gray-600 p-2" />
             </div>
           )}
         </div>
