@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { trpc } from '@/lib/trpc/client'
-import { Gift, CreditCard, ClipboardList, CheckCircle, Check, Upload, Clock, XCircle, Image, ChevronDown, Copy, Wallet, ExternalLink } from 'lucide-react'
+import { Gift, CreditCard, ClipboardList, CheckCircle, Check, Upload, Clock, XCircle, Image, ChevronDown, Copy, Wallet, ExternalLink, PartyPopper } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 
 const PLANS = [
@@ -120,7 +120,7 @@ function BillingHistory() {
 
 // ─── User Self-Service View ────────────────────────────────────────────────────
 function UserUpgradeView() {
-  const { data: planData, isLoading } = trpc.auth.getPlan.useQuery()
+  const { data: planData, isLoading, refetch: refetchPlan } = trpc.auth.getPlan.useQuery()
   const { data: myRequests, refetch: refetchRequests } = trpc.paymentRequests.myRequests.useQuery()
   const { data: paymentConfig } = trpc.paymentRequests.paymentConfig.useQuery()
   const createMutation = trpc.paymentRequests.create.useMutation({ onSuccess: () => refetchRequests() })
@@ -135,7 +135,30 @@ function UserUpgradeView() {
   const [cryptoToken, setCryptoToken] = useState<'usdc' | 'usdt' | 'sol'>('usdc')
   const [uploading, setUploading] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
+  const [successModal, setSuccessModal] = useState<{ plan: string } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const prevPendingRef = useRef<string | null>(null)
+
+  // Auto-poll every 15s when there's a pending request
+  useEffect(() => {
+    if (!pendingRequest) return
+    const interval = setInterval(() => { refetchRequests() }, 15000)
+    return () => clearInterval(interval)
+  }, [pendingRequest, refetchRequests])
+
+  // Detect when a pending request gets approved
+  useEffect(() => {
+    if (pendingRequest) {
+      prevPendingRef.current = pendingRequest.id
+    } else if (prevPendingRef.current && myRequests) {
+      const justApproved = myRequests.find(r => r.id === prevPendingRef.current && r.status === 'approved')
+      if (justApproved) {
+        setSuccessModal({ plan: justApproved.plan })
+        refetchPlan()
+      }
+      prevPendingRef.current = null
+    }
+  }, [pendingRequest, myRequests, refetchPlan])
 
   const bankName = paymentConfig?.bank?.name || ''
   const bankAcct = paymentConfig?.bank?.account || ''
@@ -197,6 +220,30 @@ function UserUpgradeView() {
 
   return (
     <div className="space-y-4 md:space-y-6">
+      {/* Success Modal */}
+      {successModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={e => e.target === e.currentTarget && setSuccessModal(null)}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-8 border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center">
+            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
+              <PartyPopper className="w-8 h-8 text-green-500" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Pembayaran Diterima!</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+              Selamat! Plan Anda telah diupgrade ke
+            </p>
+            <PlanBadge plan={successModal.plan} />
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
+              Fitur baru sudah aktif. Selamat menikmati!
+            </p>
+            <button onClick={() => setSuccessModal(null)}
+              className="mt-6 w-full py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-sm font-semibold text-white transition-colors">
+              Oke, Mantap!
+            </button>
+          </div>
+        </div>
+      )}
+
       <PageHeader
         title="Langganan"
         subtitle="Kelola dan upgrade paket berlangganan Anda."
