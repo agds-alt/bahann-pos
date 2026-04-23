@@ -11,11 +11,34 @@ import {
 import { logger } from '@/lib/logger'
 
 export const paymentRequestsRouter = router({
+  previewCryptoAmount: protectedProcedure
+    .input(z.object({
+      plan: z.enum(['warung', 'starter', 'professional', 'business', 'enterprise']),
+      token: z.enum(['usdc', 'usdt', 'sol']),
+    }))
+    .mutation(async ({ input }) => {
+      const basePriceUsd = CRYPTO_PRICES_USD[input.plan]
+      if (!basePriceUsd) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Plan tidak tersedia untuk crypto.' })
+      }
+
+      let basePrice = basePriceUsd
+      if (input.token === 'sol') {
+        const solPrice = await fetchSolPriceUsd()
+        if (!solPrice) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Gagal mengambil harga SOL.' })
+        basePrice = parseFloat((basePriceUsd / solPrice).toFixed(4))
+      }
+
+      const cryptoAmount = generateUniqueAmount(basePrice)
+      return { cryptoAmount, token: input.token }
+    }),
+
   create: protectedProcedure
     .input(z.object({
       plan: z.enum(['warung', 'starter', 'professional', 'business', 'enterprise']),
       amount: z.number().int().min(0),
       paymentMethod: z.enum(['bank_transfer', 'qris', 'crypto_usdc', 'crypto_usdt', 'crypto_sol']).default('bank_transfer'),
+      cryptoAmount: z.number().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const { data: existing } = await supabase
@@ -37,32 +60,22 @@ export const paymentRequestsRouter = router({
       let cryptoToken: string | null = null
 
       if (isCrypto) {
-        const basePriceUsd = CRYPTO_PRICES_USD[input.plan]
-        if (!basePriceUsd) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Plan ini tidak tersedia untuk pembayaran crypto.' })
-        }
-
         cryptoToken = input.paymentMethod.replace('crypto_', '')
 
-        let basePrice = basePriceUsd
-        if (cryptoToken === 'sol') {
-          const solPrice = await fetchSolPriceUsd()
-          if (!solPrice) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Gagal mengambil harga SOL.' })
-          basePrice = parseFloat((basePriceUsd / solPrice).toFixed(4))
-        }
-
-        let attempts = 0
-        while (attempts < 10) {
+        if (input.cryptoAmount) {
+          cryptoAmount = input.cryptoAmount
+        } else {
+          const basePriceUsd = CRYPTO_PRICES_USD[input.plan]
+          if (!basePriceUsd) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Plan ini tidak tersedia untuk pembayaran crypto.' })
+          }
+          let basePrice = basePriceUsd
+          if (cryptoToken === 'sol') {
+            const solPrice = await fetchSolPriceUsd()
+            if (!solPrice) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Gagal mengambil harga SOL.' })
+            basePrice = parseFloat((basePriceUsd / solPrice).toFixed(4))
+          }
           cryptoAmount = generateUniqueAmount(basePrice)
-          const { data: collision } = await supabase
-            .from('payment_requests')
-            .select('id')
-            .eq('status', 'pending')
-            .eq('crypto_token', cryptoToken)
-            .eq('crypto_amount', cryptoAmount)
-            .single()
-          if (!collision) break
-          attempts++
         }
       }
 

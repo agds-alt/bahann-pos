@@ -126,6 +126,7 @@ function UserUpgradeView() {
   const createMutation = trpc.paymentRequests.create.useMutation({ onSuccess: () => refetchRequests() })
   const uploadMutation = trpc.paymentRequests.uploadProof.useMutation({ onSuccess: () => refetchRequests() })
   const checkPaymentMutation = trpc.paymentRequests.checkMyPayment.useMutation()
+  const previewAmountMutation = trpc.paymentRequests.previewCryptoAmount.useMutation()
 
   const currentPlan = planData?.plan || 'free'
   const currentIndex = PLANS.findIndex(p => p.value === currentPlan)
@@ -137,6 +138,7 @@ function UserUpgradeView() {
   const [uploading, setUploading] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
   const [successModal, setSuccessModal] = useState<{ plan: string } | null>(null)
+  const [previewAmount, setPreviewAmount] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const prevPendingRef = useRef<string | null>(null)
 
@@ -178,6 +180,15 @@ function UserUpgradeView() {
   const cryptoPriceUsd = checkoutPlan ? paymentConfig?.crypto?.prices?.[checkoutPlan] : null
   const actualPaymentMethod = isCrypto ? `crypto_${cryptoToken}` as const : paymentMethod
 
+  useEffect(() => {
+    if (!checkoutPlan || !isCrypto) { setPreviewAmount(null); return }
+    setPreviewAmount(null)
+    previewAmountMutation.mutateAsync({
+      plan: checkoutPlan as any,
+      token: cryptoToken,
+    }).then(r => setPreviewAmount(r.cryptoAmount)).catch(() => {})
+  }, [checkoutPlan, cryptoToken, isCrypto]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text)
     setCopied(key)
@@ -196,6 +207,7 @@ function UserUpgradeView() {
         plan: checkoutPlan as any,
         amount: checkoutPlanData.price as number,
         paymentMethod: actualPaymentMethod as any,
+        ...(isCrypto && previewAmount ? { cryptoAmount: previewAmount } : {}),
       })
     } catch { /* error shown via mutation state */ }
   }
@@ -467,22 +479,30 @@ function UserUpgradeView() {
                 {/* Amount info */}
                 <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
                   <p className="text-xs text-purple-600 dark:text-purple-400 mb-1">
-                    Harga ({cryptoToken.toUpperCase()}):
+                    Jumlah yang harus dikirim ({cryptoToken.toUpperCase()}):
                   </p>
-                  <p className="text-lg font-bold text-purple-800 dark:text-purple-200">
-                    {cryptoToken === 'sol'
-                      ? paymentConfig.crypto.solPriceUsd && paymentConfig.crypto.solPriceUsd > 0
-                        ? `≈ ${(cryptoPriceUsd / paymentConfig.crypto.solPriceUsd).toFixed(6)} SOL`
-                        : 'Mengambil harga SOL...'
-                      : `${cryptoPriceUsd.toFixed(2)} ${cryptoToken.toUpperCase()}`}
-                  </p>
-                  {cryptoToken === 'sol' && paymentConfig.crypto.solPriceUsd > 0 && (
-                    <p className="text-[11px] text-purple-400 mt-0.5">
-                      1 SOL ≈ ${paymentConfig.crypto.solPriceUsd.toFixed(2)} USD
-                    </p>
+                  {previewAmount ? (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold text-purple-800 dark:text-purple-200">
+                          {previewAmount.toFixed(cryptoToken === 'sol' ? 8 : 4)} {cryptoToken.toUpperCase()}
+                        </span>
+                        <button onClick={() => copyToClipboard(previewAmount.toFixed(cryptoToken === 'sol' ? 8 : 4), 'amount')}
+                          className="p-1 rounded hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors">
+                          {copied === 'amount' ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-purple-400" />}
+                        </button>
+                      </div>
+                      {cryptoToken === 'sol' && paymentConfig.crypto.solPriceUsd > 0 && (
+                        <p className="text-[11px] text-purple-400 mt-0.5">
+                          1 SOL ≈ ${paymentConfig.crypto.solPriceUsd.toFixed(2)} USD
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-purple-400 animate-pulse">Menghitung jumlah...</p>
                   )}
                   <p className="text-[11px] text-purple-500 dark:text-purple-400 mt-1">
-                    Jumlah persis akan diberikan setelah submit. Kirim jumlah persis agar terdeteksi otomatis.
+                    Kirim jumlah <strong>persis</strong> di atas agar terdeteksi otomatis.
                   </p>
                 </div>
 
@@ -498,19 +518,19 @@ function UserUpgradeView() {
             <div className="space-y-2 mb-4">
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {isCrypto
-                  ? 'Setelah submit, Anda akan mendapat jumlah unik untuk dikirim. Plan diaktifkan otomatis setelah terdeteksi on-chain.'
+                  ? 'Kirim jumlah persis di atas, lalu klik konfirmasi. Plan diaktifkan otomatis setelah terdeteksi on-chain.'
                   : 'Setelah transfer, upload bukti pembayaran. Plan akan diaktifkan setelah admin memverifikasi.'}
               </p>
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => setCheckoutPlan(null)}
+              <button onClick={() => { setCheckoutPlan(null); setPreviewAmount(null) }}
                 className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                 Batal
               </button>
-              <button onClick={handleSubmitRequest} disabled={createMutation.isPending}
+              <button onClick={handleSubmitRequest} disabled={createMutation.isPending || (isCrypto && !previewAmount)}
                 className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-sm font-semibold text-white transition-colors disabled:opacity-50">
-                {createMutation.isPending ? 'Memproses...' : 'Saya Sudah Transfer'}
+                {createMutation.isPending ? 'Memproses...' : isCrypto ? 'Saya Sudah Kirim' : 'Saya Sudah Transfer'}
               </button>
             </div>
 
