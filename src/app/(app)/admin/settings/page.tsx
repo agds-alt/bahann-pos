@@ -123,7 +123,7 @@ export default function AdminSettingsPage() {
               <div className="flex items-start gap-4">
                 <div className="bg-white p-3 rounded-xl border border-gray-200 dark:border-gray-600 inline-block">
                   <QRCodeSVG
-                    value={`solana:${form.solana_wallet_address}`}
+                    value={form.solana_wallet_address}
                     size={140}
                     level="M"
                     bgColor="#ffffff"

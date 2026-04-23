@@ -278,7 +278,7 @@ function UserUpgradeView() {
                   <div className="flex justify-center">
                     <div className="bg-white p-2.5 rounded-xl border border-purple-200 dark:border-purple-700">
                       <QRCodeSVG
-                        value={`solana:${paymentConfig!.crypto.walletAddress}`}
+                        value={paymentConfig!.crypto.walletAddress}
                         size={120}
                         level="M"
                         bgColor="#ffffff"
@@ -436,7 +436,7 @@ function UserUpgradeView() {
                 <div className="flex flex-col items-center gap-3">
                   <div className="bg-white p-3 rounded-xl border border-gray-200 dark:border-gray-600">
                     <QRCodeSVG
-                      value={`solana:${paymentConfig!.crypto.walletAddress}`}
+                      value={paymentConfig!.crypto.walletAddress}
                       size={160}
                       level="M"
                       bgColor="#ffffff"
