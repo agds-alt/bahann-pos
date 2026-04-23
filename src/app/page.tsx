@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, type ReactNode } from 'react'
+import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useTheme } from '@/lib/theme/ThemeContext'
 import {
@@ -9,6 +9,26 @@ import {
   Store, UtensilsCrossed, Coffee, Shirt, Pill, ShoppingBag,
   ArrowRight,
 } from 'lucide-react'
+
+const SECTION_COLORS = {
+  light: [
+    [240, 253, 244],  // hero:     green-50
+    [239, 246, 255],  // features: blue-50
+    [255, 255, 255],  // pricing:  white
+    [236, 253, 245],  // faq:      emerald-50
+  ],
+  dark: [
+    [5, 20, 10],      // hero:     deep green
+    [10, 15, 30],     // features: deep blue
+    [3, 7, 18],       // pricing:  gray-950
+    [5, 25, 20],      // faq:      deep teal
+  ],
+}
+
+function lerpColor(a: number[], b: number[], t: number): string {
+  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)))
+  return `rgb(${clamp(a[0] + (b[0] - a[0]) * t)}, ${clamp(a[1] + (b[1] - a[1]) * t)}, ${clamp(a[2] + (b[2] - a[2]) * t)})`
+}
 
 const WA_NUMBER = '6287874415491'
 function buildWaLink(msg: string) {
@@ -94,10 +114,42 @@ export default function LandingPage() {
   const [chatMessage, setChatMessage] = useState('')
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [quickActionsVisible, setQuickActionsVisible] = useState(true)
+  const [bgColor, setBgColor] = useState('')
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const sectionRefs = useRef<(HTMLElement | null)[]>([])
   const { theme, toggleTheme } = useTheme()
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatMessages])
+
+  const updateBg = useCallback(() => {
+    const palette = theme === 'dark' ? SECTION_COLORS.dark : SECTION_COLORS.light
+    const sections = sectionRefs.current.filter(Boolean) as HTMLElement[]
+    if (sections.length === 0) return
+
+    const scrollY = window.scrollY + window.innerHeight * 0.4
+
+    for (let i = 0; i < sections.length - 1; i++) {
+      const curr = sections[i]
+      const next = sections[i + 1]
+      if (scrollY >= curr.offsetTop && scrollY < next.offsetTop) {
+        const progress = (scrollY - curr.offsetTop) / (next.offsetTop - curr.offsetTop)
+        setBgColor(lerpColor(palette[i], palette[i + 1], progress))
+        return
+      }
+    }
+
+    if (scrollY < sections[0].offsetTop) {
+      setBgColor(lerpColor(palette[0], palette[0], 0))
+    } else {
+      setBgColor(lerpColor(palette[palette.length - 1], palette[palette.length - 1], 0))
+    }
+  }, [theme])
+
+  useEffect(() => {
+    updateBg()
+    window.addEventListener('scroll', updateBg, { passive: true })
+    return () => window.removeEventListener('scroll', updateBg)
+  }, [updateBg])
 
   function openWa(msg: string) { window.open(buildWaLink(msg), '_blank', 'noopener,noreferrer') }
 
@@ -125,10 +177,10 @@ export default function LandingPage() {
   const feat = FEATURES[activeFeature]
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+    <div className="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-500" style={bgColor ? { backgroundColor: bgColor } : undefined}>
 
       {/* ── NAVBAR ── */}
-      <header className="sticky top-0 z-50 bg-white/90 dark:bg-gray-950/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
+      <header className="sticky top-0 z-50 backdrop-blur-md border-b border-gray-100/50 dark:border-gray-800/50" style={{ backgroundColor: bgColor ? bgColor.replace('rgb(', 'rgba(').replace(')', ', 0.85)') : undefined }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
           <div className="flex items-center gap-2">
             <img src="/logo.svg" alt="Laku POS" className="w-7 h-7" />
@@ -154,7 +206,7 @@ export default function LandingPage() {
       </header>
 
       {/* ── HERO (compact — includes industry pills + 3 steps + trust badges) ── */}
-      <section className="pt-12 md:pt-16 pb-10 md:pb-14 px-4 bg-gradient-to-b from-green-50 to-white dark:from-green-950/20 dark:to-gray-950">
+      <section ref={el => { sectionRefs.current[0] = el }} className="pt-12 md:pt-16 pb-10 md:pb-14 px-4">
         <div className="max-w-5xl mx-auto">
           {/* Headline + CTA */}
           <div className="text-center max-w-3xl mx-auto">
@@ -251,7 +303,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURES (tabbed — one viewport) ── */}
-      <section className="py-12 md:py-16 px-4 bg-gray-50 dark:bg-gray-900" id="fitur">
+      <section ref={el => { sectionRefs.current[1] = el }} className="py-12 md:py-16 px-4" id="fitur">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-extrabold mb-2">Semua yang Warung Butuhkan</h2>
@@ -311,7 +363,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── PRICING (compact) ── */}
-      <section className="py-12 md:py-16 px-4 bg-white dark:bg-gray-950" id="harga">
+      <section ref={el => { sectionRefs.current[2] = el }} className="py-12 md:py-16 px-4" id="harga">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-extrabold mb-2">Harga Transparan</h2>
@@ -387,7 +439,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FAQ (compact — 4 items) ── */}
-      <section className="py-12 md:py-16 px-4 bg-gray-50 dark:bg-gray-900" id="faq">
+      <section ref={el => { sectionRefs.current[3] = el }} className="py-12 md:py-16 px-4" id="faq">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-extrabold text-center mb-6">Pertanyaan Umum</h2>
           <div className="space-y-2">
