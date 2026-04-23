@@ -166,6 +166,83 @@ function extractTokenTransfer(
   return null
 }
 
+export async function getRecentSolTransfers(
+  sinceTimestamp?: number,
+): Promise<DetectedTransfer[]> {
+  const connection = await getConnection()
+  const wallet = await getWalletAddress()
+
+  const signatures = await connection.getSignaturesForAddress(wallet, { limit: 30 })
+
+  const validSigs = sinceTimestamp
+    ? signatures.filter(s => s.blockTime && s.blockTime > sinceTimestamp && !s.err)
+    : signatures.filter(s => !s.err)
+
+  if (validSigs.length === 0) return []
+
+  const transfers: DetectedTransfer[] = []
+
+  for (const sig of validSigs) {
+    try {
+      const tx = await connection.getParsedTransaction(sig.signature, {
+        maxSupportedTransactionVersion: 0,
+      })
+      if (!tx) continue
+
+      const found = extractSolTransfer(tx, wallet.toBase58())
+      if (found) {
+        transfers.push({
+          ...found,
+          signature: sig.signature,
+          timestamp: sig.blockTime || 0,
+        })
+      }
+    } catch (err) {
+      logger.error(`Failed to parse SOL tx ${sig.signature}`, err)
+    }
+  }
+
+  return transfers
+}
+
+function extractSolTransfer(
+  tx: ParsedTransactionWithMeta,
+  destinationWallet: string,
+): Omit<DetectedTransfer, 'signature' | 'timestamp'> | null {
+  const instructions = tx.transaction.message.instructions
+  for (const ix of instructions) {
+    if (!('parsed' in ix)) continue
+    if (ix.program !== 'system') continue
+    if (ix.parsed?.type !== 'transfer') continue
+
+    const info = ix.parsed.info
+    if (info.destination !== destinationWallet) continue
+
+    const amount = info.lamports / 1_000_000_000
+
+    return {
+      amount,
+      sender: info.source || 'unknown',
+      token: 'sol',
+    }
+  }
+  return null
+}
+
+export async function fetchSolPriceUsd(): Promise<number> {
+  try {
+    const res = await fetch(
+      'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd',
+      { next: { revalidate: 300 } },
+    )
+    const data = await res.json()
+    return data?.solana?.usd || 0
+  } catch (err) {
+    logger.error('Failed to fetch SOL price', err)
+    return 0
+  }
+}
+
 export function matchTransferToAmount(
   transferAmount: number,
   expectedAmount: number,

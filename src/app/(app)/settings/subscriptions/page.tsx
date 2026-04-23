@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { trpc } from '@/lib/trpc/client'
 import { Gift, CreditCard, ClipboardList, CheckCircle, Check, Upload, Clock, XCircle, Image, ChevronDown, Copy, Wallet, ExternalLink } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 
 const PLANS = [
   {
@@ -130,7 +131,8 @@ function UserUpgradeView() {
   const pendingRequest = myRequests?.find(r => r.status === 'pending')
 
   const [checkoutPlan, setCheckoutPlan] = useState<string | null>(null)
-  const [paymentMethod, setPaymentMethod] = useState<'bank_transfer' | 'qris' | 'crypto_usdc' | 'crypto_usdt'>('bank_transfer')
+  const [paymentMethod, setPaymentMethod] = useState<'bank_transfer' | 'qris' | 'crypto'>('bank_transfer')
+  const [cryptoToken, setCryptoToken] = useState<'usdc' | 'usdt' | 'sol'>('usdc')
   const [uploading, setUploading] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -142,8 +144,9 @@ function UserUpgradeView() {
   const qrisImageUrl = paymentConfig?.qrisImageUrl || ''
 
   const checkoutPlanData = PLANS.find(p => p.value === checkoutPlan)
-  const isCrypto = paymentMethod === 'crypto_usdc' || paymentMethod === 'crypto_usdt'
+  const isCrypto = paymentMethod === 'crypto'
   const cryptoPriceUsd = checkoutPlan ? paymentConfig?.crypto?.prices?.[checkoutPlan] : null
+  const actualPaymentMethod = isCrypto ? `crypto_${cryptoToken}` as const : paymentMethod
 
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text)
@@ -162,7 +165,7 @@ function UserUpgradeView() {
       await createMutation.mutateAsync({
         plan: checkoutPlan as any,
         amount: checkoutPlanData.price as number,
-        paymentMethod,
+        paymentMethod: actualPaymentMethod as any,
       })
     } catch { /* error shown via mutation state */ }
   }
@@ -223,9 +226,22 @@ function UserUpgradeView() {
               </p>
 
               {pendingRequest.crypto_token && pendingRequest.crypto_amount && paymentConfig?.crypto?.walletAddress ? (
-                <div className="mt-3 space-y-2">
+                <div className="mt-3 space-y-3">
+                  {/* QR Code */}
+                  <div className="flex justify-center">
+                    <div className="bg-white p-2.5 rounded-xl border border-purple-200 dark:border-purple-700">
+                      <QRCodeSVG
+                        value={`solana:${paymentConfig!.crypto.walletAddress}`}
+                        size={120}
+                        level="M"
+                        bgColor="#ffffff"
+                        fgColor="#000000"
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <p className="text-xs text-purple-600 dark:text-purple-400 mb-1">Kirim ke wallet (Solana):</p>
+                    <p className="text-xs text-purple-600 dark:text-purple-400 mb-1">Kirim {pendingRequest.crypto_token.toUpperCase()} ke wallet (Solana):</p>
                     <div className="flex items-center gap-2">
                       <code className="text-xs bg-white dark:bg-gray-900 px-2 py-1.5 rounded-lg border border-purple-200 dark:border-purple-700 text-gray-900 dark:text-gray-100 break-all font-mono flex-1">
                         {paymentConfig!.crypto.walletAddress}
@@ -294,13 +310,12 @@ function UserUpgradeView() {
             {/* Payment method */}
             <div className="space-y-2 mb-5">
               <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Metode Pembayaran</label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {([
                   { key: 'bank_transfer' as const, label: 'Transfer Bank' },
                   { key: 'qris' as const, label: 'QRIS' },
                   ...(paymentConfig?.crypto?.enabled && cryptoPriceUsd ? [
-                    { key: 'crypto_usdc' as const, label: 'USDC (SOL)' },
-                    { key: 'crypto_usdt' as const, label: 'USDT (SOL)' },
+                    { key: 'crypto' as const, label: 'Crypto' },
                   ] : []),
                 ]).map(m => (
                   <button key={m.key} onClick={() => setPaymentMethod(m.key)}
@@ -347,41 +362,73 @@ function UserUpgradeView() {
             )}
 
             {isCrypto && paymentConfig?.crypto?.walletAddress && cryptoPriceUsd && (
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-5 space-y-3">
-                <div className="flex items-center gap-2 mb-1">
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-5 space-y-4">
+                <div className="flex items-center gap-2">
                   <Wallet className="w-4 h-4 text-purple-500" />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                    Bayar dengan {paymentMethod === 'crypto_usdc' ? 'USDC' : 'USDT'} (Solana)
-                  </span>
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Crypto Payment (Solana)</span>
                 </div>
 
+                {/* Token selector */}
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Kirim ke wallet address:</p>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 text-xs bg-white dark:bg-gray-900 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 break-all font-mono">
-                      {paymentConfig!.crypto.walletAddress}
-                    </code>
-                    <button onClick={() => copyToClipboard(paymentConfig!.crypto.walletAddress, 'wallet')}
-                      className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex-shrink-0">
-                      {copied === 'wallet' ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-gray-400" />}
-                    </button>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">Pilih token:</p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {(['usdc', 'usdt', 'sol'] as const).map(t => (
+                      <button key={t} onClick={() => setCryptoToken(t)}
+                        className={`py-2 rounded-lg text-xs font-bold transition-colors ${
+                          cryptoToken === t
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-purple-400'
+                        }`}>
+                        {t.toUpperCase()}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
+                {/* QR Code + Wallet Address */}
+                <div className="flex flex-col items-center gap-3">
+                  <div className="bg-white p-3 rounded-xl border border-gray-200 dark:border-gray-600">
+                    <QRCodeSVG
+                      value={`solana:${paymentConfig!.crypto.walletAddress}`}
+                      size={160}
+                      level="M"
+                      bgColor="#ffffff"
+                      fgColor="#000000"
+                    />
+                  </div>
+                  <div className="w-full">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Wallet address:</p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 text-xs bg-white dark:bg-gray-900 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 break-all font-mono">
+                        {paymentConfig!.crypto.walletAddress}
+                      </code>
+                      <button onClick={() => copyToClipboard(paymentConfig!.crypto.walletAddress, 'wallet')}
+                        className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex-shrink-0">
+                        {copied === 'wallet' ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-gray-400" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Amount info */}
                 <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                  <p className="text-xs text-purple-600 dark:text-purple-400 mb-1">Jumlah yang harus dikirim (persis):</p>
+                  <p className="text-xs text-purple-600 dark:text-purple-400 mb-1">
+                    Harga ({cryptoToken.toUpperCase()}):
+                  </p>
                   <p className="text-lg font-bold text-purple-800 dark:text-purple-200">
-                    Akan ditampilkan setelah submit
+                    {cryptoToken === 'sol' && paymentConfig.crypto.solPriceUsd
+                      ? `≈ ${(cryptoPriceUsd / paymentConfig.crypto.solPriceUsd).toFixed(4)} SOL`
+                      : `${cryptoPriceUsd.toFixed(2)} ${cryptoToken.toUpperCase()}`}
                   </p>
                   <p className="text-[11px] text-purple-500 dark:text-purple-400 mt-1">
-                    Kirim jumlah persis agar pembayaran terdeteksi otomatis
+                    Jumlah persis akan diberikan setelah submit. Kirim jumlah persis agar terdeteksi otomatis.
                   </p>
                 </div>
 
                 <div className="flex items-start gap-2 p-2 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg border border-yellow-200 dark:border-yellow-800">
                   <Clock className="w-3.5 h-3.5 text-yellow-600 flex-shrink-0 mt-0.5" />
                   <p className="text-[11px] text-yellow-700 dark:text-yellow-300">
-                    Pembayaran akan diverifikasi otomatis dalam 2-5 menit setelah konfirmasi on-chain. Pastikan kirim di jaringan <strong>Solana</strong>.
+                    Pembayaran diverifikasi otomatis dalam 2-5 menit setelah konfirmasi on-chain. Pastikan kirim di jaringan <strong>Solana</strong>.
                   </p>
                 </div>
               </div>

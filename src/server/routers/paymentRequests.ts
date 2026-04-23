@@ -4,14 +4,14 @@ import { supabaseAdmin as supabase } from '@/infra/supabase/server'
 import { createAuditLog } from '@/lib/audit'
 import { TRPCError } from '@trpc/server'
 import { sendPlanUpgradeEmail } from '@/lib/email'
-import { CRYPTO_PRICES_USD, generateUniqueAmount } from '@/lib/solana'
+import { CRYPTO_PRICES_USD, generateUniqueAmount, fetchSolPriceUsd } from '@/lib/solana'
 
 export const paymentRequestsRouter = router({
   create: protectedProcedure
     .input(z.object({
       plan: z.enum(['warung', 'starter', 'professional', 'business', 'enterprise']),
       amount: z.number().int().min(0),
-      paymentMethod: z.enum(['bank_transfer', 'qris', 'crypto_usdc', 'crypto_usdt']).default('bank_transfer'),
+      paymentMethod: z.enum(['bank_transfer', 'qris', 'crypto_usdc', 'crypto_usdt', 'crypto_sol']).default('bank_transfer'),
     }))
     .mutation(async ({ input, ctx }) => {
       const { data: existing } = await supabase
@@ -28,16 +28,24 @@ export const paymentRequestsRouter = router({
         })
       }
 
-      const isCrypto = input.paymentMethod === 'crypto_usdc' || input.paymentMethod === 'crypto_usdt'
+      const isCrypto = input.paymentMethod.startsWith('crypto_')
       let cryptoAmount: number | null = null
       let cryptoToken: string | null = null
 
       if (isCrypto) {
-        const basePrice = CRYPTO_PRICES_USD[input.plan]
-        if (!basePrice) {
+        const basePriceUsd = CRYPTO_PRICES_USD[input.plan]
+        if (!basePriceUsd) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Plan ini tidak tersedia untuk pembayaran crypto.' })
         }
-        cryptoToken = input.paymentMethod === 'crypto_usdc' ? 'usdc' : 'usdt'
+
+        cryptoToken = input.paymentMethod.replace('crypto_', '')
+
+        let basePrice = basePriceUsd
+        if (cryptoToken === 'sol') {
+          const solPrice = await fetchSolPriceUsd()
+          if (!solPrice) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Gagal mengambil harga SOL.' })
+          basePrice = parseFloat((basePriceUsd / solPrice).toFixed(4))
+        }
 
         let attempts = 0
         while (attempts < 10) {
@@ -158,11 +166,17 @@ export const paymentRequestsRouter = router({
 
     const walletAddress = get('solana_wallet_address', process.env.SOLANA_WALLET_ADDRESS)
 
+    let solPrice = 0
+    if (walletAddress) {
+      try { solPrice = await fetchSolPriceUsd() } catch { /* fallback 0 */ }
+    }
+
     return {
       crypto: {
         enabled: !!walletAddress,
         walletAddress,
         prices: CRYPTO_PRICES_USD,
+        solPriceUsd: solPrice,
       },
       bank: {
         name: get('bank_name', process.env.NEXT_PUBLIC_BANK_NAME),
