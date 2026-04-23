@@ -125,6 +125,7 @@ function UserUpgradeView() {
   const { data: paymentConfig } = trpc.paymentRequests.paymentConfig.useQuery()
   const createMutation = trpc.paymentRequests.create.useMutation({ onSuccess: () => refetchRequests() })
   const uploadMutation = trpc.paymentRequests.uploadProof.useMutation({ onSuccess: () => refetchRequests() })
+  const checkPaymentMutation = trpc.paymentRequests.checkMyPayment.useMutation()
 
   const currentPlan = planData?.plan || 'free'
   const currentIndex = PLANS.findIndex(p => p.value === currentPlan)
@@ -139,12 +140,18 @@ function UserUpgradeView() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const prevPendingRef = useRef<string | null>(null)
 
-  // Auto-poll every 15s when there's a pending request
+  // Auto-poll every 15s when there's a pending crypto request — triggers on-chain check
   useEffect(() => {
     if (!pendingRequest) return
-    const interval = setInterval(() => { refetchRequests() }, 15000)
+    const isCryptoPending = !!pendingRequest.crypto_token
+    const interval = setInterval(async () => {
+      if (isCryptoPending) {
+        try { await checkPaymentMutation.mutateAsync() } catch { /* ignore */ }
+      }
+      refetchRequests()
+    }, 15000)
     return () => clearInterval(interval)
-  }, [pendingRequest, refetchRequests])
+  }, [pendingRequest, refetchRequests]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Detect when a pending request gets approved
   useEffect(() => {
@@ -610,7 +617,7 @@ function UserUpgradeView() {
                       </a>
                     )}
                     {req.admin_note && <p className="text-xs mt-1 opacity-70">Catatan: {req.admin_note}</p>}
-                    {req.status === 'pending' && !req.proof_url && (
+                    {req.status === 'pending' && !req.crypto_token && !req.proof_url && (
                       <div className="mt-2">
                         <input type="file" id={`proof-${req.id}`} accept="image/*" className="hidden"
                           onChange={e => handleFileUpload(e, req.id)} />
@@ -620,6 +627,9 @@ function UserUpgradeView() {
                           {uploading ? 'Mengupload...' : 'Upload Bukti'}
                         </label>
                       </div>
+                    )}
+                    {req.status === 'pending' && req.crypto_token && (
+                      <p className="text-xs mt-1.5 opacity-70 italic">Menunggu verifikasi otomatis on-chain...</p>
                     )}
                     {req.proof_url && (
                       <div className="mt-1 flex items-center gap-1.5">
@@ -649,11 +659,11 @@ function UserUpgradeView() {
           </li>
           <li className="flex gap-3">
             <span className="flex-shrink-0 w-6 h-6 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 text-xs font-bold rounded-full flex items-center justify-center">2</span>
-            <span>Transfer sesuai nominal ke rekening yang ditampilkan, atau scan QRIS.</span>
+            <span>Transfer sesuai nominal ke rekening, scan QRIS, atau kirim crypto (USDC/USDT/SOL) ke wallet Solana.</span>
           </li>
           <li className="flex gap-3">
             <span className="flex-shrink-0 w-6 h-6 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 text-xs font-bold rounded-full flex items-center justify-center">3</span>
-            <span>Upload bukti transfer. Plan akan aktif setelah diverifikasi admin.</span>
+            <span>Fiat: upload bukti transfer, plan aktif setelah diverifikasi admin. Crypto: plan aktif otomatis setelah terdeteksi on-chain (2-5 menit).</span>
           </li>
         </ol>
       </SectionCard>

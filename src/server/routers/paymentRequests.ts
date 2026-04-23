@@ -4,7 +4,11 @@ import { supabaseAdmin as supabase } from '@/infra/supabase/server'
 import { createAuditLog } from '@/lib/audit'
 import { TRPCError } from '@trpc/server'
 import { sendPlanUpgradeEmail } from '@/lib/email'
-import { CRYPTO_PRICES_USD, generateUniqueAmount, fetchSolPriceUsd } from '@/lib/solana'
+import {
+  CRYPTO_PRICES_USD, generateUniqueAmount, fetchSolPriceUsd,
+  getRecentTransfers, getRecentSolTransfers, matchTransferToAmount,
+} from '@/lib/solana'
+import { logger } from '@/lib/logger'
 
 export const paymentRequestsRouter = router({
   create: protectedProcedure
@@ -152,6 +156,99 @@ export const paymentRequestsRouter = router({
 
     if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message })
     return data ?? []
+  }),
+
+  checkMyPayment: protectedProcedure.mutation(async ({ ctx }) => {
+    const { data: pending } = await supabase
+      .from('payment_requests')
+      .select('id, user_id, plan, amount, crypto_amount, crypto_token, created_at')
+      .eq('user_id', ctx.userId)
+      .eq('status', 'pending')
+      .not('crypto_token', 'is', null)
+      .single()
+
+    if (!pending || !pending.crypto_amount || !pending.crypto_token) {
+      return { checked: false, matched: false }
+    }
+
+    const sinceTimestamp = Math.floor(new Date(pending.created_at).getTime() / 1000) - 300
+
+    try {
+      let transfers
+      if (pending.crypto_token === 'sol') {
+        transfers = await getRecentSolTransfers(sinceTimestamp)
+      } else {
+        transfers = await getRecentTransfers(pending.crypto_token as 'usdc' | 'usdt', sinceTimestamp)
+      }
+
+      const match = transfers.find(t =>
+        matchTransferToAmount(t.amount, parseFloat(pending.crypto_amount!))
+      )
+
+      if (!match) return { checked: true, matched: false }
+
+      const { error: updateError } = await supabase
+        .from('payment_requests')
+        .update({
+          status: 'approved',
+          crypto_tx_hash: match.signature,
+          admin_note: `Auto-verified on-chain. TX: ${match.signature.slice(0, 16)}...`,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq('id', pending.id)
+        .eq('status', 'pending')
+
+      if (updateError) {
+        logger.error('checkMyPayment: update failed', updateError)
+        return { checked: true, matched: false }
+      }
+
+      const { data: user } = await supabase
+        .from('users')
+        .select('plan, email, name')
+        .eq('id', pending.user_id)
+        .single()
+
+      await supabase
+        .from('users')
+        .update({ plan: pending.plan, is_trial: false })
+        .eq('id', pending.user_id)
+
+      await supabase.from('billing_history').insert({
+        user_id: pending.user_id,
+        plan: pending.plan,
+        previous_plan: user?.plan ?? 'free',
+        amount: pending.amount,
+        note: `Crypto payment (${pending.crypto_token.toUpperCase()}) auto-verified. TX: ${match.signature.slice(0, 16)}...`,
+        is_trial: false,
+        changed_by: pending.user_id,
+      })
+
+      await createAuditLog({
+        userId: pending.user_id,
+        userEmail: user?.email || 'unknown',
+        action: 'UPDATE',
+        entityType: 'payment_request',
+        entityId: pending.id,
+        changes: { status: 'approved', crypto_tx_hash: match.signature },
+        metadata: { token: pending.crypto_token, auto_verified: true },
+      })
+
+      if (user?.email && user?.name) {
+        await sendPlanUpgradeEmail({
+          to: user.email,
+          name: user.name,
+          oldPlan: user.plan ?? 'free',
+          newPlan: pending.plan,
+        })
+      }
+
+      logger.info(`checkMyPayment: auto-approved ${pending.id} via TX ${match.signature.slice(0, 16)}`)
+      return { checked: true, matched: true }
+    } catch (err) {
+      logger.error('checkMyPayment: error checking on-chain', err)
+      return { checked: true, matched: false }
+    }
   }),
 
   paymentConfig: protectedProcedure.query(async () => {
