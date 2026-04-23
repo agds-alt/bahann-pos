@@ -76,7 +76,7 @@ export default function DashboardPage() {
 
       {/* ── Header + Filters ── */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div>
+        <div className="hidden md:block">
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 leading-tight">{t('dashboard.title')}</h1>
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{t('dashboard.overview')}</p>
         </div>

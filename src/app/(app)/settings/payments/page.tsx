@@ -86,8 +86,8 @@ export default function PaymentSettingsPage() {
   return (
     <div className="p-3 md:p-6 max-w-2xl mx-auto space-y-3 md:space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-base md:text-2xl font-bold text-gray-900 dark:text-white">Pengaturan Pembayaran</h1>
+      <div className="hidden md:block">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Pengaturan Pembayaran</h1>
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Atur metode pembayaran yang diterima toko kamu</p>
       </div>
 

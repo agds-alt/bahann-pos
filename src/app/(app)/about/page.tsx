@@ -189,8 +189,8 @@ export default function AboutPage() {
     <div className="space-y-4 md:space-y-8">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-2xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-3">Laku POS</h1>
-        <p className="text-sm md:text-xl text-gray-600 dark:text-gray-400 mb-3">{t('about.subtitle')}</p>
+        <h1 className="hidden md:block text-5xl font-bold text-gray-900 dark:text-gray-100 mb-3">Laku POS</h1>
+        <p className="hidden md:block text-xl text-gray-600 dark:text-gray-400 mb-3">{t('about.subtitle')}</p>
         <div className="flex items-center justify-center gap-3 text-sm flex-wrap">
           <span className="px-3 py-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 rounded-full font-semibold">
             v1.0.0

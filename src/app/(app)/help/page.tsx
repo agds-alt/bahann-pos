@@ -468,13 +468,15 @@ export default function HelpPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-3 md:mb-6 md:mb-8 text-center">
-          <h1 className="text-lg md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-1.5 md:mb-3">
-            <BookOpen className="w-5 h-5 md:w-8 md:h-8 inline-block mr-2" />Pusat Bantuan
-          </h1>
-          <p className="text-sm md:text-lg text-gray-500 dark:text-gray-400 mb-4 md:mb-6">
-            Dokumentasi lengkap sistem Laku POS
-          </p>
+        <div className="mb-3 md:mb-8 text-center">
+          <div className="hidden md:block mb-3">
+            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+              <BookOpen className="w-8 h-8 inline-block mr-2" />Pusat Bantuan
+            </h1>
+            <p className="text-lg text-gray-500 dark:text-gray-400 mb-6">
+              Dokumentasi lengkap sistem Laku POS
+            </p>
+          </div>
 
           {/* Search Bar */}
           <div className="max-w-2xl mx-auto mb-4 md:mb-6">

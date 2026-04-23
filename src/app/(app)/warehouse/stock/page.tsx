@@ -150,11 +150,11 @@ export default function StockManagementPage() {
     <div className="space-y-4 md:space-y-6">
 
       {/* ── Header ── */}
-      <div>
-        <h1 className="text-base md:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-0.5 md:mb-1">
+      <div className="hidden md:block">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">
           Manajemen Stok
         </h1>
-        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           Catat pergerakan stok harian dan pantau inventori
         </p>
       </div>

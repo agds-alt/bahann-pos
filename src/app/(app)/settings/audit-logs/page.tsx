@@ -80,8 +80,8 @@ export default function AuditLogsPage() {
 
   return (
     <div className="space-y-2 md:space-y-4 md:space-y-8">
-      <div>
-        <h1 className="text-base md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">Audit Logs</h1>
+      <div className="hidden md:block">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">Audit Logs</h1>
         <p className="text-gray-600 dark:text-gray-400">
           View and monitor all system activities for compliance and security
         </p>
