@@ -12,6 +12,7 @@ import { useToast } from '@/components/ui/Toast'
 import { trpc } from '@/lib/trpc/client'
 import { getLimits } from '@/lib/plans'
 import type { Outlet } from '@/types'
+import { Store, CheckCircle, MapPin, Plus, Pencil, Trash2 } from 'lucide-react'
 
 // ─── Modal ───────────────────────────────────────────────────────────────────
 function OutletFormModal({ outlet, onClose, onSuccess }: {
@@ -102,13 +103,13 @@ export default function OutletsPage() {
       <PageHeader
         title="Manajemen Outlet"
         subtitle="Kelola lokasi toko kamu"
-        action={<Button variant="primary" onClick={handleAddNew}>➕ Tambah Outlet</Button>}
+        action={<Button variant="primary" onClick={handleAddNew}><Plus className="w-4 h-4 mr-1" /> Tambah Outlet</Button>}
       />
 
       <div className="grid grid-cols-3 gap-2 md:gap-4">
-        <StatCard icon="🏪" label="Total Outlet" value={outlets.length} color="gray" />
-        <StatCard icon="✅" label="Aktif"         value={outlets.length} color="green" />
-        <StatCard icon="📍" label="Lokasi"        value={outlets.length} color="blue" />
+        <StatCard icon={<Store />} label="Total Outlet" value={outlets.length} color="gray" />
+        <StatCard icon={<CheckCircle />} label="Aktif"         value={outlets.length} color="green" />
+        <StatCard icon={<MapPin />} label="Lokasi"        value={outlets.length} color="blue" />
       </div>
 
       {isLoading ? (
@@ -119,7 +120,7 @@ export default function OutletsPage() {
         </div>
       ) : outlets.length === 0 ? (
         <SectionCard>
-          <EmptyState icon="🏪" title="Belum ada outlet" description="Mulai dengan menambahkan lokasi toko pertama kamu."
+          <EmptyState icon={<Store />} title="Belum ada outlet" description="Mulai dengan menambahkan lokasi toko pertama kamu."
             action={<Button variant="primary" onClick={handleAddNew}>Tambah Outlet Pertama</Button>} />
         </SectionCard>
       ) : (
@@ -127,8 +128,8 @@ export default function OutletsPage() {
           {outlets.map(outlet => (
             <div key={outlet.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm p-4 md:p-5 space-y-4">
               <div className="flex flex-col items-center text-center gap-2">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-2xl">
-                  🏪
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white">
+                  <Store className="w-7 h-7" />
                 </div>
                 <div>
                   <p className="font-bold text-sm md:text-base text-gray-900 dark:text-white">{outlet.name}</p>
@@ -142,9 +143,9 @@ export default function OutletsPage() {
                 Dibuat {new Date(outlet.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
               </p>
               <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-                <Button variant="secondary" size="sm" onClick={() => handleEdit(outlet)} fullWidth>✏️ Edit</Button>
+                <Button variant="secondary" size="sm" onClick={() => handleEdit(outlet)} fullWidth><Pencil className="w-3.5 h-3.5 inline mr-0.5" /> Edit</Button>
                 <Button variant="danger" size="sm" onClick={() => handleDelete(outlet.id, outlet.name)} fullWidth disabled={deleteOutlet.isPending}>
-                  🗑️ Hapus
+                  <Trash2 className="w-3.5 h-3.5 inline mr-0.5" /> Hapus
                 </Button>
               </div>
             </div>

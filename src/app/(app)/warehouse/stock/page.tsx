@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { trpc } from '@/lib/trpc/client'
+import { Package, Store, ShoppingCart, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
 
 // ─── Stepper ────────────────────────────────────────────────────────────────
 function Stepper({
@@ -49,7 +50,7 @@ function Stepper({
 }
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
-function StatCard({ icon, label, value, color }: { icon: string; label: string; value: string | number; color: 'gray' | 'blue' | 'green' | 'yellow' }) {
+function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string | number; color: 'gray' | 'blue' | 'green' | 'yellow' }) {
   const map = {
     gray:   'bg-gray-50  dark:bg-gray-800   border-gray-200  dark:border-gray-700  text-gray-800  dark:text-gray-100',
     blue:   'bg-blue-50  dark:bg-blue-900/30 border-blue-200  dark:border-blue-800  text-blue-900  dark:text-blue-100',
@@ -64,7 +65,7 @@ function StatCard({ icon, label, value, color }: { icon: string; label: string; 
   }
   return (
     <div className={`flex items-center gap-3 p-3 md:p-4 rounded-xl border ${map[color]}`}>
-      <span className="text-xl md:text-2xl shrink-0">{icon}</span>
+      <span className="shrink-0">{icon}</span>
       <div className="min-w-0">
         <p className={`text-[11px] md:text-xs font-medium ${sub[color]}`}>{label}</p>
         <p className="text-base md:text-2xl font-bold">{value}</p>
@@ -161,13 +162,13 @@ export default function StockManagementPage() {
       {/* ── Alerts ── */}
       {showSuccess && (
         <div className="flex items-center gap-3 p-3.5 bg-green-50 dark:bg-green-900/30 border-2 border-green-200 dark:border-green-800 rounded-xl">
-          <span className="text-lg">✅</span>
+          <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 shrink-0" />
           <p className="text-sm font-semibold text-green-700 dark:text-green-300">Stok berhasil dicatat!</p>
         </div>
       )}
       {error && (
         <div className="flex items-center gap-3 p-3.5 bg-red-50 dark:bg-red-900/30 border-2 border-red-200 dark:border-red-800 rounded-xl">
-          <span className="text-lg">❌</span>
+          <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" />
           <p className="text-sm font-semibold text-red-700 dark:text-red-300">{error}</p>
         </div>
       )}
@@ -195,7 +196,7 @@ export default function StockManagementPage() {
                     disabled={productsLoading}
                     className="w-full appearance-none px-3 py-2.5 pr-9 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-medium focus:outline-none focus:border-blue-400 dark:focus:border-blue-500 transition-colors disabled:opacity-50"
                   >
-                    <option value="">📦 Pilih produk…</option>
+                    <option value="">Pilih produk...</option>
                     {products.map(p => (
                       <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
                     ))}
@@ -205,7 +206,7 @@ export default function StockManagementPage() {
 
                 {selectedProduct && (
                   <div className="flex items-start gap-2.5 p-2.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-                    <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-800 flex items-center justify-center text-sm shrink-0">📦</div>
+                    <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-800 flex items-center justify-center shrink-0"><Package className="w-4 h-4 text-blue-600 dark:text-blue-300" /></div>
                     <div className="min-w-0">
                       <p className="text-xs font-bold text-blue-900 dark:text-blue-200 truncate">{selectedProduct.name}</p>
                       <p className="text-[10px] text-blue-600 dark:text-blue-400">
@@ -226,7 +227,7 @@ export default function StockManagementPage() {
                     disabled={outletsLoading}
                     className="w-full appearance-none px-3 py-2.5 pr-9 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-medium focus:outline-none focus:border-purple-400 dark:focus:border-purple-500 transition-colors disabled:opacity-50"
                   >
-                    <option value="">🏪 Pilih outlet…</option>
+                    <option value="">Pilih outlet...</option>
                     {outlets.map(o => (
                       <option key={o.id} value={o.id}>{o.name}</option>
                     ))}
@@ -236,7 +237,7 @@ export default function StockManagementPage() {
 
                 {selectedOutlet && (
                   <div className="flex items-start gap-2.5 p-2.5 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl">
-                    <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-800 flex items-center justify-center text-sm shrink-0">🏪</div>
+                    <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-800 flex items-center justify-center shrink-0"><Store className="w-4 h-4 text-purple-600 dark:text-purple-300" /></div>
                     <div className="min-w-0">
                       <p className="text-xs font-bold text-purple-900 dark:text-purple-200 truncate">{selectedOutlet.name}</p>
                       {selectedOutlet.address && (
@@ -336,7 +337,7 @@ export default function StockManagementPage() {
                 ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
                 : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
             }`}>
-              <span>{akhirNegative ? '⚠️' : '📦'}</span>
+              <span>{akhirNegative ? <AlertTriangle className="w-4 h-4 inline" /> : <Package className="w-4 h-4 inline" />}</span>
               <span>
                 Stok akhir: <strong>{formData.stockAkhir} unit</strong>
                 {akhirNegative && ' — stok tidak boleh negatif'}
@@ -353,7 +354,7 @@ export default function StockManagementPage() {
               fullWidth
               disabled={recordStockMutation.isPending || productsLoading || outletsLoading || akhirNegative}
             >
-              {recordStockMutation.isPending ? 'Menyimpan…' : '✅ Simpan Pergerakan Stok'}
+              {recordStockMutation.isPending ? 'Menyimpan…' : 'Simpan Pergerakan Stok'}
             </Button>
           </div>
         </form>
@@ -367,18 +368,18 @@ export default function StockManagementPage() {
               <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ringkasan Inventori</p>
             </div>
             <div className="px-4 md:px-5 pb-4 space-y-2">
-              <StatCard icon="📦" label="Total Produk" value={(stats?.totalProducts ?? 0).toLocaleString()} color="gray" />
-              <StatCard icon="🏪" label="Total Outlet" value={stats?.totalOutlets ?? 0} color="blue" />
-              <StatCard icon="🛒" label="Total Item Terjual" value={(stats?.totalItemsSold ?? 0).toLocaleString()} color="green" />
+              <StatCard icon={<Package className="w-5 h-5" />} label="Total Produk" value={(stats?.totalProducts ?? 0).toLocaleString()} color="gray" />
+              <StatCard icon={<Store className="w-5 h-5" />} label="Total Outlet" value={stats?.totalOutlets ?? 0} color="blue" />
+              <StatCard icon={<ShoppingCart className="w-5 h-5" />} label="Total Item Terjual" value={(stats?.totalItemsSold ?? 0).toLocaleString()} color="green" />
               {(stats?.lowStockCount ?? 0) > 0 && (
-                <StatCard icon="⚠️" label="Stok Hampir Habis" value={`${stats!.lowStockCount} produk`} color="yellow" />
+                <StatCard icon={<AlertTriangle className="w-5 h-5" />} label="Stok Hampir Habis" value={`${stats!.lowStockCount} produk`} color="yellow" />
               )}
             </div>
           </div>
 
           {/* How to use */}
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4">
-            <p className="text-xs font-bold text-blue-800 dark:text-blue-300 mb-2">💡 Cara pakai</p>
+            <p className="text-xs font-bold text-blue-800 dark:text-blue-300 mb-2">Cara pakai</p>
             <ul className="text-[11px] text-blue-700 dark:text-blue-400 space-y-1 leading-relaxed">
               <li>• Pilih produk dan outlet</li>
               <li>• Stok Awal otomatis dari catatan terakhir</li>
@@ -393,7 +394,7 @@ export default function StockManagementPage() {
       {lowStock && lowStock.length > 0 && (
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-4 md:px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-            <p className="text-sm font-bold text-gray-900 dark:text-white">⚠️ Stok Hampir Habis</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-yellow-500" /> Stok Hampir Habis</p>
             <span className="px-2.5 py-0.5 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 text-xs font-bold rounded-full">
               {lowStock.length} produk
             </span>

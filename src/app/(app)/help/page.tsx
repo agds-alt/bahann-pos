@@ -1,12 +1,18 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, type ReactNode } from 'react'
 import Link from 'next/link'
+import {
+  Target, Lock, Store, Package, BarChart3, ShoppingCart,
+  TrendingUp, Settings, Smartphone, HelpCircle, Crown,
+  Briefcase, UserCheck, Rocket, BookOpen, ListOrdered,
+  Info, LayoutDashboard, Search, X
+} from 'lucide-react'
 
 interface Section {
   id: string
   title: string
-  icon: string
+  icon: ReactNode
   content: {
     subtitle?: string
     items?: string[]
@@ -30,7 +36,7 @@ const sections: Section[] = [
   {
     id: 'overview',
     title: 'Ringkasan Sistem',
-    icon: '🎯',
+    icon: <Target className="w-5 h-5" />,
     content: {
       description: 'Laku POS adalah sistem Point of Sale dan warehouse management yang dirancang untuk memudahkan pengelolaan bisnis retail Anda. Sistem ini dilengkapi dengan fitur-fitur modern seperti barcode scanning, forgot password, manajemen multi-outlet, tracking stok real-time, dan laporan penjualan yang komprehensif.',
       items: [
@@ -48,7 +54,7 @@ const sections: Section[] = [
   {
     id: 'security',
     title: 'Keamanan & Login',
-    icon: '🔐',
+    icon: <Lock className="w-5 h-5" />,
     content: {
       subsections: [
         {
@@ -61,7 +67,7 @@ const sections: Section[] = [
           ]
         },
         {
-          title: 'Lupa Password (Baru ✨)',
+          title: 'Lupa Password (Baru)',
           items: [
             'Request reset via email',
             'Token berlaku 1 jam',
@@ -84,7 +90,7 @@ const sections: Section[] = [
   {
     id: 'outlets',
     title: 'Manajemen Outlet',
-    icon: '🏪',
+    icon: <Store className="w-5 h-5" />,
     content: {
       description: 'Kelola multiple cabang/outlet dengan mudah',
       items: [
@@ -99,7 +105,7 @@ const sections: Section[] = [
   {
     id: 'products',
     title: 'Manajemen Produk',
-    icon: '📦',
+    icon: <Package className="w-5 h-5" />,
     content: {
       subsections: [
         {
@@ -127,7 +133,7 @@ const sections: Section[] = [
   {
     id: 'stock',
     title: 'Manajemen Stok',
-    icon: '📊',
+    icon: <BarChart3 className="w-5 h-5" />,
     content: {
       description: 'Kontrol inventory dengan presisi',
       items: [
@@ -144,7 +150,7 @@ const sections: Section[] = [
   {
     id: 'pos',
     title: 'Point of Sale (Kasir)',
-    icon: '🛒',
+    icon: <ShoppingCart className="w-5 h-5" />,
     content: {
       subsections: [
         {
@@ -160,7 +166,7 @@ const sections: Section[] = [
           ]
         },
         {
-          title: 'Scan Barcode (Baru ✨)',
+          title: 'Scan Barcode (Baru)',
           items: [
             'Buka kamera scanner',
             'Scan barcode produk',
@@ -184,7 +190,7 @@ const sections: Section[] = [
   {
     id: 'dashboard',
     title: 'Dashboard & Laporan',
-    icon: '📈',
+    icon: <TrendingUp className="w-5 h-5" />,
     content: {
       description: 'Analytics dan insights bisnis Anda',
       items: [
@@ -201,7 +207,7 @@ const sections: Section[] = [
   {
     id: 'settings',
     title: 'Pengaturan Sistem',
-    icon: '⚙️',
+    icon: <Settings className="w-5 h-5" />,
     content: {
       subsections: [
         {
@@ -236,7 +242,7 @@ const sections: Section[] = [
   {
     id: 'mobile',
     title: 'Penggunaan di Mobile',
-    icon: '📱',
+    icon: <Smartphone className="w-5 h-5" />,
     content: {
       description: 'Aplikasi fully responsive untuk smartphone dan tablet',
       items: [
@@ -254,7 +260,7 @@ const sections: Section[] = [
   {
     id: 'troubleshooting',
     title: 'Troubleshooting & FAQ',
-    icon: '❓',
+    icon: <HelpCircle className="w-5 h-5" />,
     content: {
       faqs: [
         {
@@ -295,7 +301,7 @@ const sections: Section[] = [
   {
     id: 'guide-admin',
     title: 'Panduan untuk Admin',
-    icon: '👑',
+    icon: <Crown className="w-5 h-5" />,
     content: {
       steps: [
         {
@@ -324,7 +330,7 @@ const sections: Section[] = [
   {
     id: 'guide-manager',
     title: 'Panduan untuk Manager',
-    icon: '👔',
+    icon: <Briefcase className="w-5 h-5" />,
     content: {
       steps: [
         {
@@ -349,7 +355,7 @@ const sections: Section[] = [
   {
     id: 'guide-cashier',
     title: 'Panduan untuk Kasir',
-    icon: '💼',
+    icon: <UserCheck className="w-5 h-5" />,
     content: {
       steps: [
         {
@@ -378,7 +384,7 @@ const sections: Section[] = [
   {
     id: 'tech-stack',
     title: 'Teknologi yang Digunakan',
-    icon: '🚀',
+    icon: <Rocket className="w-5 h-5" />,
     content: {
       subsections: [
         {
@@ -464,7 +470,7 @@ export default function HelpPage() {
         {/* Header */}
         <div className="mb-3 md:mb-6 md:mb-8 text-center">
           <h1 className="text-lg md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-1.5 md:mb-3">
-            📖 Pusat Bantuan
+            <BookOpen className="w-5 h-5 md:w-8 md:h-8 inline-block mr-2" />Pusat Bantuan
           </h1>
           <p className="text-sm md:text-lg text-gray-500 dark:text-gray-400 mb-4 md:mb-6">
             Dokumentasi lengkap sistem Laku POS
@@ -477,7 +483,7 @@ export default function HelpPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="🔍 Cari topik, fitur, atau pertanyaan..."
+                placeholder="Cari topik, fitur, atau pertanyaan..."
                 className="w-full px-4 md:px-6 py-3 md:py-4 text-base md:text-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 border-2 border-gray-300 dark:border-gray-600 rounded-2xl focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-900 transition-all shadow-lg"
               />
               {searchQuery && (
@@ -502,7 +508,7 @@ export default function HelpPage() {
           <div className="hidden md:block md:col-span-1">
             <div className="sticky top-4 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 md:p-6 border-2 border-gray-200 dark:border-gray-700">
               <h2 className="text-base md:text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 md:mb-4 flex items-center gap-2">
-                <span>📑</span> Daftar Isi
+                <ListOrdered className="w-5 h-5" /> Daftar Isi
               </h2>
               <nav className="space-y-1">
                 {filteredSections.map((section) => (
@@ -521,7 +527,7 @@ export default function HelpPage() {
                       }
                     `}
                   >
-                    <span className="mr-2">{section.icon}</span>
+                    <span className="mr-2 [&>svg]:w-4 [&>svg]:h-4 inline-flex">{section.icon}</span>
                     {section.title}
                   </button>
                 ))}
@@ -551,7 +557,7 @@ export default function HelpPage() {
                 {/* Section Header */}
                 <div className="mb-4 md:mb-6 pb-4 md:pb-6 border-b-2 border-gray-200 dark:border-gray-700">
                   <h2 className="text-base md:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2 md:gap-3">
-                    <span className="text-xs md:text-lg md:text-3xl md:text-4xl">{currentSection.icon}</span>
+                    <span className="[&>svg]:w-5 [&>svg]:h-5 md:[&>svg]:w-8 md:[&>svg]:h-8 text-blue-500">{currentSection.icon}</span>
                     {currentSection.title}
                   </h2>
                   {currentSection.content.description && (
@@ -650,13 +656,13 @@ export default function HelpPage() {
               href="/about"
               className="px-5 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all shadow-lg hover:shadow-xl text-sm md:text-base"
             >
-              ℹ️ Tentang Sistem
+              <Info className="w-4 h-4 inline-block mr-1" /> Tentang Sistem
             </Link>
             <Link
               href="/dashboard"
               className="px-5 md:px-6 py-2.5 md:py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-xl border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl text-sm md:text-base"
             >
-              📊 Kembali ke Dashboard
+              <LayoutDashboard className="w-4 h-4 inline-block mr-1" /> Kembali ke Dashboard
             </Link>
           </div>
         </div>

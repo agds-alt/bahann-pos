@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/Toast'
 import { BulkImportModal } from '@/components/products/BulkImportModal'
 import { trpc } from '@/lib/trpc/client'
 import type { Product, SelectChangeEvent } from '@/types'
+import { Package, FolderOpen, CheckCircle, AlertTriangle, Tag, Trash2, Download, Search, Pencil, Plus } from 'lucide-react'
 
 const fmtCurrency = (amount: number | null) =>
   amount ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount) : '—'
@@ -165,7 +166,7 @@ function BatchDeleteModal({ selectedCount, onClose, onSuccess, productIds, produ
   }
 
   return (
-    <Modal title="⚠️ Konfirmasi Hapus Batch" onClose={onClose}>
+    <Modal title="Konfirmasi Hapus Batch" onClose={onClose}>
       <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
         <p className="text-sm font-bold text-red-800 dark:text-red-300 mb-1">Hapus {selectedCount} produk?</p>
         <p className="text-xs text-red-700 dark:text-red-400">Aksi ini tidak bisa dibatalkan!</p>
@@ -245,14 +246,14 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      <PageHeader title="🏷️ Manajemen Produk" subtitle="Kelola katalog produk kamu" />
+      <PageHeader title="Manajemen Produk" subtitle="Kelola katalog produk kamu" />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-        <StatCard icon="📦" label="Total Produk"    value={products.length}                               color="gray" />
-        <StatCard icon="🗂️" label="Kategori"        value={categories?.length || 0}                       color="blue" />
-        <StatCard icon="✅" label="Ada Harga"        value={products.filter(p => p.price).length}          color="green" />
-        <StatCard icon="⚠️" label="Tanpa Harga"     value={products.filter(p => !p.price).length}         color="yellow" />
+        <StatCard icon={<Package />} label="Total Produk"    value={products.length}                               color="gray" />
+        <StatCard icon={<FolderOpen />} label="Kategori"        value={categories?.length || 0}                       color="blue" />
+        <StatCard icon={<CheckCircle />} label="Ada Harga"        value={products.filter(p => p.price).length}          color="green" />
+        <StatCard icon={<AlertTriangle />} label="Tanpa Harga"     value={products.filter(p => !p.price).length}         color="yellow" />
       </div>
 
       {/* Batch toolbar */}
@@ -262,8 +263,8 @@ export default function ProductsPage() {
             {selectedProducts.size} produk dipilih
           </p>
           <div className="flex gap-2">
-            <Button variant="primary" size="sm" onClick={handleBatchCategory}>🏷️ Update Kategori</Button>
-            <Button variant="danger" size="sm" onClick={handleBatchDelete}>🗑️ Hapus</Button>
+            <Button variant="primary" size="sm" onClick={handleBatchCategory}><Tag className="w-4 h-4 mr-1" /> Update Kategori</Button>
+            <Button variant="danger" size="sm" onClick={handleBatchDelete}><Trash2 className="w-4 h-4 mr-1" /> Hapus</Button>
             <Button variant="outline" size="sm" onClick={clearSelection}>✕ Batal</Button>
           </div>
         </div>
@@ -273,7 +274,7 @@ export default function ProductsPage() {
       <div className="flex flex-col md:flex-row gap-2 md:gap-3">
         <input
           type="text"
-          placeholder="🔍 Cari nama atau SKU…"
+          placeholder="Cari nama atau SKU..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           className="flex-1 px-3 py-2.5 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-400 dark:focus:border-blue-500 transition-colors"
@@ -287,8 +288,8 @@ export default function ProductsPage() {
           </select>
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">▾</span>
         </div>
-        <Button variant="secondary" size="md" onClick={() => setIsBulkImportOpen(true)}>📥 Import Excel</Button>
-        <Button variant="primary" size="md" onClick={handleAddNew}>➕ Tambah</Button>
+        <Button variant="secondary" size="md" onClick={() => setIsBulkImportOpen(true)}><Download className="w-4 h-4 mr-1" /> Import Excel</Button>
+        <Button variant="primary" size="md" onClick={handleAddNew}><Plus className="w-4 h-4 mr-1" /> Tambah</Button>
       </div>
 
       {/* Table */}
@@ -303,7 +304,7 @@ export default function ProductsPage() {
             <p className="text-sm text-gray-400">Memuat produk…</p>
           </div>
         ) : products.length === 0 ? (
-          <EmptyState icon="📦" title="Tidak ada produk"
+          <EmptyState icon={<Package />} title="Tidak ada produk"
             description={searchTerm || categoryFilter ? 'Tidak ada produk yang cocok. Coba ubah filter.' : 'Mulai dengan menambahkan produk pertama kamu.'}
             action={!searchTerm && !categoryFilter ? <Button variant="primary" onClick={handleAddNew}>Tambah Produk Pertama</Button> : undefined}
           />
@@ -353,12 +354,12 @@ export default function ProductsPage() {
                       <div className="flex items-center gap-1.5">
                         <button onClick={() => handleEdit(product)}
                           className="px-2.5 py-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
-                          ✏️ Edit
+                          <Pencil className="w-3.5 h-3.5 inline mr-0.5" /> Edit
                         </button>
                         <button onClick={() => handleDelete(product.id, product.name)}
                           disabled={deleteProduct.isPending}
                           className="px-2.5 py-1 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-40">
-                          🗑️ Hapus
+                          <Trash2 className="w-3.5 h-3.5 inline mr-0.5" /> Hapus
                         </button>
                       </div>
                     </td>

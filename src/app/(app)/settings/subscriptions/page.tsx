@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { trpc } from '@/lib/trpc/client'
+import { Gift, CreditCard, ClipboardList, CheckCircle, Check } from 'lucide-react'
 
 const PLANS = [
   {
@@ -132,7 +133,7 @@ function SuperAdminView() {
                     <td className="px-3 md:px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{user.email}</td>
                     <td className="px-3 md:px-4 py-3">
                       {savedId === user.id
-                        ? <span className="text-green-600 dark:text-green-400 text-xs font-semibold">✅ Tersimpan</span>
+                        ? <span className="text-green-600 dark:text-green-400 text-xs font-semibold inline-flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5" /> Tersimpan</span>
                         : <PlanBadge plan={user.plan || 'free'} />}
                     </td>
                     <td className="px-3 md:px-4 py-3 text-xs text-gray-400">
@@ -198,7 +199,7 @@ function BillingHistory() {
         {history.map(item => (
           <div key={item.id} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl border border-gray-100 dark:border-gray-700">
             <div className="flex-shrink-0 mt-0.5 text-lg">
-              {item.is_trial ? '🎁' : item.amount && item.amount > 0 ? '💳' : '📋'}
+              {item.is_trial ? <Gift className="w-5 h-5 text-blue-500" /> : item.amount && item.amount > 0 ? <CreditCard className="w-5 h-5 text-green-500" /> : <ClipboardList className="w-5 h-5 text-gray-400" />}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">

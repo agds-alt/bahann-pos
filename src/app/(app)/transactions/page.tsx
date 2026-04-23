@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Receipt } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -150,7 +151,7 @@ export default function TransactionsPage() {
         {isLoading ? (
           <div className="py-12 text-center text-gray-400 dark:text-gray-500 text-sm">Memuat…</div>
         ) : !data?.transactions?.length ? (
-          <EmptyState icon="🧾" title="Tidak ada transaksi" description="Coba ubah filter untuk melihat data lain." />
+          <EmptyState icon={<Receipt />} title="Tidak ada transaksi" description="Coba ubah filter untuk melihat data lain." />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">

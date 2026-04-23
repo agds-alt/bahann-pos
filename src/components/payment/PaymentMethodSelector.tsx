@@ -6,15 +6,16 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import { getActivePaymentMethods } from '@/lib/payment/payment-service'
 import type { PaymentMethod } from '@/lib/payment/payment-service'
+import { Banknote, Smartphone, Building2, Wallet, CreditCard, DollarSign, Check } from 'lucide-react'
 
 interface PaymentMethodOption {
   id: string
   type: PaymentMethod
   name: string
-  icon: string
+  icon: ReactNode
   description?: string
   isActive: boolean
 }
@@ -64,12 +65,12 @@ export function PaymentMethodSelector({
       console.error('❌ Failed to load payment methods:', error)
       // Fallback to default methods
       setMethods([
-        { id: '1', type: 'cash', name: 'Cash', icon: '💵', isActive: true },
-        { id: '2', type: 'qris', name: 'QRIS', icon: '📱', isActive: true },
-        { id: '3', type: 'bank_transfer', name: 'Bank Transfer', icon: '🏦', isActive: true },
-        { id: '6', type: 'ewallet', name: 'E-Wallet', icon: '📲', isActive: true },
-        { id: '4', type: 'debit', name: 'Debit Card', icon: '💳', isActive: true },
-        { id: '5', type: 'credit', name: 'Credit Card', icon: '💳', isActive: true }
+        { id: '1', type: 'cash', name: 'Cash', icon: <Banknote className="w-6 h-6" />, isActive: true },
+        { id: '2', type: 'qris', name: 'QRIS', icon: <Smartphone className="w-6 h-6" />, isActive: true },
+        { id: '3', type: 'bank_transfer', name: 'Bank Transfer', icon: <Building2 className="w-6 h-6" />, isActive: true },
+        { id: '6', type: 'ewallet', name: 'E-Wallet', icon: <Wallet className="w-6 h-6" />, isActive: true },
+        { id: '4', type: 'debit', name: 'Debit Card', icon: <CreditCard className="w-6 h-6" />, isActive: true },
+        { id: '5', type: 'credit', name: 'Credit Card', icon: <CreditCard className="w-6 h-6" />, isActive: true }
       ])
     } finally {
       setLoading(false)
@@ -89,16 +90,16 @@ export function PaymentMethodSelector({
     return mapping[code] || 'cash'
   }
 
-  function getMethodIcon(type: string): string {
-    const icons: Record<string, string> = {
-      cash: '💵',
-      qris: '📱',
-      bank_transfer: '🏦',
-      ewallet: '📲',
-      debit: '💳',
-      credit: '💳'
+  function getMethodIcon(type: string): ReactNode {
+    const icons: Record<string, ReactNode> = {
+      cash: <Banknote className="w-6 h-6" />,
+      qris: <Smartphone className="w-6 h-6" />,
+      bank_transfer: <Building2 className="w-6 h-6" />,
+      ewallet: <Wallet className="w-6 h-6" />,
+      debit: <CreditCard className="w-6 h-6" />,
+      credit: <CreditCard className="w-6 h-6" />,
     }
-    return icons[type] || '💰'
+    return icons[type] || <DollarSign className="w-6 h-6" />
   }
 
   if (loading) {
@@ -138,7 +139,7 @@ export function PaymentMethodSelector({
             `}
           >
             <div className="flex flex-col items-center gap-2">
-              <span className="text-xs md:text-lg md:text-3xl">{method.icon}</span>
+              <span className="text-gray-700">{method.icon}</span>
               <span className="text-sm font-semibold text-gray-900 text-center">
                 {method.name}
               </span>
@@ -152,7 +153,7 @@ export function PaymentMethodSelector({
             {value === method.type && (
               <div className="absolute top-2 right-2">
                 <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">✓</span>
+                  <Check className="w-3.5 h-3.5 text-white" />
                 </div>
               </div>
             )}

@@ -7,6 +7,7 @@ import { StatCard } from '@/components/ui/StatCard'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { trpc } from '@/lib/trpc/client'
 import { formatCurrency } from '@/lib/utils'
+import { Package, Store, AlertTriangle, CheckCircle, ClipboardList, AlertOctagon } from 'lucide-react'
 
 function StyledSelect({ label, value, onChange, options }: {
   label: string; value: string; onChange: (v: string) => void
@@ -33,9 +34,9 @@ const SEVERITY_BADGE: Record<string, string> = {
   low:      'bg-orange-600 text-white',
 }
 const SEVERITY_LABEL: Record<string, string> = {
-  critical: '🚨 CRITICAL',
-  warning:  '⚠️ WARNING',
-  low:      '⚡ LOW',
+  critical: 'CRITICAL',
+  warning:  'WARNING',
+  low:      'LOW',
 }
 
 export default function InventoryMonitorPage() {
@@ -78,7 +79,7 @@ export default function InventoryMonitorPage() {
         </div>
         {selectedOutlet && (
           <div className="mt-3 flex items-center gap-2 p-3 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-xl">
-            <span className="text-purple-500">🏪</span>
+            <Store className="w-4 h-4 text-purple-500" />
             <div>
               <p className="text-xs font-semibold text-purple-900 dark:text-purple-200">{selectedOutlet.name}</p>
               {selectedOutlet.address && <p className="text-xs text-purple-600 dark:text-purple-400">{selectedOutlet.address}</p>}
@@ -89,17 +90,17 @@ export default function InventoryMonitorPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-        <StatCard icon="📦" label="Total Produk"     value={stats?.totalProducts || products.length || 0} color="blue"   sub="Di sistem" />
-        <StatCard icon="🏪" label="Total Outlet"     value={selectedOutletId ? 1 : stats?.totalOutlets || outlets.length || 0} color="gray"   sub="Lokasi" />
-        <StatCard icon="⚠️" label="Stok Rendah"      value={lowStock?.length || 0}  color="red"    sub={`Di bawah ${stockThreshold} unit`} />
-        <StatCard icon="✅" label="Stok Normal"       value={healthyCount}           color="green"  sub="Produk cukup" />
+        <StatCard icon={<Package />} label="Total Produk"     value={stats?.totalProducts || products.length || 0} color="blue"   sub="Di sistem" />
+        <StatCard icon={<Store />} label="Total Outlet"     value={selectedOutletId ? 1 : stats?.totalOutlets || outlets.length || 0} color="gray"   sub="Lokasi" />
+        <StatCard icon={<AlertTriangle />} label="Stok Rendah"      value={lowStock?.length || 0}  color="red"    sub={`Di bawah ${stockThreshold} unit`} />
+        <StatCard icon={<CheckCircle />} label="Stok Normal"       value={healthyCount}           color="green"  sub="Produk cukup" />
       </div>
 
       {/* Low Stock Alert */}
       {lowStock && lowStock.length > 0 && (
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden">
           <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">⚠️ Butuh Perhatian Segera</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-yellow-500" /> Butuh Perhatian Segera</p>
             <span className="px-2.5 py-0.5 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 text-[11px] font-bold rounded-full">
               {lowStock.length} item
             </span>
@@ -142,11 +143,11 @@ export default function InventoryMonitorPage() {
       )}
 
       {/* All Products */}
-      <SectionCard title="📋 Semua Inventori Produk">
+      <SectionCard title="Semua Inventori Produk">
         {inventoryLoading ? (
-          <div className="py-10 text-center text-gray-400 dark:text-gray-500 text-sm">⏳ Memuat inventori...</div>
+          <div className="py-10 text-center text-gray-400 dark:text-gray-500 text-sm">Memuat inventori...</div>
         ) : !products || products.length === 0 ? (
-          <EmptyState icon="📦" title="Tidak ada produk" description="Tambahkan produk untuk mulai memantau inventori." />
+          <EmptyState icon={<Package />} title="Tidak ada produk" description="Tambahkan produk untuk mulai memantau inventori." />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -173,7 +174,7 @@ export default function InventoryMonitorPage() {
                       <td className="px-3 md:px-4 py-3">
                         <p className={`text-base font-bold ${stockColor}`}>{product.currentStock.toLocaleString()}</p>
                         <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                          {status === 'out' ? '❌ Habis' : status === 'low' ? '⚠️ Rendah' : '✅ Tersedia'}
+                          {status === 'out' ? 'Habis' : status === 'low' ? 'Rendah' : 'Tersedia'}
                         </p>
                       </td>
                       <td className="px-3 md:px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100">

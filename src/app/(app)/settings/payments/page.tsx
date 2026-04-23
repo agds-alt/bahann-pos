@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { trpc } from '@/lib/trpc/client'
+import { Building2, Wallet, Smartphone, Upload, CheckCircle, XCircle } from 'lucide-react'
 
 type Section = 'bank' | 'ewallet' | 'qris' | null
 
@@ -97,14 +98,14 @@ export default function PaymentSettingsPage() {
             ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700 text-green-700 dark:text-green-400'
             : 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700 text-red-700 dark:text-red-400'
         }`}>
-          <span>{toast.type === 'success' ? '✅' : '❌'}</span>
+          <span>{toast.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}</span>
           {toast.msg}
         </div>
       )}
 
       {/* ── Bank Transfer ── */}
       <PaymentCard
-        icon="🏦"
+        icon={<Building2 className="w-6 h-6" />}
         title="Bank Transfer"
         subtitle={bankConfigured ? `${settings!.bankTransfer.bankName} · ${maskAccount(settings!.bankTransfer.accountNumber)}` : 'Belum dikonfigurasi'}
         configured={bankConfigured}
@@ -149,7 +150,7 @@ export default function PaymentSettingsPage() {
 
       {/* ── E-Wallet ── */}
       <PaymentCard
-        icon="📲"
+        icon={<Wallet className="w-6 h-6" />}
         title="E-Wallet (GoPay / DANA)"
         subtitle={ewalletConfigured ? `Nomor: ${settings!.ewallet.phone}` : 'Belum dikonfigurasi'}
         configured={ewalletConfigured}
@@ -186,7 +187,7 @@ export default function PaymentSettingsPage() {
 
       {/* ── QRIS ── */}
       <PaymentCard
-        icon="📱"
+        icon={<Smartphone className="w-6 h-6" />}
         title="QRIS Statis"
         subtitle={qrisConfigured ? `Merchant: ${settings!.qris.merchantName || 'Toko'}` : 'Belum dikonfigurasi'}
         configured={qrisConfigured}
@@ -221,7 +222,7 @@ export default function PaymentSettingsPage() {
                 isDragging ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-700/30'
               }`}
             >
-              <span className="text-xs md:text-lg md:text-3xl">📁</span>
+              <Upload className="w-5 h-5 md:w-8 md:h-8 text-gray-400 dark:text-gray-500" />
               <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Klik atau drag gambar ke sini</p>
               <p className="text-xs text-gray-400 dark:text-gray-500">PNG / JPG · Maks 2MB</p>
             </div>
@@ -264,7 +265,7 @@ export default function PaymentSettingsPage() {
 function PaymentCard({
   icon, title, subtitle, configured, isOpen, onToggle, children
 }: {
-  icon: string
+  icon: ReactNode
   title: string
   subtitle: string
   configured: boolean
@@ -278,7 +279,7 @@ function PaymentCard({
         onClick={onToggle}
         className="w-full flex items-center gap-2 md:gap-4 p-5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors"
       >
-        <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-base md:text-2xl shrink-0">
+        <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 shrink-0">
           {icon}
         </div>
         <div className="flex-1 min-w-0">

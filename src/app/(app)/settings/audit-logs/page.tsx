@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { ClipboardList } from 'lucide-react'
 import { Input, Select } from '@/components/ui/Input'
 import { trpc } from '@/lib/trpc/client'
 
@@ -225,7 +226,7 @@ export default function AuditLogsPage() {
             </div>
           ) : !logs || logs.length === 0 ? (
             <div className="py-6 md:py-12 text-center text-gray-500 dark:text-gray-400">
-              <div className="text-3xl md:text-6xl mb-4">📋</div>
+              <div className="mb-4 flex justify-center"><ClipboardList className="w-8 h-8 md:w-14 md:h-14 text-gray-400 dark:text-gray-500" /></div>
               <p className="font-semibold">No audit logs found</p>
               <p className="text-sm">Try adjusting your filters</p>
             </div>

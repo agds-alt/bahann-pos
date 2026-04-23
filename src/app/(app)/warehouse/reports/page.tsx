@@ -11,6 +11,7 @@ import { trpc } from '@/lib/trpc/client'
 import { ChartSkeleton, ExportLoadingSkeleton } from '@/components/ui/Skeletons'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { getLimits } from '@/lib/plans'
+import { DollarSign, TrendingUp, Receipt, Package, BarChart3, Trophy, FileText, Download, Lock } from 'lucide-react'
 
 const RevenueLineChart = lazy(() => import('@/components/charts/RevenueLineChartLazy'))
 const ItemsSoldBarChart = lazy(() => import('@/components/charts/ItemsSoldBarChartLazy'))
@@ -56,14 +57,14 @@ export default function ReportsPage() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-        <StatCard icon="💰" label="Total Revenue"   value={formatCurrency(stats?.totalRevenue || 0)}     color="green"  sub={dateRange === 0 ? 'All time' : `${dateRange} hari`} />
-        <StatCard icon="📈" label="Rata-rata/Hari"  value={formatCurrency(avgDailyRevenue)}              color="blue"   sub="Per hari" />
-        <StatCard icon="🧾" label="Transaksi"       value={stats?.transactionCount || 0}                 color="purple" sub="Selesai" />
-        <StatCard icon="📦" label="Avg Item/Hari"   value={Math.round(avgItemsPerDay)}                   color="yellow" sub="Unit" />
+        <StatCard icon={<DollarSign />} label="Total Revenue"   value={formatCurrency(stats?.totalRevenue || 0)}     color="green"  sub={dateRange === 0 ? 'All time' : `${dateRange} hari`} />
+        <StatCard icon={<TrendingUp />} label="Rata-rata/Hari"  value={formatCurrency(avgDailyRevenue)}              color="blue"   sub="Per hari" />
+        <StatCard icon={<Receipt />} label="Transaksi"       value={stats?.transactionCount || 0}                 color="purple" sub="Selesai" />
+        <StatCard icon={<Package />} label="Avg Item/Hari"   value={Math.round(avgItemsPerDay)}                   color="yellow" sub="Unit" />
       </div>
 
       {/* Revenue Trend */}
-      <SectionCard title="📈 Tren Revenue">
+      <SectionCard title="Tren Revenue">
         {salesTrend && salesTrend.length > 0 ? (
           <Suspense fallback={<ChartSkeleton height={200} />}>
             <RevenueLineChart data={salesTrend} formatCurrency={formatCurrency} formatDate={formatDate} className="h-[200px] md:h-[320px]" hideMobileYAxis />
@@ -74,7 +75,7 @@ export default function ReportsPage() {
       </SectionCard>
 
       {/* Items Sold */}
-      <SectionCard title="📦 Item Terjual">
+      <SectionCard title="Item Terjual">
         {salesTrend && salesTrend.length > 0 ? (
           <Suspense fallback={<ChartSkeleton height={160} />}>
             <ItemsSoldBarChart data={salesTrend} formatDate={formatDate} className="h-[160px] md:h-[320px]" hideMobileYAxis />
@@ -86,7 +87,7 @@ export default function ReportsPage() {
 
       {/* Top Products + Pie Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
-        <SectionCard title="🏆 Produk Terlaris berdasarkan Revenue">
+        <SectionCard title="Produk Terlaris berdasarkan Revenue">
           {topProducts && topProducts.length > 0 ? (
             <div className="space-y-3">
               {topProducts.map((p, i) => {
@@ -121,7 +122,7 @@ export default function ReportsPage() {
           )}
         </SectionCard>
 
-        <SectionCard title="📊 Distribusi Revenue">
+        <SectionCard title="Distribusi Revenue">
           {pieData && pieData.length > 0 ? (
             <Suspense fallback={<ChartSkeleton height={320} />}>
               <RevenuePieChart data={pieData} formatCurrency={formatCurrency} />
@@ -133,7 +134,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Performance Metrics */}
-      <SectionCard title="📉 Metrik Performa">
+      <SectionCard title="Metrik Performa">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
           <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-xl border border-green-200 dark:border-green-800">
             <p className="text-xs text-green-700 dark:text-green-400 font-semibold mb-1">Tertinggi/Hari</p>
@@ -162,8 +163,8 @@ export default function ReportsPage() {
       <SectionCard
         title="Export Laporan"
         action={canExport
-          ? <Button variant="primary" onClick={() => setShowExporter(!showExporter)}>📥 Export Data</Button>
-          : <Button variant="secondary" onClick={() => setShowUpgradeModal(true)}>🔒 Upgrade untuk Export</Button>
+          ? <Button variant="primary" onClick={() => setShowExporter(!showExporter)}><Download className="w-4 h-4 mr-1" /> Export Data</Button>
+          : <Button variant="secondary" onClick={() => setShowUpgradeModal(true)}><Lock className="w-4 h-4 mr-1" /> Upgrade untuk Export</Button>
         }
       >
         {canExport && showExporter && (

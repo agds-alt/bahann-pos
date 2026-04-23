@@ -7,6 +7,7 @@ import { StatCard } from '@/components/ui/StatCard'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useToast } from '@/components/ui/Toast'
 import { trpc } from '@/lib/trpc/client'
+import { XCircle, AlertCircle, ClipboardList, CheckCircle, RefreshCw } from 'lucide-react'
 
 const ALERT_STYLES: Record<string, string> = {
   out_of_stock: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-900 dark:text-red-100',
@@ -51,22 +52,22 @@ export default function AlertsPage() {
         subtitle="Monitor stok menipis dan habis"
         action={
           <Button variant="primary" onClick={handleGenerate} disabled={generateMutation.isPending}>
-            {generateMutation.isPending ? 'Generating…' : '⚡ Generate Alerts'}
+            {generateMutation.isPending ? 'Generating…' : <><RefreshCw className="w-4 h-4 mr-1 inline" /> Generate Alerts</>}
           </Button>
         }
       />
 
       {summary && (
         <div className="grid grid-cols-3 gap-2 md:gap-4">
-          <StatCard icon="🔴" label="Habis"         value={summary.outOfStock} color="red" />
-          <StatCard icon="🟡" label="Hampir Habis"  value={summary.lowStock}   color="yellow" />
-          <StatCard icon="📋" label="Total Alerts"  value={summary.total}      color="blue" />
+          <StatCard icon={<XCircle />} label="Habis"         value={summary.outOfStock} color="red" />
+          <StatCard icon={<AlertCircle />} label="Hampir Habis"  value={summary.lowStock}   color="yellow" />
+          <StatCard icon={<ClipboardList />} label="Total Alerts"  value={summary.total}      color="blue" />
         </div>
       )}
 
       <SectionCard title="Alert Aktif">
         {!alerts || alerts.length === 0 ? (
-          <EmptyState icon="✅" title="Tidak ada alert aktif" description="Semua stok dalam kondisi aman." />
+          <EmptyState icon={<CheckCircle />} title="Tidak ada alert aktif" description="Semua stok dalam kondisi aman." />
         ) : (
           <div className="space-y-2 md:space-y-3">
             {alerts.map(alert => {

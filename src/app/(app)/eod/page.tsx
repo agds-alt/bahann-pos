@@ -8,6 +8,7 @@ import { SectionCard } from '@/components/ui/SectionCard'
 import { StatCard } from '@/components/ui/StatCard'
 import { trpc } from '@/lib/trpc/client'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
+import { Clock, Banknote, User, CheckCircle, Sunrise, Moon, CheckCircle2, XCircle, Info } from 'lucide-react'
 
 type AlertState = { type: 'success' | 'error' | 'info'; msg: string } | null
 
@@ -73,7 +74,7 @@ export default function EODPage() {
           : alert.type === 'error' ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300'
           : 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300'
         }`}>
-          <span>{alert.type === 'success' ? '✅' : alert.type === 'error' ? '❌' : 'ℹ️'}</span>
+          <span>{alert.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : alert.type === 'error' ? <XCircle className="w-4 h-4" /> : <Info className="w-4 h-4" />}</span>
           {alert.msg}
         </div>
       )}
@@ -86,7 +87,7 @@ export default function EODPage() {
             onChange={e => setSelectedOutlet(e.target.value)}
             className="w-full appearance-none px-3 py-2.5 pr-9 text-sm border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-medium focus:outline-none focus:border-blue-400 dark:focus:border-blue-500 transition-colors"
           >
-            <option value="">🏪 Pilih outlet…</option>
+            <option value="">Pilih outlet…</option>
             {outlets.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
           </select>
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">▾</span>
@@ -108,7 +109,7 @@ export default function EODPage() {
               fullWidth
             />
             <Button variant="primary" size="lg" fullWidth onClick={handleOpenDay} disabled={openMutation.isPending}>
-              {openMutation.isPending ? 'Membuka…' : '🌅 Buka Hari'}
+              {openMutation.isPending ? 'Membuka…' : <><Sunrise className="w-4 h-4 mr-1 inline" /> Buka Hari</>}
             </Button>
           </div>
         </SectionCard>
@@ -119,10 +120,10 @@ export default function EODPage() {
         <div className="space-y-4">
           <SectionCard title="Sesi Aktif">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-              <StatCard icon="🕐" label="Dibuka Pukul" value={formatDateTime(currentSession.opened_at)} color="gray" />
-              <StatCard icon="💵" label="Kas Awal" value={formatCurrency(currentSession.opening_cash)} color="green" />
-              <StatCard icon="👤" label="Dibuka Oleh" value={currentSession.opened_by_user?.name || '—'} color="gray" />
-              <StatCard icon="🟢" label="Status" value="BUKA" color="green" />
+              <StatCard icon={<Clock />} label="Dibuka Pukul" value={formatDateTime(currentSession.opened_at)} color="gray" />
+              <StatCard icon={<Banknote />} label="Kas Awal" value={formatCurrency(currentSession.opening_cash)} color="green" />
+              <StatCard icon={<User />} label="Dibuka Oleh" value={currentSession.opened_by_user?.name || '—'} color="gray" />
+              <StatCard icon={<CheckCircle />} label="Status" value="BUKA" color="green" />
             </div>
           </SectionCard>
 
@@ -177,7 +178,7 @@ export default function EODPage() {
                 onClick={handleCloseDay}
                 disabled={closeMutation.isPending || closingCash <= 0}
               >
-                {closeMutation.isPending ? 'Menutup…' : '🌙 Tutup Hari'}
+                {closeMutation.isPending ? 'Menutup…' : <><Moon className="w-4 h-4 mr-1 inline" /> Tutup Hari</>}
               </Button>
             </div>
           </SectionCard>

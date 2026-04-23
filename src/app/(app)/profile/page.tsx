@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -8,11 +8,12 @@ import { SectionCard } from '@/components/ui/SectionCard'
 import { useToast } from '@/components/ui/Toast'
 import { trpc } from '@/lib/trpc/client'
 import { useRouter } from 'next/navigation'
+import { Crown, Star, User as UserIcon, Pencil, Check, ShieldCheck, AlertOctagon, LogOut } from 'lucide-react'
 
-const ROLE_BADGE: Record<string, { label: string; color: string; icon: string }> = {
-  admin:   { label: 'Administrator', icon: '👑', color: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300' },
-  manager: { label: 'Manager',       icon: '⭐', color: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300' },
-  default: { label: 'Kasir',         icon: '👤', color: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' },
+const ROLE_BADGE: Record<string, { label: string; icon: ReactNode; color: string }> = {
+  admin:   { label: 'Administrator', icon: <Crown className="w-3 h-3" />,    color: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300' },
+  manager: { label: 'Manager',       icon: <Star className="w-3 h-3" />,     color: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300' },
+  default: { label: 'Kasir',         icon: <UserIcon className="w-3 h-3" />, color: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' },
 }
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -91,7 +92,7 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${badge.color}`}>
+            <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold ${badge.color}`}>
               {badge.icon} {badge.label}
             </span>
 
@@ -109,7 +110,7 @@ export default function ProfilePage() {
             title="Informasi Pribadi"
             action={!isEditing ? (
               <Button variant="secondary" size="sm" onClick={() => setIsEditing(true)}>
-                ✏️ Edit
+                <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
               </Button>
             ) : undefined}
           >
@@ -123,7 +124,7 @@ export default function ProfilePage() {
                   placeholder="08123456789" fullWidth />
                 <div className="flex gap-2 pt-1">
                   <Button variant="primary" onClick={handleSave} fullWidth disabled={updateProfile.isPending}>
-                    {updateProfile.isPending ? 'Menyimpan…' : '✅ Simpan'}
+                    {updateProfile.isPending ? 'Menyimpan…' : <><Check className="w-4 h-4 mr-1" /> Simpan</>}
                   </Button>
                   <Button variant="outline" onClick={handleCancel} fullWidth>Batal</Button>
                 </div>
@@ -133,7 +134,7 @@ export default function ProfilePage() {
                 <InfoRow label="Nama Lengkap" value={profile.name} />
                 <InfoRow label="Email" value={profile.email} />
                 <InfoRow label="Nomor HP / WhatsApp" value={profile.whatsappNumber || <span className="italic text-gray-400 font-normal text-xs">Belum diisi</span>} />
-                <InfoRow label="Role" value={`${badge.icon} ${badge.label}`} />
+                <InfoRow label="Role" value={<span className="inline-flex items-center gap-1">{badge.icon} {badge.label}</span>} />
               </div>
             )}
           </SectionCard>
@@ -141,14 +142,18 @@ export default function ProfilePage() {
           <SectionCard title="Pengaturan Akun">
             <div className="space-y-3">
               <div className="p-3 md:p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-                <p className="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-1">🔐 Informasi Sesi</p>
+                <p className="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-1 flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5" /> Informasi Sesi
+                </p>
                 <p className="text-xs text-blue-700 dark:text-blue-400">
                   Sesi berlaku selama 7 hari dan akan logout otomatis setelah itu.
                 </p>
               </div>
 
               <div className="p-3 md:p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
-                <p className="text-xs font-semibold text-red-800 dark:text-red-300 mb-1">🚨 Danger Zone</p>
+                <p className="text-xs font-semibold text-red-800 dark:text-red-300 mb-1 flex items-center gap-1">
+                  <AlertOctagon className="w-3.5 h-3.5" /> Danger Zone
+                </p>
                 <p className="text-xs text-red-700 dark:text-red-400 mb-3">
                   Setelah logout, kamu harus login ulang dengan kredensial kamu.
                 </p>
@@ -164,7 +169,7 @@ export default function ProfilePage() {
                     }
                   }}
                 >
-                  🚪 Logout
+                  <LogOut className="w-3.5 h-3.5 mr-1" /> Logout
                 </Button>
               </div>
             </div>

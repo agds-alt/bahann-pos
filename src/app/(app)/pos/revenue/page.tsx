@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { trpc } from '@/lib/trpc/client'
 import { formatCurrency } from '@/lib/utils'
 import { ChartSkeleton } from '@/components/ui/Skeletons'
+import { DollarSign, TrendingUp, BarChart3, Receipt, CreditCard, Package } from 'lucide-react'
 
 const RevenueAreaChart    = lazy(() => import('@/components/charts/RevenueAreaChartLazy'))
 const DailyRevenueBarChart = lazy(() => import('@/components/charts/DailyRevenueBarChartLazy'))
@@ -57,14 +58,14 @@ export default function RevenueTrackingPage() {
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-        <StatCard icon="💰" label="Total Revenue"   value={formatCurrency(totalRevenue)} color="green" sub={dateRange === 0 ? 'All time' : `${dateRange} hari`} />
-        <StatCard icon="📈" label="Rata-rata/Hari"  value={formatCurrency(averageDaily)} color="blue"  sub="Per hari" />
-        <StatCard icon="📊" label="Pertumbuhan"     value={`${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}%`} color={growthRate >= 0 ? 'green' : 'red'} sub="vs. periode sebelumnya" />
-        <StatCard icon="🧾" label="Transaksi"       value={stats?.transactionCount || 0} color="purple" sub="Selesai" />
+        <StatCard icon={<DollarSign />} label="Total Revenue"   value={formatCurrency(totalRevenue)} color="green" sub={dateRange === 0 ? 'All time' : `${dateRange} hari`} />
+        <StatCard icon={<TrendingUp />} label="Rata-rata/Hari"  value={formatCurrency(averageDaily)} color="blue"  sub="Per hari" />
+        <StatCard icon={<BarChart3 />} label="Pertumbuhan"     value={`${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}%`} color={growthRate >= 0 ? 'green' : 'red'} sub="vs. periode sebelumnya" />
+        <StatCard icon={<Receipt />} label="Transaksi"       value={stats?.transactionCount || 0} color="purple" sub="Selesai" />
       </div>
 
       {/* Revenue Trend */}
-      <SectionCard title="💰 Revenue Trend">
+      <SectionCard title="Revenue Trend">
         {salesTrend && salesTrend.length > 0 ? (
           <Suspense fallback={<ChartSkeleton height={220} />}>
             <RevenueAreaChart
@@ -76,12 +77,12 @@ export default function RevenueTrackingPage() {
             />
           </Suspense>
         ) : (
-          <EmptyState icon="💰" title="Belum ada data revenue" description="Mulai proses penjualan untuk melihat tren pendapatan." />
+          <EmptyState icon={<DollarSign />} title="Belum ada data revenue" description="Mulai proses penjualan untuk melihat tren pendapatan." />
         )}
       </SectionCard>
 
       {/* Daily Comparison */}
-      <SectionCard title="📊 Perbandingan Harian">
+      <SectionCard title="Perbandingan Harian">
         {salesTrend && salesTrend.length > 0 ? (
           <Suspense fallback={<ChartSkeleton height={180} />}>
             <DailyRevenueBarChart
@@ -93,20 +94,20 @@ export default function RevenueTrackingPage() {
             />
           </Suspense>
         ) : (
-          <EmptyState icon="📊" title="Belum ada data" description="Data perbandingan harian akan tampil setelah ada transaksi." />
+          <EmptyState icon={<BarChart3 />} title="Belum ada data" description="Data perbandingan harian akan tampil setelah ada transaksi." />
         )}
       </SectionCard>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
         {/* Performance Metrics */}
-        <SectionCard title="📈 Metrik Performa">
+        <SectionCard title="Metrik Performa">
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/30 rounded-xl border border-green-200 dark:border-green-800">
               <div>
                 <p className="text-xs text-green-700 dark:text-green-400 font-semibold">Total Revenue</p>
                 <p className="text-lg font-bold text-green-900 dark:text-green-200">{formatCurrency(totalRevenue)}</p>
               </div>
-              <span className="text-2xl">💰</span>
+              <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
             <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl border border-blue-200 dark:border-blue-800">
               <div>
@@ -115,7 +116,7 @@ export default function RevenueTrackingPage() {
                   {formatCurrency(stats?.transactionCount ? stats.totalRevenue / stats.transactionCount : 0)}
                 </p>
               </div>
-              <span className="text-2xl">💳</span>
+              <CreditCard className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/30 rounded-xl border border-purple-200 dark:border-purple-800">
               <div>
@@ -124,13 +125,13 @@ export default function RevenueTrackingPage() {
                   {(stats?.totalItemsSold || 0).toLocaleString()}
                 </p>
               </div>
-              <span className="text-2xl">📦</span>
+              <Package className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
         </SectionCard>
 
         {/* Revenue Goals */}
-        <SectionCard title="🎯 Target Revenue">
+        <SectionCard title="Target Revenue">
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-1.5">
@@ -153,14 +154,14 @@ export default function RevenueTrackingPage() {
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{((totalRevenue / 150000000) * 100).toFixed(1)}% tercapai</p>
             </div>
             <div className="p-3 bg-yellow-50 dark:bg-yellow-900/30 rounded-xl border border-yellow-200 dark:border-yellow-800">
-              <p className="text-xs text-yellow-800 dark:text-yellow-300">💡 Pertahankan konsistensi harian untuk mencapai target bulanan</p>
+              <p className="text-xs text-yellow-800 dark:text-yellow-300">Pertahankan konsistensi harian untuk mencapai target bulanan</p>
             </div>
           </div>
         </SectionCard>
       </div>
 
       {/* Recent Transactions */}
-      <SectionCard title="💎 Transaksi Terbaru">
+      <SectionCard title="Transaksi Terbaru">
         {recentTransactions && recentTransactions.length > 0 ? (
           <div className="space-y-2">
             {recentTransactions.map(tx => (
@@ -177,7 +178,7 @@ export default function RevenueTrackingPage() {
             ))}
           </div>
         ) : (
-          <EmptyState icon="💎" title="Belum ada transaksi" description="Mulai proses penjualan untuk melihat transaksi terbaru." />
+          <EmptyState icon={<Receipt />} title="Belum ada transaksi" description="Mulai proses penjualan untuk melihat transaksi terbaru." />
         )}
       </SectionCard>
     </div>

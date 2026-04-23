@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Tag } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -92,7 +93,7 @@ export default function PromotionsPage() {
 
           <div className="mt-4">
             <Button variant="primary" onClick={handleCreate} disabled={createMutation.isPending || !formData.code || !formData.name}>
-              {createMutation.isPending ? 'Menyimpan…' : '✅ Buat Promosi'}
+              {createMutation.isPending ? 'Menyimpan…' : 'Buat Promosi'}
             </Button>
           </div>
         </SectionCard>
@@ -100,7 +101,7 @@ export default function PromotionsPage() {
 
       <SectionCard title="Daftar Promosi">
         {!promos || promos.length === 0 ? (
-          <EmptyState icon="🏷️" title="Belum ada promosi" description="Buat promosi pertama kamu untuk mulai memberikan diskon." />
+          <EmptyState icon={<Tag />} title="Belum ada promosi" description="Buat promosi pertama kamu untuk mulai memberikan diskon." />
         ) : (
           <div className="space-y-2">
             {promos.map(promo => (

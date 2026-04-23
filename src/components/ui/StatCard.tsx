@@ -1,7 +1,9 @@
+import { type ReactNode } from 'react'
+
 type StatCardColor = 'gray' | 'blue' | 'green' | 'yellow' | 'red' | 'purple'
 
 interface StatCardProps {
-  icon: string
+  icon: ReactNode
   label: string
   value: string | number
   color?: StatCardColor
@@ -21,7 +23,7 @@ export function StatCard({ icon, label, value, color = 'gray', sub }: StatCardPr
   const { wrap, label: labelClass } = colorMap[color]
   return (
     <div className={`flex items-center gap-3 p-3 md:p-4 rounded-xl border ${wrap}`}>
-      <span className="text-xl md:text-2xl shrink-0">{icon}</span>
+      <div className="shrink-0 [&>svg]:w-5 [&>svg]:h-5 md:[&>svg]:w-6 md:[&>svg]:h-6">{icon}</div>
       <div className="min-w-0 flex-1">
         <p className={`text-[11px] md:text-xs font-medium ${labelClass}`}>{label}</p>
         <p className="text-base md:text-2xl font-bold leading-tight">{value}</p>

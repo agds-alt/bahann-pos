@@ -3,13 +3,19 @@
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
+import {
+  BarChart3, Package, ShoppingCart, TrendingUp, Tag, Users,
+  Smartphone, Palette, Settings, Lock, Radio, Wifi,
+  Telescope, Building, Rocket, ScrollText, Heart,
+  Handshake, MessageCircle, Star, Github, Mail, Phone, Code
+} from 'lucide-react'
 
 export default function AboutPage() {
   const { t } = useLanguage()
 
   const features = [
     {
-      category: `📊 ${t('about.features.dashboard')}`,
+      category: t('about.features.dashboard'),
       items: [
         t('about.features.dashboard.item1'),
         t('about.features.dashboard.item2'),
@@ -20,7 +26,7 @@ export default function AboutPage() {
       ],
     },
     {
-      category: `📦 ${t('about.features.warehouseMgmt')}`,
+      category: t('about.features.warehouseMgmt'),
       items: [
         t('about.features.warehouseMgmt.item1'),
         t('about.features.warehouseMgmt.item2'),
@@ -31,7 +37,7 @@ export default function AboutPage() {
       ],
     },
     {
-      category: `🛒 ${t('about.features.pos')}`,
+      category: t('about.features.pos'),
       items: [
         t('about.features.pos.item1'),
         t('about.features.pos.item2'),
@@ -42,7 +48,7 @@ export default function AboutPage() {
       ],
     },
     {
-      category: `📈 ${t('about.features.reports')}`,
+      category: t('about.features.reports'),
       items: [
         t('about.features.reports.item1'),
         t('about.features.reports.item2'),
@@ -53,7 +59,7 @@ export default function AboutPage() {
       ],
     },
     {
-      category: `🏷️ ${t('about.features.master')}`,
+      category: t('about.features.master'),
       items: [
         t('about.features.master.item1'),
         t('about.features.master.item2'),
@@ -62,7 +68,7 @@ export default function AboutPage() {
       ],
     },
     {
-      category: `👤 ${t('about.features.userMgmt')}`,
+      category: t('about.features.userMgmt'),
       items: [
         t('about.features.userMgmt.item1'),
         t('about.features.userMgmt.item2'),
@@ -72,7 +78,7 @@ export default function AboutPage() {
       ],
     },
     {
-      category: `📱 ${t('about.features.pwa')}`,
+      category: t('about.features.pwa'),
       items: [
         t('about.features.pwa.item1'),
         t('about.features.pwa.item2'),
@@ -85,7 +91,7 @@ export default function AboutPage() {
   const techStack = [
     {
       category: t('about.technology.frontend'),
-      icon: '🎨',
+      icon: <Palette className="w-5 h-5" />,
       technologies: [
         { name: 'Next.js 16.0.7', description: 'React framework with App Router & Turbopack' },
         { name: 'React 19.2', description: 'UI library with React Compiler enabled' },
@@ -97,7 +103,7 @@ export default function AboutPage() {
     },
     {
       category: t('about.technology.backend'),
-      icon: '⚙️',
+      icon: <Settings className="w-5 h-5" />,
       technologies: [
         { name: 'tRPC 11.7', description: 'End-to-end typesafe APIs' },
         { name: 'Supabase 2.x', description: 'PostgreSQL database with RLS' },
@@ -109,7 +115,7 @@ export default function AboutPage() {
     },
     {
       category: t('about.technology.auth'),
-      icon: '🔐',
+      icon: <Lock className="w-5 h-5" />,
       technologies: [
         { name: 'JWT (jsonwebtoken)', description: 'Stateless auth with 7-day sessions' },
         { name: 'bcryptjs 3', description: 'Password hashing' },
@@ -119,7 +125,7 @@ export default function AboutPage() {
     },
     {
       category: 'State & Data Fetching',
-      icon: '📡',
+      icon: <Radio className="w-5 h-5" />,
       technologies: [
         { name: 'TanStack Query 5.9', description: 'Async state management' },
         { name: 'tRPC React Query', description: 'Type-safe data fetching' },
@@ -128,7 +134,7 @@ export default function AboutPage() {
     },
     {
       category: 'Offline & PWA',
-      icon: '📱',
+      icon: <Wifi className="w-5 h-5" />,
       technologies: [
         { name: 'Dexie 4.2', description: 'IndexedDB wrapper for offline storage' },
         { name: 'SyncManager', description: 'Auto-sync every 30 s when online' },
@@ -138,7 +144,7 @@ export default function AboutPage() {
     },
     {
       category: 'Monitoring & Testing',
-      icon: '🔭',
+      icon: <Telescope className="w-5 h-5" />,
       technologies: [
         { name: 'Sentry 10.25', description: 'Error tracking & performance' },
         { name: 'Jest 30', description: 'Unit & integration tests' },
@@ -147,7 +153,7 @@ export default function AboutPage() {
     },
     {
       category: 'Architecture',
-      icon: '🏗️',
+      icon: <Building className="w-5 h-5" />,
       technologies: [
         { name: 'Domain-Driven Design', description: 'Clean architecture pattern' },
         { name: 'Repository Pattern', description: 'Data access abstraction' },
@@ -201,7 +207,7 @@ export default function AboutPage() {
       {/* Features Breakdown */}
       <Card variant="elevated" padding="sm">
         <CardHeader>
-          <CardTitle>✨ {t('about.featuresOverview')}</CardTitle>
+          <CardTitle>{t('about.featuresOverview')}</CardTitle>
         </CardHeader>
         <CardBody>
           <p className="text-gray-600 dark:text-gray-400 mb-3 md:mb-6">
@@ -228,7 +234,7 @@ export default function AboutPage() {
       {/* Technology Stack */}
       <Card variant="elevated" padding="sm">
         <CardHeader>
-          <CardTitle>🛠️ {t('about.techStack')}</CardTitle>
+          <CardTitle>{t('about.techStack')}</CardTitle>
         </CardHeader>
         <CardBody>
           <div className="space-y-4 md:space-y-6">
@@ -255,7 +261,7 @@ export default function AboutPage() {
       {/* Stack Summary */}
       <Card variant="default" padding="sm">
         <CardHeader>
-          <CardTitle>📚 {t('about.stackSummary')}</CardTitle>
+          <CardTitle>{t('about.stackSummary')}</CardTitle>
         </CardHeader>
         <CardBody>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
@@ -274,7 +280,7 @@ export default function AboutPage() {
       {/* Developer Profile */}
       <Card variant="elevated" padding="sm">
         <CardHeader>
-          <CardTitle>👨‍💻 {t('about.developerProfile')}</CardTitle>
+          <CardTitle>{t('about.developerProfile')}</CardTitle>
         </CardHeader>
         <CardBody>
           <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-center md:items-start">
@@ -286,9 +292,9 @@ export default function AboutPage() {
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t('about.developer.fullTitle')}</p>
               <div className="space-y-2">
                 {[
-                  { icon: '📧', href: 'mailto:agdscid@gmail.com', label: 'agdscid@gmail.com', color: 'text-blue-600 dark:text-blue-400' },
-                  { icon: '📱', href: 'https://wa.me/6287874415491', label: '+62 878-7441-5491', color: 'text-emerald-600 dark:text-emerald-400' },
-                  { icon: '💻', href: 'https://github.com/agds-alt', label: 'github.com/agds-alt', color: 'text-gray-900 dark:text-gray-100' },
+                  { icon: <Mail className="w-4 h-4" />, href: 'mailto:agdscid@gmail.com', label: 'agdscid@gmail.com', color: 'text-blue-600 dark:text-blue-400' },
+                  { icon: <Phone className="w-4 h-4" />, href: 'https://wa.me/6287874415491', label: '+62 878-7441-5491', color: 'text-emerald-600 dark:text-emerald-400' },
+                  { icon: <Github className="w-4 h-4" />, href: 'https://github.com/agds-alt', label: 'github.com/agds-alt', color: 'text-gray-900 dark:text-gray-100' },
                 ].map((contact) => (
                   <div key={contact.label} className="flex items-center justify-center md:justify-start gap-3 p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
                     <span>{contact.icon}</span>
@@ -300,10 +306,10 @@ export default function AboutPage() {
               </div>
               <div className="mt-4 flex flex-wrap gap-3 justify-center md:justify-start">
                 <a href="https://wa.me/6287874415491" target="_blank" rel="noopener noreferrer">
-                  <Button variant="primary">💬 WhatsApp</Button>
+                  <Button variant="primary"><MessageCircle className="w-4 h-4 mr-1" /> WhatsApp</Button>
                 </a>
                 <a href="https://github.com/agds-alt" target="_blank" rel="noopener noreferrer">
-                  <Button variant="secondary">🌟 GitHub</Button>
+                  <Button variant="secondary"><Star className="w-4 h-4 mr-1" /> GitHub</Button>
                 </a>
               </div>
             </div>
@@ -315,7 +321,7 @@ export default function AboutPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
         <Card variant="default" padding="sm">
           <CardHeader>
-            <CardTitle>📜 {t('about.license.title')}</CardTitle>
+            <CardTitle><ScrollText className="w-5 h-5 inline-block mr-1" /> {t('about.license.title')}</CardTitle>
           </CardHeader>
           <CardBody>
             <div className="space-y-3">
@@ -336,7 +342,7 @@ export default function AboutPage() {
 
         <Card variant="default" padding="sm">
           <CardHeader>
-            <CardTitle>🚀 {t('about.versionInfo')}</CardTitle>
+            <CardTitle><Rocket className="w-5 h-5 inline-block mr-1" /> {t('about.versionInfo')}</CardTitle>
           </CardHeader>
           <CardBody>
             <div className="space-y-3">
@@ -364,7 +370,7 @@ export default function AboutPage() {
       {/* Credits */}
       <Card variant="elevated" padding="sm">
         <CardHeader>
-          <CardTitle>🙏 {t('about.credits.title')}</CardTitle>
+          <CardTitle><Heart className="w-5 h-5 inline-block mr-1" /> {t('about.credits.title')}</CardTitle>
         </CardHeader>
         <CardBody>
           <div className="space-y-3">
@@ -385,7 +391,7 @@ export default function AboutPage() {
       {/* Contributing */}
       <Card variant="default" padding="sm">
         <CardHeader>
-          <CardTitle>🤝 {t('about.contributing.title')}</CardTitle>
+          <CardTitle><Handshake className="w-5 h-5 inline-block mr-1" /> {t('about.contributing.title')}</CardTitle>
         </CardHeader>
         <CardBody>
           <div className="space-y-3">
@@ -414,7 +420,7 @@ export default function AboutPage() {
       {/* Support */}
       <Card variant="elevated" padding="sm">
         <CardHeader>
-          <CardTitle>💬 {t('about.support.title')}</CardTitle>
+          <CardTitle><MessageCircle className="w-5 h-5 inline-block mr-1" /> {t('about.support.title')}</CardTitle>
         </CardHeader>
         <CardBody>
           <div className="text-center space-y-3">
@@ -426,10 +432,10 @@ export default function AboutPage() {
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
               <a href="https://wa.me/6287874415491" target="_blank" rel="noopener noreferrer">
-                <Button variant="primary" size="lg">💬 WhatsApp: +62 878-7441-5491</Button>
+                <Button variant="primary" size="lg"><MessageCircle className="w-4 h-4 mr-1" /> WhatsApp: +62 878-7441-5491</Button>
               </a>
               <a href="mailto:agdscid@gmail.com">
-                <Button variant="secondary" size="lg">📧 Email: agdscid@gmail.com</Button>
+                <Button variant="secondary" size="lg"><Mail className="w-4 h-4 mr-1" /> Email: agdscid@gmail.com</Button>
               </a>
             </div>
           </div>

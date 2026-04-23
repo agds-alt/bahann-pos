@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { trpc } from '@/lib/trpc/client'
 import { getLimits } from '@/lib/plans'
 import { formatCurrency } from '@/lib/utils'
+import { DollarSign, Receipt, Package, CreditCard, History, BarChart3, FileText, Lock } from 'lucide-react'
 
 function fmtDateTime(d: string) {
   return new Date(d).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -81,10 +82,10 @@ export default function SalesHistoryPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-        <StatCard icon="💰" label="Total Revenue"   value={formatCurrency(stats?.totalRevenue || 0)}     color="green"  sub={dateRange === 0 ? 'All time' : `${dateRange} hari`} />
-        <StatCard icon="🧾" label="Transaksi"       value={stats?.transactionCount || 0}                  color="blue"   sub="Total penjualan" />
-        <StatCard icon="📦" label="Item Terjual"    value={(stats?.totalItemsSold || 0).toLocaleString()} color="purple" sub="Unit" />
-        <StatCard icon="💳" label="Avg Transaksi"   value={formatCurrency(avgTx)}                         color="gray"   sub="Per penjualan" />
+        <StatCard icon={<DollarSign />} label="Total Revenue"   value={formatCurrency(stats?.totalRevenue || 0)}     color="green"  sub={dateRange === 0 ? 'All time' : `${dateRange} hari`} />
+        <StatCard icon={<Receipt />} label="Transaksi"       value={stats?.transactionCount || 0}                  color="blue"   sub="Total penjualan" />
+        <StatCard icon={<Package />} label="Item Terjual"    value={(stats?.totalItemsSold || 0).toLocaleString()} color="purple" sub="Unit" />
+        <StatCard icon={<CreditCard />} label="Avg Transaksi"   value={formatCurrency(avgTx)}                         color="gray"   sub="Per penjualan" />
       </div>
 
       {/* Daily breakdown */}
@@ -128,7 +129,7 @@ export default function SalesHistoryPage() {
         </div>
 
         {!filteredTransactions || filteredTransactions.length === 0 ? (
-          <EmptyState icon="📜" title="Tidak ada transaksi"
+          <EmptyState icon={<History />} title="Tidak ada transaksi"
             description={searchQuery ? 'Coba ubah kata kunci pencarian.' : 'Belum ada penjualan yang dicatat.'} />
         ) : (
           <div className="overflow-x-auto">
@@ -178,14 +179,14 @@ export default function SalesHistoryPage() {
       <SectionCard title="Export Data">
         {canExport ? (
           <div className="flex items-center gap-3 flex-wrap">
-            <Button variant="secondary" disabled>📊 Export ke CSV</Button>
-            <Button variant="secondary" disabled>📄 Export ke PDF</Button>
+            <Button variant="secondary" disabled><BarChart3 className="w-4 h-4 mr-1" /> Export ke CSV</Button>
+            <Button variant="secondary" disabled><FileText className="w-4 h-4 mr-1" /> Export ke PDF</Button>
             <p className="text-sm text-gray-500 dark:text-gray-400">Fitur export segera hadir</p>
           </div>
         ) : (
           <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
             <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
-              🔒 Fitur export tersedia mulai plan <strong>Warung</strong> ke atas.
+              <Lock className="w-4 h-4 inline mr-1" /> Fitur export tersedia mulai plan <strong>Warung</strong> ke atas.
             </p>
             <a href="/settings/subscriptions" className="text-sm text-amber-700 dark:text-amber-300 underline mt-1 inline-block">
               Upgrade sekarang →

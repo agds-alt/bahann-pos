@@ -1,6 +1,6 @@
 'use client'
 
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useState, type ReactNode } from 'react'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { FilterBar } from '@/components/ui/FilterBar'
 import { Button } from '@/components/ui/Button'
@@ -8,6 +8,10 @@ import { trpc } from '@/lib/trpc/client'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { ChartSkeleton } from '@/components/ui/Skeletons'
+import {
+  DollarSign, Package, AlertTriangle, Store,
+  ShoppingCart, ClipboardList, Trophy, Receipt,
+} from 'lucide-react'
 
 const DashboardRevenueChart = lazy(() => import('@/components/charts/DashboardRevenueChart'))
 
@@ -16,7 +20,7 @@ function StatCard({
   label, value, sub, subColor = 'gray', loading, icon,
 }: {
   label: string; value: string | number; sub: string
-  subColor?: 'gray' | 'green' | 'red'; loading?: boolean; icon: string
+  subColor?: 'gray' | 'green' | 'red'; loading?: boolean; icon: ReactNode
 }) {
   const subClass =
     subColor === 'green' ? 'text-emerald-600 dark:text-emerald-400' :
@@ -35,7 +39,7 @@ function StatCard({
           )}
           <p className={`text-xs font-medium truncate ${subClass}`}>{sub}</p>
         </div>
-        <span className="text-2xl select-none flex-shrink-0">{icon}</span>
+        <div className="flex-shrink-0 text-gray-400 dark:text-gray-500 [&>svg]:w-6 [&>svg]:h-6">{icon}</div>
       </div>
     </div>
   )
@@ -87,10 +91,10 @@ export default function DashboardPage() {
 
       {/* ── Stats ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label={t('dashboard.totalRevenue')} value={formatCurrency(stats?.totalRevenue || 0)} sub={`${stats?.transactionCount || 0} transaksi`} subColor="green" loading={statsLoading} icon="💰" />
-        <StatCard label={t('dashboard.totalProducts')} value={(stats?.totalProducts || 0).toLocaleString()} sub="In inventory" loading={statsLoading} icon="📦" />
-        <StatCard label={t('dashboard.lowStock')} value={stats?.lowStockCount || 0} sub={(stats?.lowStockCount || 0) > 0 ? t('warehouse.stock.lowStockAlert') : t('warehouse.stock.noLowStock')} subColor={(stats?.lowStockCount || 0) > 0 ? 'red' : 'green'} loading={statsLoading} icon="⚠️" />
-        <StatCard label={t('dashboard.totalOutlets')} value={stats?.totalOutlets || 0} sub="Active locations" loading={statsLoading} icon="🏪" />
+        <StatCard label={t('dashboard.totalRevenue')} value={formatCurrency(stats?.totalRevenue || 0)} sub={`${stats?.transactionCount || 0} transaksi`} subColor="green" loading={statsLoading} icon={<DollarSign />} />
+        <StatCard label={t('dashboard.totalProducts')} value={(stats?.totalProducts || 0).toLocaleString()} sub="In inventory" loading={statsLoading} icon={<Package />} />
+        <StatCard label={t('dashboard.lowStock')} value={stats?.lowStockCount || 0} sub={(stats?.lowStockCount || 0) > 0 ? t('warehouse.stock.lowStockAlert') : t('warehouse.stock.noLowStock')} subColor={(stats?.lowStockCount || 0) > 0 ? 'red' : 'green'} loading={statsLoading} icon={<AlertTriangle />} />
+        <StatCard label={t('dashboard.totalOutlets')} value={stats?.totalOutlets || 0} sub="Active locations" loading={statsLoading} icon={<Store />} />
       </div>
 
       {/* ── Revenue Chart ── */}
@@ -121,23 +125,25 @@ export default function DashboardPage() {
       <div>
         <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">Quick Actions</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-          {[
-            { label: 'Record Stock', icon: '📦', path: '/warehouse/stock',  variant: 'secondary' as const },
-            { label: 'New Sale',     icon: '🛒', path: '/pos/sales',        variant: 'primary'   as const },
-            { label: 'Products',     icon: '📋', path: '/products',         variant: 'secondary' as const },
-            { label: 'Outlets',      icon: '🏪', path: '/outlets',          variant: 'secondary' as const },
-          ].map(a => (
-            <Button key={a.path} variant={a.variant} size="lg" fullWidth onClick={() => router.push(a.path)}>
-              {a.icon} {a.label}
-            </Button>
-          ))}
+          <Button variant="secondary" size="lg" fullWidth onClick={() => router.push('/warehouse/stock')}>
+            <Package className="w-4 h-4 mr-1.5" /> Record Stock
+          </Button>
+          <Button variant="primary" size="lg" fullWidth onClick={() => router.push('/pos/sales')}>
+            <ShoppingCart className="w-4 h-4 mr-1.5" /> New Sale
+          </Button>
+          <Button variant="secondary" size="lg" fullWidth onClick={() => router.push('/products')}>
+            <ClipboardList className="w-4 h-4 mr-1.5" /> Products
+          </Button>
+          <Button variant="secondary" size="lg" fullWidth onClick={() => router.push('/outlets')}>
+            <Store className="w-4 h-4 mr-1.5" /> Outlets
+          </Button>
         </div>
       </div>
 
       {/* ── Low Stock Alert (conditional) ── */}
       {lowStock && lowStock.length > 0 && (
         <SectionCard
-          title="⚠️ Low Stock Alert"
+          title="Low Stock Alert"
           action={
             <span className="px-2.5 py-0.5 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-xs font-bold rounded-full">
               {lowStock.length} items
@@ -164,7 +170,7 @@ export default function DashboardPage() {
       {/* ── Two-column: Top Products + Recent Transactions ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-        <SectionCard title="🏆 Top Selling Products" action={<p className="text-xs text-gray-400 dark:text-gray-500">{dateLabel}</p>}>
+        <SectionCard title="Top Selling Products" action={<p className="text-xs text-gray-400 dark:text-gray-500">{dateLabel}</p>}>
           {topProductsLoading ? (
             <div className="space-y-3">{[1,2,3,4,5].map(i => <div key={i} className="h-12 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse" />)}</div>
           ) : topProducts && topProducts.length > 0 ? (
@@ -190,14 +196,16 @@ export default function DashboardPage() {
           )}
         </SectionCard>
 
-        <SectionCard title="🧾 Recent Transactions" action={<p className="text-xs text-gray-400 dark:text-gray-500">5 transaksi terakhir</p>}>
+        <SectionCard title="Recent Transactions" action={<p className="text-xs text-gray-400 dark:text-gray-500">5 transaksi terakhir</p>}>
           {transactionsLoading ? (
             <div className="space-y-3">{[1,2,3,4,5].map(i => <div key={i} className="h-12 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse" />)}</div>
           ) : recentTransactions && recentTransactions.length > 0 ? (
             <div className="divide-y divide-gray-100 dark:divide-gray-700/60">
               {recentTransactions.map(tx => (
                 <div key={tx.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-                  <div className="w-7 h-7 flex-shrink-0 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-sm">🛒</div>
+                  <div className="w-7 h-7 flex-shrink-0 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{tx.productName}</p>
                     <p className="text-xs text-gray-400 truncate">{tx.outletName} · {formatDateTime(tx.date)}</p>
