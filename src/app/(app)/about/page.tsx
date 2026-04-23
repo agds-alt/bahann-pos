@@ -7,7 +7,7 @@ import {
   BarChart3, Package, ShoppingCart, TrendingUp, Tag, Users,
   Smartphone, Palette, Settings, Lock, Radio, Wifi,
   Telescope, Building, Rocket, ScrollText, Heart,
-  Handshake, MessageCircle, Star, Github, Mail, Phone, Code
+  Handshake, MessageCircle, Star, ExternalLink, Mail, Phone
 } from 'lucide-react'
 
 export default function AboutPage() {
@@ -294,7 +294,7 @@ export default function AboutPage() {
                 {[
                   { icon: <Mail className="w-4 h-4" />, href: 'mailto:agdscid@gmail.com', label: 'agdscid@gmail.com', color: 'text-blue-600 dark:text-blue-400' },
                   { icon: <Phone className="w-4 h-4" />, href: 'https://wa.me/6287874415491', label: '+62 878-7441-5491', color: 'text-emerald-600 dark:text-emerald-400' },
-                  { icon: <Github className="w-4 h-4" />, href: 'https://github.com/agds-alt', label: 'github.com/agds-alt', color: 'text-gray-900 dark:text-gray-100' },
+                  { icon: <ExternalLink className="w-4 h-4" />, href: 'https://github.com/agds-alt', label: 'github.com/agds-alt', color: 'text-gray-900 dark:text-gray-100' },
                 ].map((contact) => (
                   <div key={contact.label} className="flex items-center justify-center md:justify-start gap-3 p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
                     <span>{contact.icon}</span>

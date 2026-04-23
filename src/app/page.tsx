@@ -1,8 +1,14 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useTheme } from '@/lib/theme/ThemeContext'
+import {
+  ShoppingCart, Package, BarChart3, WifiOff, Users, Shield,
+  Sun, Moon, MessageCircle, Check, Zap, DollarSign, Headphones,
+  Store, UtensilsCrossed, Coffee, Shirt, Pill, ShoppingBag,
+  ArrowRight,
+} from 'lucide-react'
 
 const WA_NUMBER = '6287874415491'
 function buildWaLink(msg: string) {
@@ -12,76 +18,76 @@ function buildWaLink(msg: string) {
 interface ChatMessage { from: 'bot' | 'user'; text: string }
 
 const QUICK_ACTIONS = [
-  { label: '💰 Tanya harga', waMessage: 'Halo, saya ingin tanya harga paket Laku POS.' },
-  { label: '📅 Jadwalkan demo', waMessage: 'Halo, saya ingin jadwalkan demo Laku POS.' },
-  { label: '🤝 Jadi mitra', waMessage: 'Halo, saya tertarik jadi mitra Laku POS.' },
-  { label: '❓ Pertanyaan lain', waMessage: 'Halo, saya punya pertanyaan tentang Laku POS.' },
+  { label: 'Tanya harga', waMessage: 'Halo, saya ingin tanya harga paket Laku POS.' },
+  { label: 'Jadwalkan demo', waMessage: 'Halo, saya ingin jadwalkan demo Laku POS.' },
+  { label: 'Jadi mitra', waMessage: 'Halo, saya tertarik jadi mitra Laku POS.' },
+  { label: 'Pertanyaan lain', waMessage: 'Halo, saya punya pertanyaan tentang Laku POS.' },
 ]
 
-const INDUSTRIES = [
-  { icon: '🏪', label: 'Warung Kelontong' },
-  { icon: '🍜', label: 'Warung Makan' },
-  { icon: '☕', label: 'Kafe & Minuman' },
-  { icon: '👗', label: 'Toko Fashion' },
-  { icon: '💊', label: 'Apotek Kecil' },
-  { icon: '🛒', label: 'Minimarket' },
+const INDUSTRIES: { icon: ReactNode; label: string }[] = [
+  { icon: <Store className="w-3.5 h-3.5" />, label: 'Warung' },
+  { icon: <UtensilsCrossed className="w-3.5 h-3.5" />, label: 'Warung Makan' },
+  { icon: <Coffee className="w-3.5 h-3.5" />, label: 'Kafe' },
+  { icon: <Shirt className="w-3.5 h-3.5" />, label: 'Fashion' },
+  { icon: <Pill className="w-3.5 h-3.5" />, label: 'Apotek' },
+  { icon: <ShoppingBag className="w-3.5 h-3.5" />, label: 'Minimarket' },
 ]
 
-const STEPS = [
-  { n: '1', title: 'Daftar Gratis', desc: 'Buat akun dalam 1 menit. Tidak perlu kartu kredit.' },
-  { n: '2', title: 'Setup Toko', desc: 'Masukkan nama toko, tambah produk, dan undang kasir.' },
-  { n: '3', title: 'Mulai Jualan', desc: 'Langsung pakai POS di HP atau laptop. Semudah itu.' },
-]
-
-const FEATURES = [
+const FEATURES: { icon: ReactNode; title: string; desc: string; points: string[] }[] = [
   {
-    icon: '🏪',
+    icon: <ShoppingCart className="w-5 h-5" />,
     title: 'POS Cepat',
     desc: 'Transaksi dalam hitungan detik. Dukung cash, transfer, dan QRIS.',
     points: ['Multi-metode pembayaran', 'Barcode & kamera scanner', 'Cetak struk otomatis', 'Diskon & promo'],
   },
   {
-    icon: '📦',
+    icon: <Package className="w-5 h-5" />,
     title: 'Stok Real-time',
     desc: 'Pantau stok dari mana saja. Alert otomatis saat barang hampir habis.',
     points: ['Notifikasi stok menipis', 'Riwayat pergerakan stok', 'Multi-outlet', 'Stok opname mudah'],
   },
   {
-    icon: '📊',
+    icon: <BarChart3 className="w-5 h-5" />,
     title: 'Laporan Lengkap',
     desc: 'Dashboard penjualan real-time. Tahu produk terlaris setiap hari.',
     points: ['Grafik penjualan harian', 'Produk terlaris', 'Ekspor PDF & Excel', 'Laporan per kasir'],
   },
   {
-    icon: '📱',
+    icon: <WifiOff className="w-5 h-5" />,
     title: 'Mode Offline',
-    desc: 'Internet mati? Transaksi tetap jalan. Data sync otomatis saat online lagi.',
+    desc: 'Internet mati? Transaksi tetap jalan. Data sync otomatis saat online.',
     points: ['Transaksi tanpa internet', 'Auto-sync real-time', 'Data tidak hilang', 'Zero downtime'],
   },
   {
-    icon: '👥',
+    icon: <Users className="w-5 h-5" />,
     title: 'Manajemen Kasir',
     desc: 'Tambah kasir, atur hak akses, dan pantau aktivitas mereka.',
     points: ['Multi-kasir per toko', 'Kontrol hak akses', 'Audit log lengkap', 'Shift & closing'],
   },
   {
-    icon: '🔒',
+    icon: <Shield className="w-5 h-5" />,
     title: 'Aman & Terpercaya',
     desc: 'Data Anda terenkripsi dan terisolasi. Hanya Anda yang bisa akses.',
-    points: ['Enkripsi end-to-end', 'Data terisolasi per toko', 'Backup otomatis', 'RLS database'],
+    points: ['Enkripsi end-to-end', 'Data terisolasi per toko', 'Backup otomatis', 'Row Level Security'],
   },
 ]
 
 const FAQS = [
   { q: 'Apakah benar-benar gratis?', a: 'Ya! Paket Gratis tidak perlu kartu kredit dan bisa dipakai selamanya. Limit 100 transaksi/bulan — cukup untuk warung yang baru mulai.' },
-  { q: 'Apakah bisa dipakai di HP?', a: 'Tentu! Laku POS dirancang mobile-first. Buka di browser HP Anda, langsung bisa transaksi tanpa install aplikasi.' },
+  { q: 'Bisa dipakai di HP?', a: 'Tentu! Laku POS dirancang mobile-first. Buka di browser HP, langsung bisa transaksi tanpa install aplikasi.' },
   { q: 'Bagaimana kalau internet mati?', a: 'Ada mode offline. Transaksi tetap berjalan dan data akan sync otomatis begitu internet kembali.' },
-  { q: 'Apakah data saya aman?', a: 'Data setiap warung terisolasi penuh. Hanya Anda yang bisa akses data toko Anda. Kami pakai enkripsi dan Row Level Security di database.' },
-  { q: 'Bisa untuk beberapa kasir?', a: 'Bisa! Admin (pemilik warung) bisa tambah kasir dari menu Pengaturan dan atur hak akses masing-masing.' },
-  { q: 'Kalau mau upgrade gimana?', a: 'Hubungi kami via WhatsApp, proses upgrade cepat dan data tidak hilang sama sekali.' },
+  { q: 'Apakah data saya aman?', a: 'Data setiap warung terisolasi penuh. Hanya Anda yang bisa akses. Kami pakai enkripsi dan Row Level Security.' },
+]
+
+const TRUST_BADGES = [
+  { icon: <Check className="w-3.5 h-3.5" />, label: 'Gratis Selamanya' },
+  { icon: <WifiOff className="w-3.5 h-3.5" />, label: 'Mode Offline' },
+  { icon: <Store className="w-3.5 h-3.5" />, label: 'Multi-outlet' },
+  { icon: <Shield className="w-3.5 h-3.5" />, label: 'Open Source' },
 ]
 
 export default function LandingPage() {
+  const [activeFeature, setActiveFeature] = useState(0)
   const [pricingMode, setPricingMode] = useState<'subscription' | 'onetime'>('subscription')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [chatOpen, setChatOpen] = useState(false)
@@ -99,7 +105,7 @@ export default function LandingPage() {
     setQuickActionsVisible(false)
     setChatMessages(p => [...p, { from: 'user', text: action.label }])
     setTimeout(() => {
-      setChatMessages(p => [...p, { from: 'bot', text: 'Baik! Kami sambungkan ke tim kami via WhatsApp sekarang 💬' }])
+      setChatMessages(p => [...p, { from: 'bot', text: 'Baik! Kami sambungkan ke tim kami via WhatsApp sekarang.' }])
       setTimeout(() => openWa(action.waMessage), 800)
     }, 500)
   }
@@ -111,30 +117,31 @@ export default function LandingPage() {
     setChatMessages(p => [...p, { from: 'user', text }])
     setChatMessage('')
     setTimeout(() => {
-      setChatMessages(p => [...p, { from: 'bot', text: 'Terima kasih! Tim kami akan balas via WhatsApp sekarang 💬' }])
+      setChatMessages(p => [...p, { from: 'bot', text: 'Terima kasih! Tim kami akan balas via WhatsApp sekarang.' }])
       setTimeout(() => openWa(`Halo, saya punya pertanyaan: ${text}`), 800)
     }, 500)
   }
+
+  const feat = FEATURES[activeFeature]
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
 
       {/* ── NAVBAR ── */}
       <header className="sticky top-0 z-50 bg-white/90 dark:bg-gray-950/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
           <div className="flex items-center gap-2">
-            <img src="/logo.svg" alt="Laku POS" className="w-8 h-8" />
-            <span className="text-xl font-bold text-green-600">Laku POS</span>
+            <img src="/logo.svg" alt="Laku POS" className="w-7 h-7" />
+            <span className="text-lg font-bold text-green-600">Laku POS</span>
           </div>
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600 dark:text-gray-400">
-            <a href="#cara-kerja" className="hover:text-green-600 transition-colors">Cara Kerja</a>
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600 dark:text-gray-400">
             <a href="#fitur" className="hover:text-green-600 transition-colors">Fitur</a>
             <a href="#harga" className="hover:text-green-600 transition-colors">Harga</a>
             <a href="#faq" className="hover:text-green-600 transition-colors">FAQ</a>
           </nav>
-          <div className="flex items-center gap-3">
-            <button onClick={toggleTheme} className="w-9 h-9 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-base" aria-label="Toggle dark mode">
-              {theme === 'dark' ? '☀️' : '🌙'}
+          <div className="flex items-center gap-2.5">
+            <button onClick={toggleTheme} className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" aria-label="Toggle dark mode">
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
             <Link href="/login" className="text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-green-600 transition-colors">
               Masuk
@@ -146,168 +153,174 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* ── HERO ── */}
-      <section className="pt-20 pb-24 px-4 text-center bg-gradient-to-b from-green-50 to-white dark:from-green-950/20 dark:to-gray-950">
-        <div className="max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-4 py-1.5 rounded-full text-sm font-semibold mb-6">
-            🚀 Gratis selamanya untuk warung kecil
-          </div>
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-6 tracking-tight">
-            Kasir Digital<br />
-            <span className="text-green-600">untuk Warung</span><br />
-            Indonesia
-          </h1>
-          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Kelola penjualan, stok, dan laporan dari HP Anda. Tanpa ribet, tanpa mahal.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/register" className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white text-lg font-bold px-8 py-4 rounded-xl transition-all hover:shadow-lg hover:-translate-y-0.5">
-              Mulai Gratis Sekarang →
-            </Link>
-            <a href={buildWaLink('Halo, saya ingin jadwalkan demo Laku POS. Kapan bisa?')} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto flex items-center justify-center gap-2 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-lg font-semibold px-8 py-4 rounded-xl hover:border-green-600 hover:text-green-600 transition-all">
-              💬 Minta Demo
-            </a>
-          </div>
-          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-            Tidak perlu kartu kredit · Setup &lt; 5 menit · Data 100% milik Anda
-          </p>
-        </div>
-
-        {/* App preview mockup */}
-        <div className="mt-16 max-w-3xl mx-auto">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-            {/* Browser bar */}
-            <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                <div className="w-3 h-3 rounded-full bg-green-400"></div>
-              </div>
-              <div className="flex-1 mx-4 bg-white dark:bg-gray-700 rounded-md px-3 py-1 text-xs text-gray-400 text-left">
-                app.lakupos.id/dashboard
-              </div>
+      {/* ── HERO (compact — includes industry pills + 3 steps + trust badges) ── */}
+      <section className="pt-12 md:pt-16 pb-10 md:pb-14 px-4 bg-gradient-to-b from-green-50 to-white dark:from-green-950/20 dark:to-gray-950">
+        <div className="max-w-5xl mx-auto">
+          {/* Headline + CTA */}
+          <div className="text-center max-w-3xl mx-auto">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-4 tracking-tight">
+              Kasir Digital <span className="text-green-600">untuk Warung</span> Indonesia
+            </h1>
+            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+              Kelola penjualan, stok, dan laporan dari HP. Tanpa ribet, tanpa mahal.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
+              <Link href="/register" className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white text-base font-bold px-7 py-3.5 rounded-xl transition-all hover:shadow-lg hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                Mulai Gratis Sekarang <ArrowRight className="w-4 h-4" />
+              </Link>
+              <a href={buildWaLink('Halo, saya ingin jadwalkan demo Laku POS.')} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto flex items-center justify-center gap-2 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold px-7 py-3.5 rounded-xl hover:border-green-600 hover:text-green-600 transition-all">
+                <MessageCircle className="w-4 h-4" /> Minta Demo
+              </a>
             </div>
-            {/* Dashboard preview */}
-            <div className="p-6 bg-gray-50 dark:bg-gray-900">
-              <div className="grid grid-cols-4 gap-3 mb-4">
-                {[
-                  { label: 'Omset Hari Ini', value: 'Rp 1,2jt', color: 'bg-green-500' },
-                  { label: 'Transaksi', value: '24', color: 'bg-blue-500' },
-                  { label: 'Produk Terjual', value: '67', color: 'bg-purple-500' },
-                  { label: 'Stok Menipis', value: '3', color: 'bg-orange-500' },
-                ].map((s, i) => (
-                  <div key={i} className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm">
-                    <div className={`w-6 h-1.5 rounded-full ${s.color} mb-2`}></div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{s.label}</div>
-                    <div className="text-base font-bold text-gray-900 dark:text-gray-100 mt-0.5">{s.value}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Penjualan 7 Hari Terakhir</span>
-                  <span className="text-xs text-green-600 font-semibold">+18% vs minggu lalu</span>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Tanpa kartu kredit · Setup &lt; 5 menit · Data 100% milik Anda
+            </p>
+          </div>
+
+          {/* Industry pills */}
+          <div className="flex flex-wrap justify-center gap-2 mt-6">
+            {INDUSTRIES.map((ind, i) => (
+              <span key={i} className="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                {ind.icon} {ind.label}
+              </span>
+            ))}
+          </div>
+
+          {/* App preview mockup */}
+          <div className="mt-10 max-w-2xl mx-auto">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
                 </div>
-                <div className="flex items-end gap-2 h-16">
-                  {[40, 65, 45, 80, 55, 90, 75].map((h, i) => (
-                    <div key={i} className="flex-1 flex items-end">
-                      <div className="w-full bg-green-500 rounded-t-md opacity-80 hover:opacity-100 transition-opacity" style={{ height: `${h}%` }}></div>
+                <div className="flex-1 mx-4 bg-white dark:bg-gray-700 rounded-md px-3 py-1 text-xs text-gray-400 text-left">
+                  app.lakupos.id/dashboard
+                </div>
+              </div>
+              <div className="p-4 bg-gray-50 dark:bg-gray-900">
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {[
+                    { label: 'Omset', value: 'Rp 1,2jt', color: 'bg-green-500' },
+                    { label: 'Transaksi', value: '24', color: 'bg-blue-500' },
+                    { label: 'Terjual', value: '67', color: 'bg-purple-500' },
+                    { label: 'Alert', value: '3', color: 'bg-orange-500' },
+                  ].map((s, i) => (
+                    <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-2.5 shadow-sm">
+                      <div className={`w-5 h-1 rounded-full ${s.color} mb-1.5`} />
+                      <div className="text-[10px] text-gray-500 dark:text-gray-400">{s.label}</div>
+                      <div className="text-sm font-bold text-gray-900 dark:text-gray-100">{s.value}</div>
                     </div>
                   ))}
                 </div>
-                <div className="flex justify-between mt-1">
-                  {['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'].map(d => (
-                    <span key={d} className="text-xs text-gray-400 flex-1 text-center">{d}</span>
-                  ))}
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Penjualan 7 Hari</span>
+                    <span className="text-[10px] text-green-600 font-semibold">+18%</span>
+                  </div>
+                  <div className="flex items-end gap-1.5 h-12">
+                    {[40, 65, 45, 80, 55, 90, 75].map((h, i) => (
+                      <div key={i} className="flex-1">
+                        <div className="w-full bg-green-500 rounded-t opacity-80" style={{ height: `${h}%` }} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* ── INDUSTRY VERTICALS ── */}
-      <section className="py-12 border-y border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-6">Cocok untuk berbagai jenis usaha</p>
-          <div className="flex flex-wrap justify-center gap-3">
-            {INDUSTRIES.map((ind, i) => (
-              <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                <span>{ind.icon}</span>
-                <span>{ind.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ── */}
-      <section className="py-24 px-4 bg-white dark:bg-gray-950" id="cara-kerja">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-green-600 font-semibold text-sm uppercase tracking-widest mb-3">Cara Kerja</p>
-          <h2 className="text-4xl md:text-5xl font-extrabold mb-16">Mulai dalam 3 Langkah</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {STEPS.map((step, i) => (
-              <div key={i} className="relative">
-                {i < STEPS.length - 1 && (
-                  <div className="hidden md:block absolute top-8 left-[60%] w-full h-0.5 bg-green-100 dark:bg-green-900/40"></div>
-                )}
-                <div className="w-16 h-16 bg-green-600 text-white text-2xl font-extrabold rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-200 dark:shadow-green-900/30">
+          {/* 3 steps — horizontal compact */}
+          <div className="mt-10 grid grid-cols-3 gap-3 max-w-2xl mx-auto" id="cara-kerja">
+            {[
+              { n: '1', t: 'Daftar Gratis', d: 'Buat akun 1 menit' },
+              { n: '2', t: 'Setup Toko', d: 'Tambah produk & kasir' },
+              { n: '3', t: 'Mulai Jualan', d: 'Langsung pakai di HP' },
+            ].map((step, i) => (
+              <div key={i} className="text-center">
+                <div className="w-9 h-9 bg-green-600 text-white text-sm font-bold rounded-full flex items-center justify-center mx-auto mb-2">
                   {step.n}
                 </div>
-                <h3 className="text-xl font-bold mb-2">{step.title}</h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{step.desc}</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{step.t}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{step.d}</p>
               </div>
             ))}
           </div>
-          <Link href="/register" className="inline-block mt-12 bg-green-600 hover:bg-green-700 text-white font-bold px-8 py-4 rounded-xl transition-all hover:shadow-lg">
-            Coba Sekarang — Gratis
-          </Link>
         </div>
       </section>
 
-      {/* ── FEATURES ── */}
-      <section className="py-24 px-4 bg-gray-50 dark:bg-gray-900" id="fitur">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-green-600 font-semibold text-sm uppercase tracking-widest mb-3">Fitur</p>
-            <h2 className="text-4xl md:text-5xl font-extrabold mb-4">Semua yang Warung Butuhkan</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Dari POS sampai laporan — satu aplikasi, tidak perlu software lain.
-            </p>
+      {/* ── FEATURES (tabbed — one viewport) ── */}
+      <section className="py-12 md:py-16 px-4 bg-gray-50 dark:bg-gray-900" id="fitur">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-2">Semua yang Warung Butuhkan</h2>
+            <p className="text-gray-600 dark:text-gray-400">Satu aplikasi, tidak perlu software lain.</p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+          {/* Feature tabs */}
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
             {FEATURES.map((f, i) => (
-              <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-700 hover:shadow-lg transition-all group">
-                <div className="text-4xl mb-4">{f.icon}</div>
-                <h3 className="text-xl font-bold mb-2 group-hover:text-green-600 transition-colors">{f.title}</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 leading-relaxed">{f.desc}</p>
-                <ul className="space-y-1.5">
-                  {f.points.map((p, j) => (
+              <button
+                key={i}
+                onClick={() => setActiveFeature(i)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                  activeFeature === i
+                    ? 'bg-green-600 text-white shadow-md'
+                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-700'
+                }`}
+              >
+                {f.icon}
+                <span className="hidden sm:inline">{f.title}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Active feature detail */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 md:p-8 border border-gray-100 dark:border-gray-700 shadow-sm">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-green-100 dark:bg-green-900/40 text-green-600 rounded-xl flex items-center justify-center">
+                    {feat.icon}
+                  </div>
+                  <h3 className="text-xl font-bold">{feat.title}</h3>
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">{feat.desc}</p>
+                <ul className="space-y-2">
+                  {feat.points.map((p, j) => (
                     <li key={j} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                      <span className="text-green-500 font-bold">✓</span>
+                      <Check className="w-4 h-4 text-green-500 shrink-0" />
                       {p}
                     </li>
                   ))}
                 </ul>
               </div>
-            ))}
+              {/* Trust badges sidebar */}
+              <div className="md:w-56 flex flex-row md:flex-col gap-2 md:border-l md:border-gray-100 md:dark:border-gray-700 md:pl-6">
+                {TRUST_BADGES.map((b, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2 flex-1 md:flex-none">
+                    <span className="text-green-600">{b.icon}</span>
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{b.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── PRICING ── */}
-      <section className="py-24 px-4 bg-white dark:bg-gray-950" id="harga">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-green-600 font-semibold text-sm uppercase tracking-widest mb-3">Harga</p>
-            <h2 className="text-4xl md:text-5xl font-extrabold mb-4">Transparan, Tanpa Biaya Tersembunyi</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400">Mulai gratis, upgrade kapan saja.</p>
+      {/* ── PRICING (compact) ── */}
+      <section className="py-12 md:py-16 px-4 bg-white dark:bg-gray-950" id="harga">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-2">Harga Transparan</h2>
+            <p className="text-gray-600 dark:text-gray-400">Mulai gratis, upgrade kapan saja.</p>
 
-            <div className="inline-flex mt-8 bg-gray-100 dark:bg-gray-800 rounded-full p-1 gap-1">
+            <div className="inline-flex mt-4 bg-gray-100 dark:bg-gray-800 rounded-full p-1 gap-1">
               {(['subscription', 'onetime'] as const).map(mode => (
                 <button key={mode} onClick={() => setPricingMode(mode)}
-                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${pricingMode === mode ? 'bg-white dark:bg-gray-700 text-green-600 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}`}>
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${pricingMode === mode ? 'bg-white dark:bg-gray-700 text-green-600 shadow-sm' : 'text-gray-600 dark:text-gray-400'}`}>
                   {mode === 'subscription' ? 'Berlangganan' : 'Sekali Bayar'}
                 </button>
               ))}
@@ -315,160 +328,78 @@ export default function LandingPage() {
           </div>
 
           {pricingMode === 'subscription' && (
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
               <PricingCard name="Gratis" price="Rp 0" badge="SELAMANYA" badgeColor="bg-green-500"
-                desc="Untuk warung yang baru coba"
-                features={['1 Outlet', '1 Kasir', 'POS Dasar', 'Maks. 100 transaksi/bulan', 'Laporan Harian', 'Tanpa kartu kredit']}
+                desc="Warung baru coba"
+                features={['1 Outlet, 1 Kasir', 'POS Dasar', '100 transaksi/bulan', 'Laporan Harian']}
                 cta="Daftar Gratis" href="/register" />
-              <PricingCard name="Warung" price="Rp 99rb" period="/bulan" badge="TERJANGKAU" badgeColor="bg-orange-500"
-                desc="Untuk warung aktif sehari-hari"
-                features={['1 Outlet', '2 Kasir', 'Transaksi Tidak Terbatas', 'POS + Inventori', 'Laporan Harian & Mingguan', 'Mode Offline', 'Support WhatsApp']}
+              <PricingCard name="Warung" price="Rp 99rb" period="/bln" badge="TERJANGKAU" badgeColor="bg-orange-500"
+                desc="Warung aktif harian"
+                features={['Transaksi Unlimited', 'POS + Inventori', 'Mode Offline', 'Support WA']}
                 cta="Pilih Warung" waMsg="Halo, saya tertarik paket Warung Laku POS (Rp 99rb/bulan)." />
-              <PricingCard name="Starter" price="Rp 299rb" period="/bulan" badge="HEMAT 25%" badgeColor="bg-red-500"
-                desc="Untuk toko kecil yang berkembang"
-                features={['1 Outlet', '3 Pengguna', 'Fitur POS Lengkap', 'Inventori Lanjutan', 'Laporan + Ekspor', 'Mode Offline', 'Support Email & WA', 'Backup Cloud']}
+              <PricingCard name="Starter" price="Rp 299rb" period="/bln"
+                desc="Toko berkembang"
+                features={['3 Pengguna', 'Inventori Lanjutan', 'Ekspor PDF & Excel', 'Backup Cloud']}
                 cta="Pilih Starter" waMsg="Halo, saya tertarik paket Starter Laku POS (Rp 299rb/bulan)." />
-              <PricingCard name="Professional" price="Rp 1,2jt" period="/bulan" badge="POPULER" badgeColor="bg-blue-500"
-                desc="Untuk bisnis multi-outlet"
-                features={['3 Outlet', '10 Pengguna', 'Semua Fitur Starter', 'Multi-outlet Inventori', 'Audit Log', 'Akses API', 'Laporan Kustom', 'Support Prioritas', 'Integrasi QRIS']}
-                cta="Pilih Professional" waMsg="Halo, saya tertarik paket Professional Laku POS (Rp 1,2jt/bulan)." popular />
+              <PricingCard name="Professional" price="Rp 1,2jt" period="/bln" badge="POPULER" badgeColor="bg-blue-500"
+                desc="Multi-outlet"
+                features={['3 Outlet, 10 User', 'Audit Log & API', 'Laporan Kustom', 'Support Prioritas']}
+                cta="Pilih Pro" waMsg="Halo, saya tertarik paket Professional Laku POS (Rp 1,2jt/bulan)." popular />
             </div>
           )}
 
           {pricingMode === 'onetime' && (
-            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              <PricingCard name="SME Package" price="Rp 75jt" badge="LISENSI SEUMUR HIDUP" badgeColor="bg-gray-600"
-                desc="Untuk UKM — bayar sekali, pakai selamanya"
-                features={['1–3 Outlet', '5–10 Pengguna', 'Setup & Pelatihan', 'Update Gratis 1 Tahun', 'Support Email', 'Source Code (+30%)']}
+            <div className="grid md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+              <PricingCard name="SME" price="Rp 75jt" badge="SEUMUR HIDUP" badgeColor="bg-gray-600"
+                desc="UKM — bayar sekali"
+                features={['1–3 Outlet', 'Setup & Pelatihan', 'Update 1 Tahun', 'Source Code (+30%)']}
                 cta="Minta Penawaran" waMsg="Halo, saya tertarik paket One-Time SME Laku POS (Rp 75jt)." />
               <PricingCard name="Business" price="Rp 150jt" badge="TERLENGKAP" badgeColor="bg-green-600"
-                desc="Solusi lengkap termasuk source code"
-                features={['5–10 Outlet', 'Pengguna Tak Terbatas', 'Source Code Termasuk', '1x Kustomisasi Minor', 'Update Gratis 2 Tahun', 'Opsi Self-Host', 'Onboarding Khusus']}
+                desc="Termasuk source code"
+                features={['5–10 Outlet', 'Source Code', 'Self-Host', 'Update 2 Tahun']}
                 cta="Minta Penawaran" waMsg="Halo, saya tertarik paket One-Time Business Laku POS (Rp 150jt)." popular />
               <PricingCard name="Enterprise" price="Rp 300jt" badge="WHITE-LABEL" badgeColor="bg-purple-600"
-                desc="Solusi enterprise + white-label"
-                features={['Outlet Tak Terbatas', 'Pengguna Tak Terbatas', 'Source Code Lengkap', '3 Fitur Custom', 'White-label', 'SLA Garansi', 'Update Seumur Hidup', 'Account Manager']}
+                desc="Enterprise + white-label"
+                features={['Unlimited Outlet', 'Fitur Custom', 'SLA Garansi', 'Account Manager']}
                 cta="Hubungi Sales" waMsg="Halo, saya tertarik paket Enterprise Laku POS (Rp 300jt)." />
             </div>
           )}
 
-          <div className="mt-8 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border border-green-200 dark:border-green-800 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
-              <p className="font-bold text-gray-900 dark:text-gray-100">Butuh lebih? Paket Business & Enterprise tersedia</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Multi-outlet, white-label, SLA, dan account manager khusus.</p>
-            </div>
-            <a href={buildWaLink('Halo, saya ingin tanya paket Business/Enterprise Laku POS.')} target="_blank" rel="noopener noreferrer"
-              className="shrink-0 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors">
-              Hubungi Sales
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ── COMPARISON ── */}
-      <section className="py-24 px-4 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-green-600 font-semibold text-sm uppercase tracking-widest mb-3">Perbandingan</p>
-            <h2 className="text-4xl font-extrabold">Kenapa Pilih Laku POS?</h2>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-green-600 text-white">
-                    <th className="py-4 px-6 text-left font-semibold">Fitur</th>
-                    <th className="py-4 px-6 text-center font-semibold">✅ Laku POS</th>
-                    <th className="py-4 px-6 text-center font-semibold text-green-200">Moka POS</th>
-                    <th className="py-4 px-6 text-center font-semibold text-green-200">iReap POS</th>
-                    <th className="py-4 px-6 text-center font-semibold text-green-200">Pawoon</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {[
-                    ['Harga Mulai Dari', <span className="text-green-600 font-bold">Gratis</span>, 'Rp 1,2jt', 'Rp 800rb', 'Rp 999rb'],
-                    ['Mode Offline', '✅', '❌', 'Terbatas', '❌'],
-                    ['Multi-outlet', '✅', '✅', '✅', '✅'],
-                    ['Source Code Tersedia', '✅', '❌', '❌', '❌'],
-                    ['Self-hosted', '✅', '❌', '❌', '❌'],
-                    ['Audit Log Lengkap', '✅', 'Basic', 'Basic', 'Basic'],
-                    ['Pembelian Sekali Bayar', '✅', '❌', '❌', '❌'],
-                    ['Support WhatsApp', '✅', 'Terbatas', '❌', '❌'],
-                  ].map(([feat, ...vals], i) => (
-                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-750">
-                      <td className="py-3 px-6 font-medium text-gray-900 dark:text-gray-100">{feat}</td>
-                      <td className="py-3 px-6 text-center font-bold text-green-600 dark:text-green-400 bg-green-50/50 dark:bg-green-950/20">{vals[0]}</td>
-                      {vals.slice(1).map((v, j) => (
-                        <td key={j} className="py-3 px-6 text-center text-gray-500 dark:text-gray-400">{v}</td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── EARLY ADOPTER ── */}
-      <section className="py-24 px-4 bg-white dark:bg-gray-950">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-block bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-4 py-1.5 rounded-full text-sm font-semibold mb-6">
-            🚀 Baru Diluncurkan
-          </div>
-          <h2 className="text-4xl md:text-5xl font-extrabold mb-4">Jadilah Pengguna Pertama</h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-12">
-            Kami sedang mencari warung & toko kecil yang mau tumbuh bersama kami. Pengguna awal dapat keuntungan eksklusif.
-          </p>
-
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
-            {[
-              { icon: '💰', title: 'Harga Terjangkau Selamanya', desc: 'Daftar sekarang, harga dikunci — tidak naik meski kami berkembang.' },
-              { icon: '🎯', title: 'Feedback Langsung', desc: 'Fitur yang Anda butuhkan bisa kami prioritaskan. Akses langsung ke developer.' },
-              { icon: '🤝', title: 'Support Personal via WA', desc: 'Bukan chatbot. Tim kami siap bantu setup dan pertanyaan apapun.' },
-            ].map((item, i) => (
-              <div key={i} className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-                <div className="text-4xl mb-3">{item.icon}</div>
-                <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-2">{item.title}</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{item.desc}</p>
+          {/* Upsell strip */}
+          <div className="mt-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border border-green-200 dark:border-green-800 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-1.5 text-green-600">
+                <DollarSign className="w-5 h-5" />
+                <Zap className="w-5 h-5" />
+                <Headphones className="w-5 h-5" />
               </div>
-            ))}
-          </div>
-
-          <div className="bg-green-600 rounded-2xl p-8 text-white">
-            <p className="text-lg font-semibold mb-4">Cocok untuk jenis usaha Anda?</p>
-            <div className="flex flex-wrap justify-center gap-2 mb-6">
-              {INDUSTRIES.map(ind => (
-                <span key={ind.label} className="bg-white/20 px-3 py-1.5 rounded-full text-sm font-medium">
-                  {ind.icon} {ind.label}
-                </span>
-              ))}
+              <div>
+                <p className="font-bold text-sm text-gray-900 dark:text-gray-100">Pengguna awal? Harga dikunci selamanya</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Feedback langsung ke developer + support personal via WA.</p>
+              </div>
             </div>
-            <a href={buildWaLink('Halo, saya tertarik jadi pengguna awal Laku POS. Boleh info lebih lanjut?')} target="_blank" rel="noopener noreferrer"
-              className="inline-block bg-white text-green-600 hover:bg-green-50 font-bold px-8 py-3 rounded-xl transition-colors">
-              💬 Tanya Tim Kami via WhatsApp
+            <a href={buildWaLink('Halo, saya ingin tanya paket Laku POS.')} target="_blank" rel="noopener noreferrer"
+              className="shrink-0 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5">
+              <MessageCircle className="w-4 h-4" /> Hubungi Sales
             </a>
           </div>
         </div>
       </section>
 
-      {/* ── FAQ ── */}
-      <section className="py-24 px-4 bg-gray-50 dark:bg-gray-900" id="faq">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-green-600 font-semibold text-sm uppercase tracking-widest mb-3">FAQ</p>
-            <h2 className="text-4xl font-extrabold">Pertanyaan Umum</h2>
-          </div>
-          <div className="space-y-3">
+      {/* ── FAQ (compact — 4 items) ── */}
+      <section className="py-12 md:py-16 px-4 bg-gray-50 dark:bg-gray-900" id="faq">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-2xl md:text-3xl font-extrabold text-center mb-6">Pertanyaan Umum</h2>
+          <div className="space-y-2">
             {FAQS.map((faq, i) => (
               <div key={i} onClick={() => setOpenFaq(openFaq === i ? null : i)}
                 className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-green-300 dark:hover:border-green-700 transition-all overflow-hidden">
-                <div className="flex justify-between items-center p-5">
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 pr-4">{faq.q}</h3>
-                  <span className="text-green-600 font-bold text-xl shrink-0">{openFaq === i ? '−' : '+'}</span>
+                <div className="flex justify-between items-center px-4 py-3.5">
+                  <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100 pr-4">{faq.q}</h3>
+                  <span className="text-green-600 font-bold text-lg shrink-0">{openFaq === i ? '−' : '+'}</span>
                 </div>
                 {openFaq === i && (
-                  <div className="px-5 pb-5 text-gray-600 dark:text-gray-400 leading-relaxed border-t border-gray-100 dark:border-gray-700 pt-4">
+                  <div className="px-4 pb-4 text-sm text-gray-600 dark:text-gray-400 leading-relaxed border-t border-gray-100 dark:border-gray-700 pt-3">
                     {faq.a}
                   </div>
                 )}
@@ -478,61 +409,56 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── FINAL CTA ── */}
-      <section className="py-24 px-4 bg-green-600 text-white text-center">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-extrabold mb-4">Siap Bikin Warung Makin Laku?</h2>
-          <p className="text-xl mb-10 opacity-90">Daftar gratis sekarang. Tidak perlu kartu kredit, tidak perlu install aplikasi.</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/register" className="bg-white text-green-600 hover:bg-green-50 font-bold text-lg px-8 py-4 rounded-xl transition-all hover:shadow-lg">
-              Mulai Gratis Sekarang →
+      {/* ── FINAL CTA (compact) ── */}
+      <section className="py-12 md:py-16 px-4 bg-green-600 text-white text-center">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-extrabold mb-3">Siap Bikin Warung Makin Laku?</h2>
+          <p className="text-base mb-6 opacity-90">Daftar gratis sekarang. Tanpa kartu kredit, tanpa install.</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href="/register" className="bg-white text-green-600 hover:bg-green-50 font-bold px-7 py-3.5 rounded-xl transition-all hover:shadow-lg flex items-center justify-center gap-2">
+              Mulai Gratis <ArrowRight className="w-4 h-4" />
             </Link>
-            <a href={buildWaLink('Halo, saya ingin konsultasi dan demo Laku POS.')} target="_blank" rel="noopener noreferrer"
-              className="border-2 border-white text-white hover:bg-white/10 font-bold text-lg px-8 py-4 rounded-xl transition-all">
-              💬 Hubungi Kami
+            <a href={buildWaLink('Halo, saya ingin konsultasi Laku POS.')} target="_blank" rel="noopener noreferrer"
+              className="border-2 border-white hover:bg-white/10 font-bold px-7 py-3.5 rounded-xl transition-all flex items-center justify-center gap-2">
+              <MessageCircle className="w-4 h-4" /> Hubungi Kami
             </a>
           </div>
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer className="bg-gray-950 text-white py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-12">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <img src="/logo.svg" alt="Laku POS" className="w-8 h-8" />
-                <span className="text-xl font-bold text-green-400">Laku POS</span>
+      {/* ── FOOTER (compact) ── */}
+      <footer className="bg-gray-950 text-white py-10 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <img src="/logo.svg" alt="Laku POS" className="w-6 h-6" />
+                <span className="text-lg font-bold text-green-400">Laku POS</span>
               </div>
-              <p className="text-gray-400 leading-relaxed max-w-sm">
-                Kasir digital modern untuk warung dan toko kecil Indonesia. Gratis, mudah, dan aman.
-              </p>
-              <a href={buildWaLink('Halo, saya ingin tanya tentang Laku POS.')} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 mt-4 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
-                💬 Chat via WhatsApp
-              </a>
+              <p className="text-gray-400 text-sm max-w-xs">Kasir digital modern untuk warung dan toko kecil Indonesia.</p>
             </div>
-            <div>
-              <h3 className="font-bold mb-4 text-green-400">Produk</h3>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a href="#fitur" className="hover:text-white transition-colors">Fitur</a></li>
-                <li><a href="#harga" className="hover:text-white transition-colors">Harga</a></li>
-                <li><Link href="/register" className="hover:text-white transition-colors">Daftar Gratis</Link></li>
-                <li><Link href="/login" className="hover:text-white transition-colors">Login</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold mb-4 text-green-400">Bantuan</h3>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a href="#faq" className="hover:text-white transition-colors">FAQ</a></li>
-                <li><a href={buildWaLink('Halo, saya butuh bantuan Laku POS.')} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Support WhatsApp</a></li>
-                <li><a href="#cara-kerja" className="hover:text-white transition-colors">Cara Kerja</a></li>
-              </ul>
+            <div className="flex gap-10">
+              <div>
+                <h4 className="font-semibold text-green-400 text-sm mb-2">Produk</h4>
+                <ul className="space-y-1.5 text-gray-400 text-sm">
+                  <li><a href="#fitur" className="hover:text-white transition-colors">Fitur</a></li>
+                  <li><a href="#harga" className="hover:text-white transition-colors">Harga</a></li>
+                  <li><Link href="/register" className="hover:text-white transition-colors">Daftar</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-green-400 text-sm mb-2">Bantuan</h4>
+                <ul className="space-y-1.5 text-gray-400 text-sm">
+                  <li><a href="#faq" className="hover:text-white transition-colors">FAQ</a></li>
+                  <li><a href={buildWaLink('Halo, butuh bantuan Laku POS.')} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">WhatsApp</a></li>
+                  <li><Link href="/login" className="hover:text-white transition-colors">Login</Link></li>
+                </ul>
+              </div>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-gray-500 text-sm">
-            <p>© 2026 Laku POS. Hak cipta dilindungi.</p>
-            <p>Dibuat dengan ❤️ untuk warung Indonesia</p>
+          <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row justify-between items-center gap-2 text-gray-500 text-xs">
+            <p>&copy; 2026 Laku POS. Hak cipta dilindungi.</p>
+            <p>Dibuat untuk warung Indonesia</p>
           </div>
         </div>
       </footer>
@@ -541,21 +467,21 @@ export default function LandingPage() {
       <div className="fixed bottom-6 right-6 z-50">
         {chatOpen && (
           <div className="mb-4 w-80 sm:w-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-700">
-            <div className="bg-green-600 text-white p-4 flex justify-between items-center">
+            <div className="bg-green-600 text-white p-3.5 flex justify-between items-center">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center font-bold">L</div>
+                <div className="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center font-bold text-sm">L</div>
                 <div>
                   <h3 className="font-bold text-sm">Laku POS Support</h3>
-                  <p className="text-xs opacity-80">Biasanya balas dalam menit</p>
+                  <p className="text-[11px] opacity-80">Biasanya balas dalam menit</p>
                 </div>
               </div>
               <button onClick={() => setChatOpen(false)} className="hover:bg-white/20 rounded-full p-1.5 transition-colors text-lg">✕</button>
             </div>
-            <div className="h-80 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900 flex flex-col gap-3">
+            <div className="h-72 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900 flex flex-col gap-3">
               <div className="flex gap-3">
                 <div className="w-7 h-7 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">L</div>
                 <div className="bg-white dark:bg-gray-800 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm max-w-[80%]">
-                  <p className="text-sm text-gray-800 dark:text-gray-200">👋 Halo! Ada yang bisa kami bantu?</p>
+                  <p className="text-sm text-gray-800 dark:text-gray-200">Halo! Ada yang bisa kami bantu?</p>
                 </div>
               </div>
               {quickActionsVisible && (
@@ -592,10 +518,10 @@ export default function LandingPage() {
           </div>
         )}
         <button onClick={() => setChatOpen(!chatOpen)}
-          className={`${chatOpen ? 'hidden' : 'flex'} relative items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-3.5 rounded-full shadow-xl hover:shadow-2xl transition-all hover:scale-105 font-semibold`}>
-          <span className="text-xl">💬</span>
-          <span>Chat dengan Kami</span>
-          <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+          className={`${chatOpen ? 'hidden' : 'flex'} relative items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-full shadow-xl hover:shadow-2xl transition-all hover:scale-105 font-semibold`}>
+          <MessageCircle className="w-5 h-5" />
+          <span className="text-sm">Chat</span>
+          <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
         </button>
       </div>
     </div>
@@ -611,33 +537,33 @@ interface PricingCardProps {
 }
 
 function PricingCard({ name, price, period, badge, badgeColor, desc, features, cta, popular, href, waMsg }: PricingCardProps) {
-  const btnClass = `block w-full text-center py-3 rounded-xl font-semibold transition-all ${
+  const btnClass = `block w-full text-center py-2.5 rounded-xl text-sm font-semibold transition-all ${
     popular
-      ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-200 dark:shadow-green-900/30'
-      : 'bg-gray-50 dark:bg-gray-700 text-green-600 dark:text-green-400 border-2 border-green-600 dark:border-green-500 hover:bg-green-50 dark:hover:bg-gray-600'
+      ? 'bg-green-600 hover:bg-green-700 text-white shadow-md'
+      : 'bg-gray-50 dark:bg-gray-700 text-green-600 dark:text-green-400 border border-green-600 dark:border-green-500 hover:bg-green-50 dark:hover:bg-gray-600'
   }`
   return (
-    <div className={`relative bg-white dark:bg-gray-800 rounded-2xl p-6 border transition-all hover:-translate-y-1 hover:shadow-xl ${
-      popular ? 'border-green-500 shadow-lg shadow-green-100 dark:shadow-green-900/20' : 'border-gray-100 dark:border-gray-700'
+    <div className={`relative bg-white dark:bg-gray-800 rounded-xl p-4 md:p-5 border transition-all hover:-translate-y-0.5 hover:shadow-lg ${
+      popular ? 'border-green-500 shadow-md' : 'border-gray-100 dark:border-gray-700'
     }`}>
       {popular && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-600 text-white text-xs font-bold px-4 py-1 rounded-full">
-          🔥 POPULER
+        <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-green-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-full">
+          POPULER
         </div>
       )}
-      <div className="flex items-start justify-between mb-4">
-        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{name}</h3>
-        {badge && <span className={`text-xs px-2 py-1 rounded-full font-bold text-white ${badgeColor}`}>{badge}</span>}
+      <div className="flex items-start justify-between mb-2">
+        <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">{name}</h3>
+        {badge && !popular && <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold text-white ${badgeColor}`}>{badge}</span>}
       </div>
-      <div className="mb-1 flex items-baseline gap-1">
-        <span className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">{price}</span>
-        {period && <span className="text-gray-500 dark:text-gray-400 text-sm">{period}</span>}
+      <div className="mb-1 flex items-baseline gap-0.5">
+        <span className="text-2xl font-extrabold text-gray-900 dark:text-gray-100">{price}</span>
+        {period && <span className="text-gray-500 dark:text-gray-400 text-xs">{period}</span>}
       </div>
-      <p className="text-gray-500 dark:text-gray-400 text-sm mb-5">{desc}</p>
-      <ul className="space-y-2 mb-6">
+      <p className="text-gray-500 dark:text-gray-400 text-xs mb-3">{desc}</p>
+      <ul className="space-y-1.5 mb-4">
         {features.map((f, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-            <span className="text-green-500 font-bold mt-0.5">✓</span>{f}
+          <li key={i} className="flex items-start gap-1.5 text-xs text-gray-700 dark:text-gray-300">
+            <Check className="w-3.5 h-3.5 text-green-500 shrink-0 mt-0.5" />{f}
           </li>
         ))}
       </ul>
