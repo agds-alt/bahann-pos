@@ -652,9 +652,12 @@ export const authRouter = router({
     const { supabaseAdmin } = await import('@/infra/supabase/server')
     const { data } = await supabaseAdmin
       .from('users')
-      .select('email_verified_at')
+      .select('email_verified_at, plan')
       .eq('id', ctx.userId)
       .single()
-    return { verified: !!data?.email_verified_at }
+    return {
+      verified: !!data?.email_verified_at,
+      plan: (data?.plan as string) || 'free',
+    }
   }),
 })
