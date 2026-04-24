@@ -24,7 +24,22 @@ export const paymentRequestsRouter = router({
       if (!basePrice) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Plan tidak tersedia.' })
       }
-      const uniqueAmount = generateUniqueAmountIDR(basePrice)
+
+      const { data: pending } = await supabase
+        .from('payment_requests')
+        .select('unique_amount')
+        .eq('status', 'pending')
+        .not('unique_amount', 'is', null)
+
+      const usedAmounts = new Set(pending?.map(r => r.unique_amount) ?? [])
+
+      let uniqueAmount = generateUniqueAmountIDR(basePrice)
+      let attempts = 0
+      while (usedAmounts.has(uniqueAmount) && attempts < 50) {
+        uniqueAmount = generateUniqueAmountIDR(basePrice)
+        attempts++
+      }
+
       return { uniqueAmount, basePrice }
     }),
 
@@ -97,12 +112,34 @@ export const paymentRequestsRouter = router({
           cryptoAmount = generateUniqueAmount(basePrice)
         }
       } else {
-        if (input.uniqueAmount) {
-          uniqueAmount = input.uniqueAmount
-        } else {
-          const basePrice = PLAN_PRICES_IDR[input.plan]
-          if (basePrice) {
-            uniqueAmount = generateUniqueAmountIDR(basePrice)
+        const basePrice = PLAN_PRICES_IDR[input.plan]
+        if (basePrice) {
+          const candidate = input.uniqueAmount || generateUniqueAmountIDR(basePrice)
+
+          const { data: collision } = await supabase
+            .from('payment_requests')
+            .select('id')
+            .eq('status', 'pending')
+            .eq('unique_amount', candidate)
+            .single()
+
+          if (collision) {
+            const { data: pending } = await supabase
+              .from('payment_requests')
+              .select('unique_amount')
+              .eq('status', 'pending')
+              .not('unique_amount', 'is', null)
+            const usedAmounts = new Set(pending?.map(r => r.unique_amount) ?? [])
+
+            let fresh = generateUniqueAmountIDR(basePrice)
+            let attempts = 0
+            while (usedAmounts.has(fresh) && attempts < 50) {
+              fresh = generateUniqueAmountIDR(basePrice)
+              attempts++
+            }
+            uniqueAmount = fresh
+          } else {
+            uniqueAmount = candidate
           }
         }
       }
