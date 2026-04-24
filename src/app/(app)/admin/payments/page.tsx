@@ -172,7 +172,14 @@ function PaymentsContent() {
                         <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
                           {req.crypto_amount
                             ? <span className="text-purple-600 dark:text-purple-400">{parseFloat(req.crypto_amount).toFixed(4)} {req.crypto_token?.toUpperCase()}</span>
-                            : fmtRupiah(req.amount)}
+                            : (
+                              <div>
+                                <span>{fmtRupiah(req.unique_amount || req.amount)}</span>
+                                {req.unique_amount && (
+                                  <p className="text-[10px] text-green-600 dark:text-green-400 font-normal">unik</p>
+                                )}
+                              </div>
+                            )}
                         </td>
                         <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
                           {req.crypto_token ? (
@@ -254,7 +261,12 @@ function PaymentsContent() {
                       <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 ml-auto">
                         {req.crypto_amount
                           ? <span className="text-purple-600 dark:text-purple-400">{parseFloat(req.crypto_amount).toFixed(4)} {req.crypto_token?.toUpperCase()}</span>
-                          : fmtRupiah(req.amount)}
+                          : (
+                            <span>
+                              {fmtRupiah(req.unique_amount || req.amount)}
+                              {req.unique_amount && <span className="text-[10px] text-green-600 dark:text-green-400 ml-1">unik</span>}
+                            </span>
+                          )}
                       </span>
                     </div>
 

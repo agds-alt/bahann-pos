@@ -127,6 +127,7 @@ function UserUpgradeView() {
   const uploadMutation = trpc.paymentRequests.uploadProof.useMutation({ onSuccess: () => refetchRequests() })
   const checkPaymentMutation = trpc.paymentRequests.checkMyPayment.useMutation()
   const previewAmountMutation = trpc.paymentRequests.previewCryptoAmount.useMutation()
+  const previewBankMutation = trpc.paymentRequests.previewBankAmount.useMutation()
 
   const currentPlan = planData?.plan || 'free'
   const currentIndex = PLANS.findIndex(p => p.value === currentPlan)
@@ -139,6 +140,7 @@ function UserUpgradeView() {
   const [copied, setCopied] = useState<string | null>(null)
   const [successModal, setSuccessModal] = useState<{ plan: string } | null>(null)
   const [previewAmount, setPreviewAmount] = useState<number | null>(null)
+  const [bankUniqueAmount, setBankUniqueAmount] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const prevPendingRef = useRef<string | null>(null)
 
@@ -189,6 +191,14 @@ function UserUpgradeView() {
     }).then(r => setPreviewAmount(r.cryptoAmount)).catch(() => {})
   }, [checkoutPlan, cryptoToken, isCrypto]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (!checkoutPlan || isCrypto) { setBankUniqueAmount(null); return }
+    setBankUniqueAmount(null)
+    previewBankMutation.mutateAsync({
+      plan: checkoutPlan as any,
+    }).then(r => setBankUniqueAmount(r.uniqueAmount)).catch(() => {})
+  }, [checkoutPlan, paymentMethod, isCrypto]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text)
     setCopied(key)
@@ -203,12 +213,16 @@ function UserUpgradeView() {
   const handleSubmitRequest = async () => {
     if (!checkoutPlan || !checkoutPlanData) return
     try {
-      await createMutation.mutateAsync({
+      const result = await createMutation.mutateAsync({
         plan: checkoutPlan as any,
-        amount: checkoutPlanData.price as number,
+        amount: bankUniqueAmount || checkoutPlanData.price as number,
         paymentMethod: actualPaymentMethod as any,
         ...(isCrypto && previewAmount ? { cryptoAmount: previewAmount } : {}),
+        ...(!isCrypto && bankUniqueAmount ? { uniqueAmount: bankUniqueAmount } : {}),
       })
+      if (result.waNotifLink) {
+        window.open(result.waNotifLink, '_blank')
+      }
     } catch { /* error shown via mutation state */ }
   }
 
@@ -401,11 +415,29 @@ function UserUpgradeView() {
               <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-5">
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Transfer ke:</p>
                 <p className="text-xs text-gray-400 dark:text-gray-500">{bankName}</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-gray-100 tracking-wider">{bankAcct}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-bold text-gray-900 dark:text-gray-100 tracking-wider">{bankAcct}</p>
+                  <button onClick={() => copyToClipboard(bankAcct, 'bank-acct')}
+                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    {copied === 'bank-acct' ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-gray-400" />}
+                  </button>
+                </div>
                 <p className="text-xs text-gray-400 dark:text-gray-500">a.n. {bankHolder}</p>
-                <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                  <p className="text-xs text-yellow-700 dark:text-yellow-300 font-medium">
-                    Nominal: {fmtRupiah(checkoutPlanData.price as number)}
+                <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <p className="text-xs text-green-600 dark:text-green-400 mb-1">Nominal yang harus ditransfer:</p>
+                  {bankUniqueAmount ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-green-800 dark:text-green-200">{fmtRupiah(bankUniqueAmount)}</span>
+                      <button onClick={() => copyToClipboard(bankUniqueAmount.toString(), 'bank-amount')}
+                        className="p-1 rounded hover:bg-green-200 dark:hover:bg-green-800 transition-colors">
+                        {copied === 'bank-amount' ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-green-400" />}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-green-400 animate-pulse">Menghitung nominal...</p>
+                  )}
+                  <p className="text-[11px] text-green-600 dark:text-green-400 mt-1">
+                    Transfer jumlah <strong>persis</strong> di atas agar mudah diverifikasi.
                   </p>
                 </div>
               </div>
@@ -421,9 +453,23 @@ function UserUpgradeView() {
                     <p className="text-xs text-gray-400">QRIS belum dikonfigurasi</p>
                   </div>
                 )}
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Nominal: {fmtRupiah(checkoutPlanData.price as number)}
-                </p>
+                <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <p className="text-xs text-green-600 dark:text-green-400 mb-1">Nominal:</p>
+                  {bankUniqueAmount ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-lg font-bold text-green-800 dark:text-green-200">{fmtRupiah(bankUniqueAmount)}</span>
+                      <button onClick={() => copyToClipboard(bankUniqueAmount.toString(), 'qris-amount')}
+                        className="p-1 rounded hover:bg-green-200 dark:hover:bg-green-800 transition-colors">
+                        {copied === 'qris-amount' ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-green-400" />}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-green-400 animate-pulse">Menghitung nominal...</p>
+                  )}
+                  <p className="text-[11px] text-green-600 dark:text-green-400 mt-1">
+                    Bayar jumlah <strong>persis</strong> di atas.
+                  </p>
+                </div>
               </div>
             )}
 
@@ -524,11 +570,11 @@ function UserUpgradeView() {
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => { setCheckoutPlan(null); setPreviewAmount(null) }}
+              <button onClick={() => { setCheckoutPlan(null); setPreviewAmount(null); setBankUniqueAmount(null) }}
                 className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                 Batal
               </button>
-              <button onClick={handleSubmitRequest} disabled={createMutation.isPending || (isCrypto && !previewAmount)}
+              <button onClick={handleSubmitRequest} disabled={createMutation.isPending || (isCrypto && !previewAmount) || (!isCrypto && !bankUniqueAmount)}
                 className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-sm font-semibold text-white transition-colors disabled:opacity-50">
                 {createMutation.isPending ? 'Memproses...' : isCrypto ? 'Saya Sudah Kirim' : 'Saya Sudah Transfer'}
               </button>

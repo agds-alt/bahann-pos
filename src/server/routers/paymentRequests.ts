@@ -9,8 +9,25 @@ import {
   getRecentTransfers, getRecentSolTransfers, matchTransferToAmount,
 } from '@/lib/solana'
 import { logger } from '@/lib/logger'
+import {
+  PLAN_PRICES_IDR, generateUniqueAmountIDR,
+  formatWaPaymentNotif, buildWaDeepLink,
+} from '@/lib/payment/unique-amount'
 
 export const paymentRequestsRouter = router({
+  previewBankAmount: protectedProcedure
+    .input(z.object({
+      plan: z.enum(['warung', 'starter', 'professional', 'business', 'enterprise']),
+    }))
+    .mutation(async ({ input }) => {
+      const basePrice = PLAN_PRICES_IDR[input.plan]
+      if (!basePrice) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Plan tidak tersedia.' })
+      }
+      const uniqueAmount = generateUniqueAmountIDR(basePrice)
+      return { uniqueAmount, basePrice }
+    }),
+
   previewCryptoAmount: protectedProcedure
     .input(z.object({
       plan: z.enum(['warung', 'starter', 'professional', 'business', 'enterprise']),
@@ -39,6 +56,7 @@ export const paymentRequestsRouter = router({
       amount: z.number().int().min(0),
       paymentMethod: z.enum(['bank_transfer', 'qris', 'crypto_usdc', 'crypto_usdt', 'crypto_sol']).default('bank_transfer'),
       cryptoAmount: z.number().optional(),
+      uniqueAmount: z.number().int().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const { data: existing } = await supabase
@@ -58,6 +76,7 @@ export const paymentRequestsRouter = router({
       const isCrypto = input.paymentMethod.startsWith('crypto_')
       let cryptoAmount: number | null = null
       let cryptoToken: string | null = null
+      let uniqueAmount: number | null = null
 
       if (isCrypto) {
         cryptoToken = input.paymentMethod.replace('crypto_', '')
@@ -77,6 +96,15 @@ export const paymentRequestsRouter = router({
           }
           cryptoAmount = generateUniqueAmount(basePrice)
         }
+      } else {
+        if (input.uniqueAmount) {
+          uniqueAmount = input.uniqueAmount
+        } else {
+          const basePrice = PLAN_PRICES_IDR[input.plan]
+          if (basePrice) {
+            uniqueAmount = generateUniqueAmountIDR(basePrice)
+          }
+        }
       }
 
       const { data, error } = await supabase
@@ -84,11 +112,12 @@ export const paymentRequestsRouter = router({
         .insert({
           user_id: ctx.userId,
           plan: input.plan,
-          amount: input.amount,
+          amount: uniqueAmount || input.amount,
           payment_method: input.paymentMethod,
           status: 'pending',
           crypto_amount: cryptoAmount,
           crypto_token: cryptoToken,
+          unique_amount: uniqueAmount,
         })
         .select()
         .single()
@@ -101,10 +130,36 @@ export const paymentRequestsRouter = router({
         action: 'CREATE',
         entityType: 'payment_request',
         entityId: data.id,
-        changes: { plan: input.plan, amount: input.amount, method: input.paymentMethod, cryptoAmount, cryptoToken },
+        changes: { plan: input.plan, amount: uniqueAmount || input.amount, method: input.paymentMethod, cryptoAmount, cryptoToken, uniqueAmount },
       })
 
-      return data
+      let waNotifLink: string | null = null
+      if (!isCrypto) {
+        const { data: settings } = await supabase
+          .from('platform_settings')
+          .select('key, value')
+          .in('key', ['support_wa'])
+        const adminWa = settings?.find(s => s.key === 'support_wa')?.value
+          || process.env.NEXT_PUBLIC_SUPPORT_WA
+
+        if (adminWa) {
+          const { data: user } = await supabase
+            .from('users')
+            .select('name, email')
+            .eq('id', ctx.userId)
+            .single()
+
+          const msg = formatWaPaymentNotif({
+            userEmail: user?.email || ctx.session?.email || 'unknown',
+            userName: user?.name || 'User',
+            plan: input.plan,
+            uniqueAmount: uniqueAmount || input.amount,
+          })
+          waNotifLink = buildWaDeepLink(adminWa, msg)
+        }
+      }
+
+      return { ...data, waNotifLink }
     }),
 
   uploadProof: protectedProcedure
@@ -162,7 +217,7 @@ export const paymentRequestsRouter = router({
   myRequests: protectedProcedure.query(async ({ ctx }) => {
     const { data, error } = await supabase
       .from('payment_requests')
-      .select('id, plan, amount, payment_method, proof_url, status, admin_note, created_at, reviewed_at, crypto_amount, crypto_token, crypto_tx_hash')
+      .select('id, plan, amount, payment_method, proof_url, status, admin_note, created_at, reviewed_at, crypto_amount, crypto_token, crypto_tx_hash, unique_amount')
       .eq('user_id', ctx.userId)
       .order('created_at', { ascending: false })
       .limit(20)
@@ -309,7 +364,7 @@ export const paymentRequestsRouter = router({
     .query(async ({ input }) => {
       let query = supabase
         .from('payment_requests')
-        .select('id, user_id, plan, amount, payment_method, proof_url, status, admin_note, created_at, reviewed_at, crypto_amount, crypto_token, crypto_tx_hash', { count: 'exact' })
+        .select('id, user_id, plan, amount, payment_method, proof_url, status, admin_note, created_at, reviewed_at, crypto_amount, crypto_token, crypto_tx_hash, unique_amount', { count: 'exact' })
         .order('created_at', { ascending: false })
 
       if (input?.status) query = query.eq('status', input.status)
